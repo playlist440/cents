@@ -1,0 +1,21 @@
+/* Login / first run */
+.login {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: calc(var(--sat) + 24px) max(24px, var(--sar)) calc(var(--sab) + 12vh) max(24px, var(--sal));
+  background: var(--bg-grouped);
+}
+.login-card { width: 100%; max-width: 340px; display: flex; flex-direction: column; align-items: center; text-align: center; }
+.login-icon {
+  width: 92px; height: 92px;
+  border-radius: 21px;
+  margin-bottom: 18px;
+  box-shadow: 0 10px 30px rgba(18, 90, 60, .22), 0 1px 2px rgba(0, 0, 0, .08);
+  animation: login-in 700ms var(--spring-lin) both;
+}
+@keyframes login-in { from { opacity: 0; transform: scale(.8); } }
+.login-title { font: 700 var(--fs-title1)/1.2 var(--font); letter-spacing: .013em; margin-bottom: 28px; }
+.login-fields { width: 100%; display: flex; flex-direction: column; gap: 10px; }
+.login-note { min-height: 18px; margin: 10px 0 14px; font: 400 var(--fs-footnote)/1.38 var(--font); color: var(--label-2); }

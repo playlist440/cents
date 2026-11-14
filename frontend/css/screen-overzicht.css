@@ -1,0 +1,88 @@
+/* Overzicht and bakje detail */
+.ov-body { transition: opacity 200ms linear; }
+.ov-body.is-stale { opacity: .55; }
+.ov-empty { display: grid; place-items: center; min-height: calc(100dvh - 260px); padding: 8px 0 24px; }
+.ov-empty .dropzone { max-width: 520px; }
+
+.hero { --surface: var(--bg-grouped); padding: 2px 4px 4px; margin-bottom: 18px; touch-action: pan-y; }
+.hero-inner { will-change: auto; }
+.hero-label { font: 600 var(--fs-subhead)/1.3 var(--font); color: var(--label-2); letter-spacing: -.016em; }
+.hero-amount { font: 700 var(--fs-hero)/1.08 var(--font-rounded); letter-spacing: -.025em; margin: 2px 0 4px; }
+.hero-amount.is-warn { color: var(--warn-text); }
+.hero-sub { font: 400 var(--fs-subhead)/1.3 var(--font); color: var(--label-2); }
+.hero-pace { margin-top: 16px; }
+.pace-legend { display: flex; gap: 16px; margin-top: 8px; font: 400 var(--fs-caption1)/1.2 var(--font); color: var(--label-2); }
+.pace-legend i { display: inline-block; width: 14px; height: 3px; margin-right: 6px; vertical-align: middle; border-radius: 2px; }
+.lg-solid { background: var(--tint); }
+.lg-dot { background: radial-gradient(circle, var(--label-3) 1.3px, transparent 1.6px) 0 50% / 5.5px 3px repeat-x; }
+
+.sort-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 12px;
+  padding: 10px 10px 10px 14px;
+  border-radius: var(--r-list);
+  background: var(--tint-soft);
+}
+.sort-banner-icon { font-size: 22px; line-height: 1; }
+.sort-banner-text { flex: 1; min-width: 0; font: 600 var(--fs-callout)/1.25 var(--font); letter-spacing: -.02em; }
+
+.capsule-wrap { margin: 4px 0 14px; }
+
+.insights {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  margin: 0 calc(-1 * var(--pad-r)) 0 calc(-1 * var(--pad-l));
+  padding: 2px var(--pad-r) 8px var(--pad-l);
+  scroll-padding-inline: var(--pad-l);
+  scrollbar-width: none;
+}
+.insights::-webkit-scrollbar { display: none; }
+.insight-wrap { position: relative; flex: 0 0 min(76%, 290px); scroll-snap-align: start; display: flex; }
+.insight {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 124px;
+  border-radius: var(--r-list);
+}
+.insight-emoji { font-size: 28px; line-height: 1; }
+.insight-title { font: 600 var(--fs-callout)/1.32 var(--font); letter-spacing: -.02em; }
+@media (min-width: 700px) {
+  .insights { display: grid; grid-template-columns: repeat(3, 1fr); overflow: visible; margin: 0; padding: 0; }
+}
+
+.potjes-peek { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; padding: 18px 8px 14px; }
+.peek-item { display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 0; }
+.peek-item .ring { margin-bottom: 6px; }
+.peek-name { max-width: 100%; font: 600 var(--fs-footnote)/1.2 var(--font); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.peek-sub { font: 400 var(--fs-caption1)/1.2 var(--font); color: var(--label-2); }
+@media (max-width: 359px) { .potjes-peek .ring { transform: scale(.85); margin: -5px 0 1px; } }
+
+/* Bakje detail */
+.bakje-head { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 6px 0 22px; text-align: center; }
+.bakje-name { font: 700 var(--fs-title2)/1.25 var(--font); letter-spacing: -.016em; }
+.bakje-chart { padding-bottom: 10px; }
+.bc-head { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 14px; min-height: 56px; }
+.bc-value { font: 700 var(--fs-title1)/1.15 var(--font-rounded); letter-spacing: -.02em; }
+.bc-label { font: 400 var(--fs-subhead)/1.3 var(--font); color: var(--label-2); }
+
+/* "…" on an insight (Niet meer tonen / Dit soort meldingen uitzetten) */
+.insight-more {
+  position: absolute;
+  top: 6px; right: 6px;
+  display: grid;
+  place-items: center;
+  width: 32px; height: 32px;
+  border-radius: 16px;
+  color: var(--label-3);
+}
+.insight-more::after { content: ""; position: absolute; inset: -6px; }
+.insight .insight-title { padding-right: 18px; }
+@media (hover: none) { .insight-more:active { background: var(--fill-3); } }
+@media (hover: hover) and (pointer: fine) { .insight-more:hover { background: var(--fill-4); color: var(--label-2); } }
+.ov-total-lbl { font-size: var(--fs-footnote); color: var(--label-2); margin-right: 4px; }

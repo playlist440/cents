@@ -1,0 +1,12 @@
+.git
+.github
+docs
+tests
+tools
+demo-data
+**/__pycache__
+**/*.db
+**/*.db-wal
+**/*.db-shm
+.claude
+*.md

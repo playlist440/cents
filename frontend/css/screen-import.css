@@ -1,0 +1,96 @@
+/* Import sheet. Prefix .im- */
+
+.im { display: flex; flex-direction: column; gap: 18px; padding-top: 8px; }
+
+.im-summary {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 0 4px;
+  text-align: center;
+  animation: so-pop 520ms var(--spring-bouncy) both;
+}
+.im-summary-icon {
+  display: grid;
+  place-items: center;
+  width: 64px; height: 64px;
+  margin-bottom: 6px;
+  border-radius: 50%;
+  background: var(--tint);
+  color: var(--on-tint);
+}
+.im-summary.is-known .im-summary-icon { background: var(--tint-soft); color: var(--tint); }
+.im-summary-title { font: 700 var(--fs-title2)/1.25 var(--font); letter-spacing: -.016em; }
+.im-summary-sub { font: 400 var(--fs-subhead)/1.3 var(--font); color: var(--label-2); }
+@keyframes so-pop { from { transform: scale(.6); opacity: 0; } }
+
+.im-file { position: relative; }
+.im-file-icon {
+  display: grid;
+  place-items: center;
+  width: 36px; height: 36px;
+  border-radius: 10px;
+  background: var(--fill-4);
+  color: var(--label-2);
+  transition: background-color 240ms linear, color 240ms linear;
+}
+.im-file.is-done .im-file-icon { background: var(--tint-soft); color: var(--tint); }
+.im-file.is-error .im-file-icon { background: color-mix(in srgb, var(--orange) 16%, transparent); color: var(--orange); }
+.im-file .row-title { font-weight: 500; }
+.im-file .row-sub { white-space: normal; }
+.im-file.is-error .row-sub { color: var(--label); }
+.im-acc { font-size: var(--fs-subhead); max-width: 40%; overflow: hidden; text-overflow: ellipsis; }
+.im-bar {
+  position: absolute;
+  left: 64px; right: 16px; bottom: 6px;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--fill-3);
+  overflow: hidden;
+}
+.im-bar span { display: block; height: 100%; border-radius: 2px; background: var(--tint); transform-origin: left; transition: transform 160ms linear; }
+.im-bar.is-indeterminate span { width: 35%; animation: im-slide 1.1s var(--ease-in-out) infinite; }
+@keyframes im-slide { from { transform: translateX(-100%); } to { transform: translateX(290%); } }
+
+.im-accounts .list-header { margin-left: 16px; }
+.im-account { padding: 0 16px; margin-bottom: 10px; }
+.im-account-head { display: flex; align-items: center; gap: 12px; min-height: 52px; }
+.im-account-icon {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 30px; height: 30px;
+  border-radius: 8px;
+  background: var(--tint);
+  color: var(--on-tint);
+}
+.im-account-name {
+  flex: 1;
+  min-width: 0;
+  height: 44px;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: var(--label);
+  font: 600 max(16px, var(--fs-body))/1.2 var(--font);
+  letter-spacing: -.024em;
+}
+.im-account-name:focus { outline: none; }
+.im-account:focus-within { box-shadow: 0 0 0 2px var(--focus); }
+.im-iban { flex: none; color: var(--label-2); font-size: var(--fs-subhead); }
+.im-account-type {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  min-height: 44px;
+  font: 400 var(--fs-body)/1.2 var(--font);
+  box-shadow: inset 0 var(--hair) 0 var(--sep);
+}
+.im-account-type-value { display: inline-flex; align-items: center; gap: 4px; color: var(--label-2); }
+@media (hover: none) { .im-account-type:active { opacity: .5; } }
+
+.im-actions { display: flex; flex-direction: column; align-items: stretch; gap: 6px; margin-top: 4px; }
+.im-more { display: flex; justify-content: center; }

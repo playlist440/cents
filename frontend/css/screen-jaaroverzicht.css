@@ -1,0 +1,30 @@
+/* Jaaroverzicht (.jo-) */
+.jo-chart { border-radius: var(--r-card); padding: 16px 16px 12px; --surface: var(--bg-grouped-2); }
+.jo-chart-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 32px; }
+.jo-title { font: 600 var(--fs-headline)/1.25 var(--font); letter-spacing: -.02em; }
+.jo-open { display: inline-flex; align-items: center; gap: 2px; height: 32px; padding: 0 10px 0 12px; margin-right: -4px; border-radius: 16px; background: var(--tint-soft); color: var(--tint); font: 600 var(--fs-subhead)/1 var(--font); position: relative; }
+.jo-open::after { content: ""; position: absolute; inset: -6px -2px; }
+.jo-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin: 10px 0 16px; }
+.jo-stat { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.jo-stat-label { display: flex; align-items: center; gap: 5px; font: 400 var(--fs-caption1)/1.2 var(--font); color: var(--label-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.jo-stat-label i { flex: none; width: 8px; height: 8px; border-radius: 2px; }
+.jo-stat-value { font: 600 var(--fs-callout)/1.2 var(--font-rounded); letter-spacing: -.01em; overflow: hidden; text-overflow: ellipsis; }
+@media (max-width: 374px) { .jo-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); row-gap: 10px; } }
+
+.jo-ly { border-radius: var(--r-list); }
+.jo-ly-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px; font: 600 var(--fs-callout)/1.25 var(--font); }
+.jo-ly-row { display: grid; grid-template-columns: 88px minmax(0, 1fr); gap: 10px; align-items: center; padding: 6px 0; }
+.jo-ly-label { font: 400 var(--fs-subhead)/1.25 var(--font); color: var(--label-2); }
+.jo-ly-bars { display: flex; flex-direction: column; gap: 4px; }
+.jo-ly-bar { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.jo-ly-bar span { display: block; height: 8px; min-width: 3px; border-radius: 4px; max-width: calc(100% - 76px); transform-origin: left; }
+.jo-ly-bar.is-then span { background: var(--fill); }
+.jo-ly-bar b { flex: none; font: 500 var(--fs-footnote)/1 var(--font); }
+.jo-ly-bar.is-then b { color: var(--label-2); font-weight: 400; }
+.jo-ly-legend { display: flex; gap: 16px; margin-top: 10px; font: 400 var(--fs-caption1)/1.2 var(--font); color: var(--label-2); }
+.jo-ly-legend i { display: inline-block; width: 10px; height: 6px; border-radius: 3px; margin-right: 6px; background: var(--fill); vertical-align: 1px; }
+.jo-ly-legend i.is-now { background: var(--label-2); }
+
+.jo-spark { flex: none; display: flex; margin-top: 3px; }
+.jo-total { color: var(--label); }
+.jo-rank { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 9px; background: var(--fill-4); font: 600 var(--fs-subhead)/1 var(--font-rounded); color: var(--label-2); }

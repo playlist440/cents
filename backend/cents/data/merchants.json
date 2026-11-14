@@ -1,0 +1,8974 @@
+[
+ {
+  "key": "albert-heijn",
+  "name": "Albert Heijn",
+  "match": [
+   "albert heijn",
+   "albertheijn",
+   "ah to go",
+   "ahtogo"
+  ],
+  "category": "boodschappen"
+ },
+ {
+  "key": "jumbo",
+  "name": "Jumbo",
+  "match": [
+   "jumbo",
+   "jumbo foodmarkt"
+  ],
+  "category": "boodschappen"
+ },
+ {
+  "key": "lidl",
+  "name": "Lidl",
+  "match": [
+   "lidl"
+  ],
+  "category": "boodschappen"
+ },
+ {
+  "key": "aldi",
+  "name": "Aldi",
+  "match": [
+   "aldi"
+  ],
+  "category": "boodschappen"
+ },
+ {
+  "key": "plus",
+  "name": "Plus",
+  "match": [
+   "plus supermarkt",
+   "plus retail"
+  ],
+  "category": "boodschappen"
+ },
+ {
+  "key": "dirk",
+  "name": "Dirk",
+  "match": [
+   "dirk van den broek",
+   "dirk vdbroek",
+   "dirk v d broek"
+  ],
+  "category": "boodschappen"
+ },
+ {
+  "key": "dekamarkt",
+  "name": "DekaMarkt",
+  "match": [
+   "dekamarkt",
+   "deka markt"
+  ],
+  "category": "boodschappen"
+ },
+ {
+  "key": "vomar",
+  "name": "Vomar",
+  "match": [
+   "vomar"
+  ],
+  "category": "boodschappen"
+ },
+ {
+  "key": "hoogvliet",
+  "name": "Hoogvliet",
+  "match": [
+   "hoogvliet"
+  ],
+  "category": "boodschappen",
+  "weak": true
+ },
+ {
+  "key": "coop",
+  "name": "Coop",
+  "match": [
+   "coop",
+   "coop supermarkt",
+   "coop supermarkten"
+  ],
+  "category": "boodschappen",
+  "weak": [
+   "coop"
+  ]
+ },
+ {
+  "key": "spar",
+  "name": "Spar",
+  "match": [
+   "spar",
+   "eurospar",
+   "interspar",
+   "spar city"
+  ],
+  "category": "boodschappen",
+  "weak": [
+   "spar"
+  ]
+ },
+ {
+  "key": "poiesz",
+  "name": "Poiesz",
+  "match": [
+   "poiesz"
+  ],
+  "category": "boodschappen",
+  "weak": true
+ },
+ {
+  "key": "boni",
+  "name": "Boni",
+  "match": [
+   "boni",
+   "boni supermarkt"
+  ],
+  "category": "boodschappen",
+  "weak": [
+   "boni"
+  ]
+ },
+ {
+  "key": "nettorama",
+  "name": "Nettorama",
+  "match": [
+   "nettorama"
+  ],
+  "category": "boodschappen"
+ },
+ {
+  "key": "jan-linders",
+  "name": "Jan Linders",
+  "match": [
+   "jan linders"
+  ],
+  "category": "boodschappen"
+ },
+ {
+  "key": "mcd-supermarkt",
+  "name": "MCD Supermarkt",
+  "match": [
+   "mcd supermarkt"
+  ],
+  "category": "boodschappen"
+ },
+ {
+  "key": "boons-markt",
+  "name": "Boon's Markt",
+  "match": [
+   "boons markt",
+   "boon s markt"
+  ],
+  "category": "boodschappen"
+ },
+ {
+  "key": "agrimarkt",
+  "name": "Agrimarkt",
+  "match": [
+   "agrimarkt"
+  ],
+  "category": "boodschappen"
+ },
+ {
+  "key": "ekoplaza",
+  "name": "Ekoplaza",
+  "match": [
+   "ekoplaza"
+  ],
+  "category": "boodschappen"
+ },
+ {
+  "key": "picnic",
+  "name": "Picnic",
+  "match": [
+   "picnic",
+   "picnic bv"
+  ],
+  "category": "boodschappen",
+  "weak": [
+   "picnic"
+  ]
+ },
+ {
+  "key": "crisp",
+  "name": "Crisp",
+  "match": [
+   "crisp"
+  ],
+  "category": "boodschappen",
+  "weak": true
+ },
+ {
+  "key": "hellofresh",
+  "name": "HelloFresh",
+  "match": [
+   "hellofresh",
+   "hello fresh"
+  ],
+  "category": "boodschappen"
+ },
+ {
+  "key": "marley-spoon",
+  "name": "Marley Spoon",
+  "match": [
+   "marley spoon",
+   "marleyspoon"
+  ],
+  "category": "boodschappen"
+ },
+ {
+  "key": "ekomenu",
+  "name": "Ekomenu",
+  "match": [
+   "ekomenu"
+  ],
+  "category": "boodschappen"
+ },
+ {
+  "key": "flink",
+  "name": "Flink",
+  "match": [
+   "flink se",
+   "goflink"
+  ],
+  "category": "boodschappen"
+ },
+ {
+  "key": "getir",
+  "name": "Getir",
+  "match": [
+   "getir"
+  ],
+  "category": "boodschappen"
+ },
+ {
+  "key": "amazing-oriental",
+  "name": "Amazing Oriental",
+  "match": [
+   "amazing oriental"
+  ],
+  "category": "boodschappen"
+ },
+ {
+  "key": "gall-en-gall",
+  "name": "Gall & Gall",
+  "match": [
+   "gall gall",
+   "gall en gall"
+  ],
+  "category": "boodschappen"
+ },
+ {
+  "key": "mitra",
+  "name": "Mitra",
+  "match": [
+   "mitra"
+  ],
+  "category": "boodschappen"
+ },
+ {
+  "key": "keurslager",
+  "name": "Keurslager",
+  "match": [
+   "keurslager"
+  ],
+  "category": "boodschappen"
+ },
+ {
+  "key": "bakker-bart",
+  "name": "Bakker Bart",
+  "match": [
+   "bakker bart"
+  ],
+  "category": "boodschappen"
+ },
+ {
+  "key": "vlaamsch-broodhuys",
+  "name": "Vlaamsch Broodhuys",
+  "match": [
+   "vlaamsch broodhuys"
+  ],
+  "category": "boodschappen"
+ },
+ {
+  "key": "multivlaai",
+  "name": "Multivlaai",
+  "match": [
+   "multivlaai"
+  ],
+  "category": "boodschappen"
+ },
+ {
+  "key": "de-echte-bakker",
+  "name": "De Echte Bakker",
+  "match": [
+   "echte bakker"
+  ],
+  "category": "boodschappen"
+ },
+ {
+  "key": "simon-levelt",
+  "name": "Simon Lévelt",
+  "match": [
+   "simon levelt"
+  ],
+  "category": "boodschappen"
+ },
+ {
+  "key": "carrefour",
+  "name": "Carrefour",
+  "match": [
+   "carrefour",
+   "carrefour market",
+   "carrefour express"
+  ],
+  "category": "boodschappen"
+ },
+ {
+  "key": "edeka",
+  "name": "Edeka",
+  "match": [
+   "edeka"
+  ],
+  "category": "boodschappen"
+ },
+ {
+  "key": "rewe",
+  "name": "Rewe",
+  "match": [
+   "rewe"
+  ],
+  "category": "boodschappen"
+ },
+ {
+  "key": "kaufland",
+  "name": "Kaufland",
+  "match": [
+   "kaufland"
+  ],
+  "category": "boodschappen"
+ },
+ {
+  "key": "intermarche",
+  "name": "Intermarché",
+  "match": [
+   "intermarche"
+  ],
+  "category": "boodschappen"
+ },
+ {
+  "key": "e-leclerc",
+  "name": "E.Leclerc",
+  "match": [
+   "leclerc",
+   "e leclerc"
+  ],
+  "category": "boodschappen"
+ },
+ {
+  "key": "auchan",
+  "name": "Auchan",
+  "match": [
+   "auchan"
+  ],
+  "category": "boodschappen"
+ },
+ {
+  "key": "mercadona",
+  "name": "Mercadona",
+  "match": [
+   "mercadona"
+  ],
+  "category": "boodschappen"
+ },
+ {
+  "key": "conad",
+  "name": "Conad",
+  "match": [
+   "conad"
+  ],
+  "category": "boodschappen"
+ },
+ {
+  "key": "esselunga",
+  "name": "Esselunga",
+  "match": [
+   "esselunga"
+  ],
+  "category": "boodschappen"
+ },
+ {
+  "key": "delhaize",
+  "name": "Delhaize",
+  "match": [
+   "delhaize"
+  ],
+  "category": "boodschappen"
+ },
+ {
+  "key": "colruyt",
+  "name": "Colruyt",
+  "match": [
+   "colruyt"
+  ],
+  "category": "boodschappen"
+ },
+ {
+  "key": "billa",
+  "name": "Billa",
+  "match": [
+   "billa"
+  ],
+  "category": "boodschappen"
+ },
+ {
+  "key": "kruidvat",
+  "name": "Kruidvat",
+  "match": [
+   "kruidvat"
+  ],
+  "category": "verzorging"
+ },
+ {
+  "key": "etos",
+  "name": "Etos",
+  "match": [
+   "etos"
+  ],
+  "category": "verzorging"
+ },
+ {
+  "key": "trekpleister",
+  "name": "Trekpleister",
+  "match": [
+   "trekpleister"
+  ],
+  "category": "verzorging",
+  "weak": true
+ },
+ {
+  "key": "da",
+  "name": "DA",
+  "match": [
+   "da drogist",
+   "da drogisterij"
+  ],
+  "category": "verzorging"
+ },
+ {
+  "key": "holland-en-barrett",
+  "name": "Holland & Barrett",
+  "match": [
+   "holland barrett",
+   "holland and barrett"
+  ],
+  "category": "verzorging"
+ },
+ {
+  "key": "douglas",
+  "name": "Douglas",
+  "match": [
+   "douglas",
+   "parfumerie douglas"
+  ],
+  "category": "verzorging",
+  "weak": [
+   "douglas"
+  ]
+ },
+ {
+  "key": "ici-paris-xl",
+  "name": "ICI Paris XL",
+  "match": [
+   "ici paris xl",
+   "ici paris"
+  ],
+  "category": "verzorging"
+ },
+ {
+  "key": "rituals",
+  "name": "Rituals",
+  "match": [
+   "rituals"
+  ],
+  "category": "verzorging"
+ },
+ {
+  "key": "lush",
+  "name": "Lush",
+  "match": [
+   "lush"
+  ],
+  "category": "verzorging",
+  "weak": true
+ },
+ {
+  "key": "the-body-shop",
+  "name": "The Body Shop",
+  "match": [
+   "the body shop"
+  ],
+  "category": "verzorging"
+ },
+ {
+  "key": "yves-rocher",
+  "name": "Yves Rocher",
+  "match": [
+   "yves rocher"
+  ],
+  "category": "verzorging"
+ },
+ {
+  "key": "rossmann",
+  "name": "Rossmann",
+  "match": [
+   "rossmann"
+  ],
+  "category": "verzorging"
+ },
+ {
+  "key": "dm",
+  "name": "dm",
+  "match": [
+   "dm drogerie",
+   "dm drogerie markt"
+  ],
+  "category": "verzorging"
+ },
+ {
+  "key": "benu-apotheek",
+  "name": "BENU Apotheek",
+  "match": [
+   "benu",
+   "benu apotheek"
+  ],
+  "category": "verzorging"
+ },
+ {
+  "key": "boots-apotheek",
+  "name": "Boots Apotheek",
+  "match": [
+   "boots apotheek"
+  ],
+  "category": "verzorging"
+ },
+ {
+  "key": "mediq",
+  "name": "Mediq",
+  "match": [
+   "mediq",
+   "mediq apotheek"
+  ],
+  "category": "verzorging"
+ },
+ {
+  "key": "service-apotheek",
+  "name": "Service Apotheek",
+  "match": [
+   "service apotheek"
+  ],
+  "category": "verzorging"
+ },
+ {
+  "key": "alphega-apotheek",
+  "name": "Alphega Apotheek",
+  "match": [
+   "alphega"
+  ],
+  "category": "verzorging"
+ },
+ {
+  "key": "plein-nl",
+  "name": "Plein.nl",
+  "match": [
+   "plein nl",
+   "pleinnl"
+  ],
+  "category": "verzorging"
+ },
+ {
+  "key": "infomedics",
+  "name": "Infomedics",
+  "match": [
+   "infomedics"
+  ],
+  "category": "verzorging"
+ },
+ {
+  "key": "famed",
+  "name": "Famed",
+  "match": [
+   "famed",
+   "fa med"
+  ],
+  "category": "verzorging"
+ },
+ {
+  "key": "cak",
+  "name": "CAK",
+  "match": [
+   "cak",
+   "centraal administratie kantoor"
+  ],
+  "category": "verzorging",
+  "weak": [
+   "cak"
+  ]
+ },
+ {
+  "key": "pearle",
+  "name": "Pearle",
+  "match": [
+   "pearle"
+  ],
+  "category": "verzorging"
+ },
+ {
+  "key": "hans-anders",
+  "name": "Hans Anders",
+  "match": [
+   "hans anders"
+  ],
+  "category": "verzorging"
+ },
+ {
+  "key": "specsavers",
+  "name": "Specsavers",
+  "match": [
+   "specsavers"
+  ],
+  "category": "verzorging"
+ },
+ {
+  "key": "eyewish",
+  "name": "Eyewish",
+  "match": [
+   "eyewish",
+   "eye wish"
+  ],
+  "category": "verzorging"
+ },
+ {
+  "key": "ace-en-tate",
+  "name": "Ace & Tate",
+  "match": [
+   "ace tate",
+   "ace and tate"
+  ],
+  "category": "verzorging"
+ },
+ {
+  "key": "charlie-temple",
+  "name": "Charlie Temple",
+  "match": [
+   "charlie temple"
+  ],
+  "category": "verzorging"
+ },
+ {
+  "key": "beter-horen",
+  "name": "Beter Horen",
+  "match": [
+   "beter horen"
+  ],
+  "category": "verzorging"
+ },
+ {
+  "key": "schoonenberg",
+  "name": "Schoonenberg",
+  "match": [
+   "schoonenberg"
+  ],
+  "category": "verzorging",
+  "weak": true
+ },
+ {
+  "key": "amplifon",
+  "name": "Amplifon",
+  "match": [
+   "amplifon"
+  ],
+  "category": "verzorging"
+ },
+ {
+  "key": "rob-peetoom",
+  "name": "Rob Peetoom",
+  "match": [
+   "rob peetoom"
+  ],
+  "category": "verzorging"
+ },
+ {
+  "key": "toni-en-guy",
+  "name": "Toni & Guy",
+  "match": [
+   "toni guy",
+   "toni and guy"
+  ],
+  "category": "verzorging"
+ },
+ {
+  "key": "treatwell",
+  "name": "Treatwell",
+  "match": [
+   "treatwell"
+  ],
+  "category": "verzorging"
+ },
+ {
+  "key": "dental-clinics",
+  "name": "Dental Clinics",
+  "match": [
+   "dental clinics"
+  ],
+  "category": "verzorging"
+ },
+ {
+  "key": "action",
+  "name": "Action",
+  "match": [
+   "action",
+   "action nederland",
+   "action non food"
+  ],
+  "category": "winkelen",
+  "weak": [
+   "action"
+  ]
+ },
+ {
+  "key": "hema",
+  "name": "HEMA",
+  "match": [
+   "hema"
+  ],
+  "category": "winkelen"
+ },
+ {
+  "key": "blokker",
+  "name": "Blokker",
+  "match": [
+   "blokker"
+  ],
+  "category": "winkelen",
+  "weak": true
+ },
+ {
+  "key": "xenos",
+  "name": "Xenos",
+  "match": [
+   "xenos"
+  ],
+  "category": "winkelen"
+ },
+ {
+  "key": "big-bazar",
+  "name": "Big Bazar",
+  "match": [
+   "big bazar"
+  ],
+  "category": "winkelen"
+ },
+ {
+  "key": "wibra",
+  "name": "Wibra",
+  "match": [
+   "wibra"
+  ],
+  "category": "winkelen"
+ },
+ {
+  "key": "flying-tiger",
+  "name": "Flying Tiger",
+  "match": [
+   "flying tiger",
+   "flying tiger copenhagen"
+  ],
+  "category": "winkelen"
+ },
+ {
+  "key": "s-strene-grene",
+  "name": "Søstrene Grene",
+  "match": [
+   "sostrene grene"
+  ],
+  "category": "winkelen"
+ },
+ {
+  "key": "normal",
+  "name": "Normal",
+  "match": [
+   "normal"
+  ],
+  "category": "winkelen",
+  "weak": true
+ },
+ {
+  "key": "de-bijenkorf",
+  "name": "De Bijenkorf",
+  "match": [
+   "bijenkorf",
+   "de bijenkorf"
+  ],
+  "category": "winkelen"
+ },
+ {
+  "key": "kijkshop",
+  "name": "Kijkshop",
+  "match": [
+   "kijkshop"
+  ],
+  "category": "winkelen"
+ },
+ {
+  "key": "bruna",
+  "name": "Bruna",
+  "match": [
+   "bruna"
+  ],
+  "category": "winkelen",
+  "weak": true
+ },
+ {
+  "key": "the-read-shop",
+  "name": "The Read Shop",
+  "match": [
+   "the read shop",
+   "readshop"
+  ],
+  "category": "winkelen"
+ },
+ {
+  "key": "bol",
+  "name": "bol",
+  "match": [
+   "bol com",
+   "bolcom"
+  ],
+  "category": "winkelen"
+ },
+ {
+  "key": "amazon",
+  "name": "Amazon",
+  "match": [
+   "amazon",
+   "amzn",
+   "amzn mktp",
+   "amazon eu",
+   "amazon nl",
+   "amazon de"
+  ],
+  "category": "winkelen"
+ },
+ {
+  "key": "aliexpress",
+  "name": "AliExpress",
+  "match": [
+   "aliexpress"
+  ],
+  "category": "winkelen"
+ },
+ {
+  "key": "temu",
+  "name": "Temu",
+  "match": [
+   "temu"
+  ],
+  "category": "winkelen"
+ },
+ {
+  "key": "wish",
+  "name": "Wish",
+  "match": [
+   "wish com"
+  ],
+  "category": "winkelen"
+ },
+ {
+  "key": "ebay",
+  "name": "eBay",
+  "match": [
+   "ebay"
+  ],
+  "category": "winkelen"
+ },
+ {
+  "key": "etsy",
+  "name": "Etsy",
+  "match": [
+   "etsy"
+  ],
+  "category": "winkelen"
+ },
+ {
+  "key": "marktplaats",
+  "name": "Marktplaats",
+  "match": [
+   "marktplaats"
+  ],
+  "category": "winkelen"
+ },
+ {
+  "key": "wehkamp",
+  "name": "Wehkamp",
+  "match": [
+   "wehkamp"
+  ],
+  "category": "winkelen"
+ },
+ {
+  "key": "coolblue",
+  "name": "Coolblue",
+  "match": [
+   "coolblue"
+  ],
+  "category": "winkelen"
+ },
+ {
+  "key": "mediamarkt",
+  "name": "MediaMarkt",
+  "match": [
+   "mediamarkt",
+   "media markt"
+  ],
+  "category": "winkelen"
+ },
+ {
+  "key": "bcc",
+  "name": "BCC",
+  "match": [
+   "bcc"
+  ],
+  "category": "winkelen",
+  "weak": true
+ },
+ {
+  "key": "azerty",
+  "name": "Azerty",
+  "match": [
+   "azerty"
+  ],
+  "category": "winkelen"
+ },
+ {
+  "key": "megekko",
+  "name": "Megekko",
+  "match": [
+   "megekko"
+  ],
+  "category": "winkelen"
+ },
+ {
+  "key": "apple-store",
+  "name": "Apple Store",
+  "match": [
+   "apple store",
+   "apple retail"
+  ],
+  "category": "winkelen"
+ },
+ {
+  "key": "samsung",
+  "name": "Samsung",
+  "match": [
+   "samsung"
+  ],
+  "category": "winkelen"
+ },
+ {
+  "key": "lucardi",
+  "name": "Lucardi",
+  "match": [
+   "lucardi"
+  ],
+  "category": "winkelen"
+ },
+ {
+  "key": "bax-shop",
+  "name": "Bax-shop",
+  "match": [
+   "bax shop",
+   "baxshop"
+  ],
+  "category": "winkelen"
+ },
+ {
+  "key": "gamma",
+  "name": "Gamma",
+  "match": [
+   "gamma",
+   "gamma bouwmarkt"
+  ],
+  "category": "huis-tuin",
+  "weak": [
+   "gamma"
+  ]
+ },
+ {
+  "key": "karwei",
+  "name": "Karwei",
+  "match": [
+   "karwei"
+  ],
+  "category": "huis-tuin"
+ },
+ {
+  "key": "praxis",
+  "name": "Praxis",
+  "match": [
+   "praxis"
+  ],
+  "category": "huis-tuin",
+  "weak": true
+ },
+ {
+  "key": "hornbach",
+  "name": "Hornbach",
+  "match": [
+   "hornbach"
+  ],
+  "category": "huis-tuin"
+ },
+ {
+  "key": "hubo",
+  "name": "Hubo",
+  "match": [
+   "hubo"
+  ],
+  "category": "huis-tuin"
+ },
+ {
+  "key": "formido",
+  "name": "Formido",
+  "match": [
+   "formido"
+  ],
+  "category": "huis-tuin"
+ },
+ {
+  "key": "bauhaus",
+  "name": "Bauhaus",
+  "match": [
+   "bauhaus"
+  ],
+  "category": "huis-tuin"
+ },
+ {
+  "key": "toolstation",
+  "name": "Toolstation",
+  "match": [
+   "toolstation"
+  ],
+  "category": "huis-tuin"
+ },
+ {
+  "key": "intratuin",
+  "name": "Intratuin",
+  "match": [
+   "intratuin"
+  ],
+  "category": "huis-tuin"
+ },
+ {
+  "key": "groenrijk",
+  "name": "GroenRijk",
+  "match": [
+   "groenrijk"
+  ],
+  "category": "huis-tuin"
+ },
+ {
+  "key": "ranzijn",
+  "name": "Ranzijn",
+  "match": [
+   "ranzijn"
+  ],
+  "category": "huis-tuin",
+  "weak": true
+ },
+ {
+  "key": "tuinland",
+  "name": "Tuinland",
+  "match": [
+   "tuinland"
+  ],
+  "category": "huis-tuin"
+ },
+ {
+  "key": "ikea",
+  "name": "IKEA",
+  "match": [
+   "ikea"
+  ],
+  "category": "huis-tuin"
+ },
+ {
+  "key": "leen-bakker",
+  "name": "Leen Bakker",
+  "match": [
+   "leen bakker",
+   "leenbakker"
+  ],
+  "category": "huis-tuin"
+ },
+ {
+  "key": "kwantum",
+  "name": "Kwantum",
+  "match": [
+   "kwantum"
+  ],
+  "category": "huis-tuin"
+ },
+ {
+  "key": "jysk",
+  "name": "JYSK",
+  "match": [
+   "jysk"
+  ],
+  "category": "huis-tuin"
+ },
+ {
+  "key": "dille-en-kamille",
+  "name": "Dille & Kamille",
+  "match": [
+   "dille kamille",
+   "dille en kamille"
+  ],
+  "category": "huis-tuin"
+ },
+ {
+  "key": "goossens",
+  "name": "Goossens",
+  "match": [
+   "goossens wonen",
+   "goossens wonen en slapen"
+  ],
+  "category": "huis-tuin"
+ },
+ {
+  "key": "montel",
+  "name": "Montel",
+  "match": [
+   "montel"
+  ],
+  "category": "huis-tuin",
+  "weak": true
+ },
+ {
+  "key": "beter-bed",
+  "name": "Beter Bed",
+  "match": [
+   "beter bed"
+  ],
+  "category": "huis-tuin"
+ },
+ {
+  "key": "swiss-sense",
+  "name": "Swiss Sense",
+  "match": [
+   "swiss sense"
+  ],
+  "category": "huis-tuin"
+ },
+ {
+  "key": "auping",
+  "name": "Auping",
+  "match": [
+   "auping"
+  ],
+  "category": "huis-tuin"
+ },
+ {
+  "key": "trendhopper",
+  "name": "Trendhopper",
+  "match": [
+   "trendhopper"
+  ],
+  "category": "huis-tuin"
+ },
+ {
+  "key": "woonexpress",
+  "name": "Woonexpress",
+  "match": [
+   "woonexpress"
+  ],
+  "category": "huis-tuin"
+ },
+ {
+  "key": "profijt-meubel",
+  "name": "Profijt Meubel",
+  "match": [
+   "profijt meubel"
+  ],
+  "category": "huis-tuin"
+ },
+ {
+  "key": "loods-5",
+  "name": "Loods 5",
+  "match": [
+   "loods 5",
+   "loods5"
+  ],
+  "category": "huis-tuin"
+ },
+ {
+  "key": "eijerkamp",
+  "name": "Eijerkamp",
+  "match": [
+   "eijerkamp"
+  ],
+  "category": "huis-tuin",
+  "weak": true
+ },
+ {
+  "key": "pronto-wonen",
+  "name": "Pronto Wonen",
+  "match": [
+   "pronto wonen"
+  ],
+  "category": "huis-tuin"
+ },
+ {
+  "key": "riviera-maison",
+  "name": "Riviera Maison",
+  "match": [
+   "riviera maison"
+  ],
+  "category": "huis-tuin"
+ },
+ {
+  "key": "kees-smit",
+  "name": "Kees Smit",
+  "match": [
+   "kees smit tuinmeubelen",
+   "kees smit tuin"
+  ],
+  "category": "huis-tuin"
+ },
+ {
+  "key": "carpetright",
+  "name": "Carpetright",
+  "match": [
+   "carpetright"
+  ],
+  "category": "huis-tuin"
+ },
+ {
+  "key": "vloerenland",
+  "name": "Vloerenland",
+  "match": [
+   "vloerenland"
+  ],
+  "category": "huis-tuin"
+ },
+ {
+  "key": "rofra-home",
+  "name": "Rofra Home",
+  "match": [
+   "rofra",
+   "rofra home"
+  ],
+  "category": "huis-tuin"
+ },
+ {
+  "key": "bruynzeel-keukens",
+  "name": "Bruynzeel Keukens",
+  "match": [
+   "bruynzeel keukens"
+  ],
+  "category": "huis-tuin"
+ },
+ {
+  "key": "mandemakers",
+  "name": "Mandemakers",
+  "match": [
+   "mandemakers"
+  ],
+  "category": "huis-tuin",
+  "weak": true
+ },
+ {
+  "key": "fonq",
+  "name": "fonQ",
+  "match": [
+   "fonq"
+  ],
+  "category": "huis-tuin"
+ },
+ {
+  "key": "vidaxl",
+  "name": "vidaXL",
+  "match": [
+   "vidaxl"
+  ],
+  "category": "huis-tuin"
+ },
+ {
+  "key": "home24",
+  "name": "home24",
+  "match": [
+   "home24"
+  ],
+  "category": "huis-tuin"
+ },
+ {
+  "key": "westwing",
+  "name": "Westwing",
+  "match": [
+   "westwing"
+  ],
+  "category": "huis-tuin"
+ },
+ {
+  "key": "lampenlicht",
+  "name": "Lampenlicht",
+  "match": [
+   "lampenlicht"
+  ],
+  "category": "huis-tuin"
+ },
+ {
+  "key": "hm",
+  "name": "H&M",
+  "match": [
+   "hennes mauritz",
+   "h m hennes"
+  ],
+  "category": "kleding"
+ },
+ {
+  "key": "zara",
+  "name": "Zara",
+  "match": [
+   "zara"
+  ],
+  "category": "kleding",
+  "weak": true
+ },
+ {
+  "key": "primark",
+  "name": "Primark",
+  "match": [
+   "primark"
+  ],
+  "category": "kleding"
+ },
+ {
+  "key": "zeeman",
+  "name": "Zeeman",
+  "match": [
+   "zeeman"
+  ],
+  "category": "kleding",
+  "weak": true
+ },
+ {
+  "key": "tk-maxx",
+  "name": "TK Maxx",
+  "match": [
+   "tk maxx",
+   "tkmaxx"
+  ],
+  "category": "kleding"
+ },
+ {
+  "key": "vero-moda",
+  "name": "Vero Moda",
+  "match": [
+   "vero moda"
+  ],
+  "category": "kleding"
+ },
+ {
+  "key": "jack-en-jones",
+  "name": "Jack & Jones",
+  "match": [
+   "jack jones"
+  ],
+  "category": "kleding"
+ },
+ {
+  "key": "mango",
+  "name": "Mango",
+  "match": [
+   "mango"
+  ],
+  "category": "kleding",
+  "weak": true
+ },
+ {
+  "key": "we-fashion",
+  "name": "WE Fashion",
+  "match": [
+   "we fashion",
+   "wefashion"
+  ],
+  "category": "kleding"
+ },
+ {
+  "key": "the-sting",
+  "name": "The Sting",
+  "match": [
+   "the sting"
+  ],
+  "category": "kleding"
+ },
+ {
+  "key": "america-today",
+  "name": "America Today",
+  "match": [
+   "america today"
+  ],
+  "category": "kleding"
+ },
+ {
+  "key": "costes",
+  "name": "Costes",
+  "match": [
+   "costes"
+  ],
+  "category": "kleding"
+ },
+ {
+  "key": "esprit",
+  "name": "Esprit",
+  "match": [
+   "esprit"
+  ],
+  "category": "kleding",
+  "weak": true
+ },
+ {
+  "key": "bershka",
+  "name": "Bershka",
+  "match": [
+   "bershka"
+  ],
+  "category": "kleding"
+ },
+ {
+  "key": "pull-en-bear",
+  "name": "Pull&Bear",
+  "match": [
+   "pull bear"
+  ],
+  "category": "kleding"
+ },
+ {
+  "key": "stradivarius",
+  "name": "Stradivarius",
+  "match": [
+   "stradivarius"
+  ],
+  "category": "kleding"
+ },
+ {
+  "key": "massimo-dutti",
+  "name": "Massimo Dutti",
+  "match": [
+   "massimo dutti"
+  ],
+  "category": "kleding"
+ },
+ {
+  "key": "uniqlo",
+  "name": "Uniqlo",
+  "match": [
+   "uniqlo"
+  ],
+  "category": "kleding"
+ },
+ {
+  "key": "scotch-en-soda",
+  "name": "Scotch & Soda",
+  "match": [
+   "scotch soda"
+  ],
+  "category": "kleding"
+ },
+ {
+  "key": "tommy-hilfiger",
+  "name": "Tommy Hilfiger",
+  "match": [
+   "tommy hilfiger"
+  ],
+  "category": "kleding"
+ },
+ {
+  "key": "levis",
+  "name": "Levi's",
+  "match": [
+   "levis",
+   "levi s"
+  ],
+  "category": "kleding"
+ },
+ {
+  "key": "g-star",
+  "name": "G-Star",
+  "match": [
+   "g star",
+   "gstar",
+   "g star raw"
+  ],
+  "category": "kleding"
+ },
+ {
+  "key": "hunkemoller",
+  "name": "Hunkemöller",
+  "match": [
+   "hunkemoller"
+  ],
+  "category": "kleding"
+ },
+ {
+  "key": "livera",
+  "name": "Livera",
+  "match": [
+   "livera"
+  ],
+  "category": "kleding"
+ },
+ {
+  "key": "peek-en-cloppenburg",
+  "name": "Peek & Cloppenburg",
+  "match": [
+   "peek cloppenburg"
+  ],
+  "category": "kleding"
+ },
+ {
+  "key": "miss-etam",
+  "name": "Miss Etam",
+  "match": [
+   "miss etam",
+   "etam"
+  ],
+  "category": "kleding"
+ },
+ {
+  "key": "promiss",
+  "name": "Promiss",
+  "match": [
+   "promiss"
+  ],
+  "category": "kleding"
+ },
+ {
+  "key": "ms-mode",
+  "name": "MS Mode",
+  "match": [
+   "ms mode"
+  ],
+  "category": "kleding"
+ },
+ {
+  "key": "sissy-boy",
+  "name": "Sissy-Boy",
+  "match": [
+   "sissy boy",
+   "sissyboy"
+  ],
+  "category": "kleding"
+ },
+ {
+  "key": "claudia-strater",
+  "name": "Claudia Sträter",
+  "match": [
+   "claudia strater"
+  ],
+  "category": "kleding"
+ },
+ {
+  "key": "mexx",
+  "name": "Mexx",
+  "match": [
+   "mexx"
+  ],
+  "category": "kleding"
+ },
+ {
+  "key": "shoeby",
+  "name": "Shoeby",
+  "match": [
+   "shoeby"
+  ],
+  "category": "kleding"
+ },
+ {
+  "key": "coolcat",
+  "name": "Coolcat",
+  "match": [
+   "coolcat"
+  ],
+  "category": "kleding"
+ },
+ {
+  "key": "superdry",
+  "name": "Superdry",
+  "match": [
+   "superdry"
+  ],
+  "category": "kleding"
+ },
+ {
+  "key": "hollister",
+  "name": "Hollister",
+  "match": [
+   "hollister"
+  ],
+  "category": "kleding",
+  "weak": true
+ },
+ {
+  "key": "kiabi",
+  "name": "Kiabi",
+  "match": [
+   "kiabi"
+  ],
+  "category": "kleding"
+ },
+ {
+  "key": "new-yorker",
+  "name": "New Yorker",
+  "match": [
+   "new yorker"
+  ],
+  "category": "kleding"
+ },
+ {
+  "key": "vingino",
+  "name": "Vingino",
+  "match": [
+   "vingino"
+  ],
+  "category": "kleding"
+ },
+ {
+  "key": "bijou-brigitte",
+  "name": "Bijou Brigitte",
+  "match": [
+   "bijou brigitte"
+  ],
+  "category": "kleding"
+ },
+ {
+  "key": "vanharen",
+  "name": "vanHaren",
+  "match": [
+   "vanharen",
+   "van haren schoenen"
+  ],
+  "category": "kleding",
+  "weak": [
+   "vanharen"
+  ]
+ },
+ {
+  "key": "scapino",
+  "name": "Scapino",
+  "match": [
+   "scapino"
+  ],
+  "category": "kleding"
+ },
+ {
+  "key": "omoda",
+  "name": "Omoda",
+  "match": [
+   "omoda"
+  ],
+  "category": "kleding"
+ },
+ {
+  "key": "manfield",
+  "name": "Manfield",
+  "match": [
+   "manfield"
+  ],
+  "category": "kleding"
+ },
+ {
+  "key": "ziengs",
+  "name": "Ziengs",
+  "match": [
+   "ziengs"
+  ],
+  "category": "kleding",
+  "weak": true
+ },
+ {
+  "key": "jd-sports",
+  "name": "JD Sports",
+  "match": [
+   "jd sports"
+  ],
+  "category": "kleding"
+ },
+ {
+  "key": "foot-locker",
+  "name": "Foot Locker",
+  "match": [
+   "foot locker",
+   "footlocker"
+  ],
+  "category": "kleding"
+ },
+ {
+  "key": "nike",
+  "name": "Nike",
+  "match": [
+   "nike"
+  ],
+  "category": "kleding"
+ },
+ {
+  "key": "adidas",
+  "name": "Adidas",
+  "match": [
+   "adidas"
+  ],
+  "category": "kleding"
+ },
+ {
+  "key": "zalando",
+  "name": "Zalando",
+  "match": [
+   "zalando"
+  ],
+  "category": "kleding"
+ },
+ {
+  "key": "about-you",
+  "name": "About You",
+  "match": [
+   "about you"
+  ],
+  "category": "kleding"
+ },
+ {
+  "key": "shein",
+  "name": "Shein",
+  "match": [
+   "shein"
+  ],
+  "category": "kleding"
+ },
+ {
+  "key": "asos",
+  "name": "ASOS",
+  "match": [
+   "asos"
+  ],
+  "category": "kleding"
+ },
+ {
+  "key": "bonprix",
+  "name": "bonprix",
+  "match": [
+   "bonprix"
+  ],
+  "category": "kleding"
+ },
+ {
+  "key": "vinted",
+  "name": "Vinted",
+  "match": [
+   "vinted"
+  ],
+  "category": "kleding"
+ },
+ {
+  "key": "kleertjes-com",
+  "name": "Kleertjes.com",
+  "match": [
+   "kleertjes com",
+   "kleertjes"
+  ],
+  "category": "kleding"
+ },
+ {
+  "key": "decathlon",
+  "name": "Decathlon",
+  "match": [
+   "decathlon"
+  ],
+  "category": "vrije-tijd"
+ },
+ {
+  "key": "intersport",
+  "name": "Intersport",
+  "match": [
+   "intersport"
+  ],
+  "category": "vrije-tijd"
+ },
+ {
+  "key": "sport-2000",
+  "name": "Sport 2000",
+  "match": [
+   "sport 2000"
+  ],
+  "category": "vrije-tijd"
+ },
+ {
+  "key": "perry-sport",
+  "name": "Perry Sport",
+  "match": [
+   "perry sport",
+   "perrysport"
+  ],
+  "category": "vrije-tijd"
+ },
+ {
+  "key": "run2day",
+  "name": "Run2Day",
+  "match": [
+   "run2day"
+  ],
+  "category": "vrije-tijd"
+ },
+ {
+  "key": "bever",
+  "name": "Bever",
+  "match": [
+   "bever"
+  ],
+  "category": "vrije-tijd",
+  "weak": true
+ },
+ {
+  "key": "plutosport",
+  "name": "Plutosport",
+  "match": [
+   "plutosport"
+  ],
+  "category": "vrije-tijd"
+ },
+ {
+  "key": "sports-direct",
+  "name": "Sports Direct",
+  "match": [
+   "sports direct",
+   "sportsdirect"
+  ],
+  "category": "vrije-tijd"
+ },
+ {
+  "key": "basic-fit",
+  "name": "Basic-Fit",
+  "match": [
+   "basic fit",
+   "basicfit"
+  ],
+  "category": "vrije-tijd"
+ },
+ {
+  "key": "sportcity",
+  "name": "SportCity",
+  "match": [
+   "sportcity"
+  ],
+  "category": "vrije-tijd"
+ },
+ {
+  "key": "anytime-fitness",
+  "name": "Anytime Fitness",
+  "match": [
+   "anytime fitness"
+  ],
+  "category": "vrije-tijd"
+ },
+ {
+  "key": "trainmore",
+  "name": "TrainMore",
+  "match": [
+   "trainmore"
+  ],
+  "category": "vrije-tijd"
+ },
+ {
+  "key": "fit-for-free",
+  "name": "Fit For Free",
+  "match": [
+   "fit for free",
+   "fitforfree"
+  ],
+  "category": "vrije-tijd"
+ },
+ {
+  "key": "david-lloyd",
+  "name": "David Lloyd",
+  "match": [
+   "david lloyd"
+  ],
+  "category": "vrije-tijd"
+ },
+ {
+  "key": "saints-en-stars",
+  "name": "Saints & Stars",
+  "match": [
+   "saints stars"
+  ],
+  "category": "vrije-tijd"
+ },
+ {
+  "key": "optisport",
+  "name": "Optisport",
+  "match": [
+   "optisport"
+  ],
+  "category": "vrije-tijd"
+ },
+ {
+  "key": "sportfondsen",
+  "name": "Sportfondsen",
+  "match": [
+   "sportfondsen",
+   "sportfondsenbad"
+  ],
+  "category": "vrije-tijd"
+ },
+ {
+  "key": "sportplaza",
+  "name": "Sportplaza",
+  "match": [
+   "sportplaza"
+  ],
+  "category": "vrije-tijd"
+ },
+ {
+  "key": "health-city",
+  "name": "Health City",
+  "match": [
+   "health city"
+  ],
+  "category": "vrije-tijd"
+ },
+ {
+  "key": "knvb",
+  "name": "KNVB",
+  "match": [
+   "knvb"
+  ],
+  "category": "vrije-tijd"
+ },
+ {
+  "key": "knltb",
+  "name": "KNLTB",
+  "match": [
+   "knltb"
+  ],
+  "category": "vrije-tijd"
+ },
+ {
+  "key": "knhb",
+  "name": "KNHB",
+  "match": [
+   "knhb"
+  ],
+  "category": "vrije-tijd"
+ },
+ {
+  "key": "knzb",
+  "name": "KNZB",
+  "match": [
+   "knzb"
+  ],
+  "category": "vrije-tijd"
+ },
+ {
+  "key": "nevobo",
+  "name": "Nevobo",
+  "match": [
+   "nevobo"
+  ],
+  "category": "vrije-tijd"
+ },
+ {
+  "key": "atletiekunie",
+  "name": "Atletiekunie",
+  "match": [
+   "atletiekunie"
+  ],
+  "category": "vrije-tijd"
+ },
+ {
+  "key": "kngu",
+  "name": "KNGU",
+  "match": [
+   "kngu"
+  ],
+  "category": "vrije-tijd"
+ },
+ {
+  "key": "knkv",
+  "name": "KNKV",
+  "match": [
+   "knkv"
+  ],
+  "category": "vrije-tijd"
+ },
+ {
+  "key": "knwu",
+  "name": "KNWU",
+  "match": [
+   "knwu"
+  ],
+  "category": "vrije-tijd"
+ },
+ {
+  "key": "knsb",
+  "name": "KNSB",
+  "match": [
+   "knsb"
+  ],
+  "category": "vrije-tijd"
+ },
+ {
+  "key": "sportlink",
+  "name": "Sportlink",
+  "match": [
+   "sportlink"
+  ],
+  "category": "vrije-tijd"
+ },
+ {
+  "key": "clubcollect",
+  "name": "ClubCollect",
+  "match": [
+   "clubcollect",
+   "club collect"
+  ],
+  "category": "vrije-tijd"
+ },
+ {
+  "key": "allunited",
+  "name": "AllUnited",
+  "match": [
+   "allunited"
+  ],
+  "category": "vrije-tijd"
+ },
+ {
+  "key": "pathe",
+  "name": "Pathé",
+  "match": [
+   "pathe",
+   "pathe thuis"
+  ],
+  "category": "vrije-tijd"
+ },
+ {
+  "key": "vue",
+  "name": "Vue",
+  "match": [
+   "vue cinemas",
+   "vue bioscopen"
+  ],
+  "category": "vrije-tijd"
+ },
+ {
+  "key": "kinepolis",
+  "name": "Kinepolis",
+  "match": [
+   "kinepolis"
+  ],
+  "category": "vrije-tijd"
+ },
+ {
+  "key": "euroscoop",
+  "name": "Euroscoop",
+  "match": [
+   "euroscoop"
+  ],
+  "category": "vrije-tijd"
+ },
+ {
+  "key": "efteling",
+  "name": "Efteling",
+  "match": [
+   "efteling"
+  ],
+  "category": "vrije-tijd"
+ },
+ {
+  "key": "walibi",
+  "name": "Walibi",
+  "match": [
+   "walibi"
+  ],
+  "category": "vrije-tijd"
+ },
+ {
+  "key": "duinrell",
+  "name": "Duinrell",
+  "match": [
+   "duinrell"
+  ],
+  "category": "vrije-tijd"
+ },
+ {
+  "key": "attractiepark-slagharen",
+  "name": "Attractiepark Slagharen",
+  "match": [
+   "slagharen"
+  ],
+  "category": "vrije-tijd",
+  "weak": true
+ },
+ {
+  "key": "toverland",
+  "name": "Toverland",
+  "match": [
+   "toverland"
+  ],
+  "category": "vrije-tijd"
+ },
+ {
+  "key": "avonturenpark-hellendoorn",
+  "name": "Avonturenpark Hellendoorn",
+  "match": [
+   "avonturenpark hellendoorn"
+  ],
+  "category": "vrije-tijd"
+ },
+ {
+  "key": "drievliet",
+  "name": "Drievliet",
+  "match": [
+   "drievliet"
+  ],
+  "category": "vrije-tijd"
+ },
+ {
+  "key": "madurodam",
+  "name": "Madurodam",
+  "match": [
+   "madurodam"
+  ],
+  "category": "vrije-tijd"
+ },
+ {
+  "key": "artis",
+  "name": "Artis",
+  "match": [
+   "artis"
+  ],
+  "category": "vrije-tijd"
+ },
+ {
+  "key": "diergaarde-blijdorp",
+  "name": "Diergaarde Blijdorp",
+  "match": [
+   "blijdorp",
+   "diergaarde blijdorp"
+  ],
+  "category": "vrije-tijd"
+ },
+ {
+  "key": "burgers-zoo",
+  "name": "Burgers' Zoo",
+  "match": [
+   "burgers zoo"
+  ],
+  "category": "vrije-tijd"
+ },
+ {
+  "key": "ouwehands-dierenpark",
+  "name": "Ouwehands Dierenpark",
+  "match": [
+   "ouwehands"
+  ],
+  "category": "vrije-tijd"
+ },
+ {
+  "key": "wildlands",
+  "name": "Wildlands",
+  "match": [
+   "wildlands"
+  ],
+  "category": "vrije-tijd"
+ },
+ {
+  "key": "beekse-bergen",
+  "name": "Beekse Bergen",
+  "match": [
+   "beekse bergen"
+  ],
+  "category": "vrije-tijd"
+ },
+ {
+  "key": "apenheul",
+  "name": "Apenheul",
+  "match": [
+   "apenheul"
+  ],
+  "category": "vrije-tijd"
+ },
+ {
+  "key": "gaiazoo",
+  "name": "GaiaZOO",
+  "match": [
+   "gaiazoo",
+   "gaia zoo"
+  ],
+  "category": "vrije-tijd"
+ },
+ {
+  "key": "dierenpark-amersfoort",
+  "name": "DierenPark Amersfoort",
+  "match": [
+   "dierenpark amersfoort"
+  ],
+  "category": "vrije-tijd"
+ },
+ {
+  "key": "avifauna",
+  "name": "Avifauna",
+  "match": [
+   "avifauna"
+  ],
+  "category": "vrije-tijd"
+ },
+ {
+  "key": "sea-life",
+  "name": "Sea Life",
+  "match": [
+   "sea life"
+  ],
+  "category": "vrije-tijd"
+ },
+ {
+  "key": "nemo",
+  "name": "NEMO",
+  "match": [
+   "nemo science museum"
+  ],
+  "category": "vrije-tijd"
+ },
+ {
+  "key": "rijksmuseum",
+  "name": "Rijksmuseum",
+  "match": [
+   "rijksmuseum"
+  ],
+  "category": "vrije-tijd"
+ },
+ {
+  "key": "van-gogh-museum",
+  "name": "Van Gogh Museum",
+  "match": [
+   "van gogh museum"
+  ],
+  "category": "vrije-tijd"
+ },
+ {
+  "key": "naturalis",
+  "name": "Naturalis",
+  "match": [
+   "naturalis"
+  ],
+  "category": "vrije-tijd"
+ },
+ {
+  "key": "museumkaart",
+  "name": "Museumkaart",
+  "match": [
+   "museumkaart",
+   "museumvereniging"
+  ],
+  "category": "vrije-tijd"
+ },
+ {
+  "key": "disneyland-paris",
+  "name": "Disneyland Paris",
+  "match": [
+   "disneyland",
+   "disneyland paris"
+  ],
+  "category": "vrije-tijd"
+ },
+ {
+  "key": "europa-park",
+  "name": "Europa-Park",
+  "match": [
+   "europa park"
+  ],
+  "category": "vrije-tijd"
+ },
+ {
+  "key": "phantasialand",
+  "name": "Phantasialand",
+  "match": [
+   "phantasialand"
+  ],
+  "category": "vrije-tijd"
+ },
+ {
+  "key": "ticketmaster",
+  "name": "Ticketmaster",
+  "match": [
+   "ticketmaster"
+  ],
+  "category": "vrije-tijd"
+ },
+ {
+  "key": "eventim",
+  "name": "Eventim",
+  "match": [
+   "eventim",
+   "cts eventim"
+  ],
+  "category": "vrije-tijd"
+ },
+ {
+  "key": "ticketswap",
+  "name": "TicketSwap",
+  "match": [
+   "ticketswap"
+  ],
+  "category": "vrije-tijd"
+ },
+ {
+  "key": "paylogic",
+  "name": "Paylogic",
+  "match": [
+   "paylogic"
+  ],
+  "category": "vrije-tijd"
+ },
+ {
+  "key": "see-tickets",
+  "name": "See Tickets",
+  "match": [
+   "see tickets"
+  ],
+  "category": "vrije-tijd"
+ },
+ {
+  "key": "eventbrite",
+  "name": "Eventbrite",
+  "match": [
+   "eventbrite"
+  ],
+  "category": "vrije-tijd"
+ },
+ {
+  "key": "ticketcounter",
+  "name": "Ticketcounter",
+  "match": [
+   "ticketcounter"
+  ],
+  "category": "vrije-tijd"
+ },
+ {
+  "key": "nintendo",
+  "name": "Nintendo",
+  "match": [
+   "nintendo"
+  ],
+  "category": "vrije-tijd"
+ },
+ {
+  "key": "playstation",
+  "name": "PlayStation",
+  "match": [
+   "playstation",
+   "playstation network",
+   "sony interactive"
+  ],
+  "category": "vrije-tijd"
+ },
+ {
+  "key": "xbox",
+  "name": "Xbox",
+  "match": [
+   "xbox"
+  ],
+  "category": "vrije-tijd"
+ },
+ {
+  "key": "steam",
+  "name": "Steam",
+  "match": [
+   "steam games",
+   "steampowered"
+  ],
+  "category": "vrije-tijd"
+ },
+ {
+  "key": "epic-games",
+  "name": "Epic Games",
+  "match": [
+   "epic games"
+  ],
+  "category": "vrije-tijd"
+ },
+ {
+  "key": "libris",
+  "name": "Libris",
+  "match": [
+   "libris"
+  ],
+  "category": "vrije-tijd"
+ },
+ {
+  "key": "boekenvoordeel",
+  "name": "Boekenvoordeel",
+  "match": [
+   "boekenvoordeel"
+  ],
+  "category": "vrije-tijd"
+ },
+ {
+  "key": "paagman",
+  "name": "Paagman",
+  "match": [
+   "paagman"
+  ],
+  "category": "vrije-tijd",
+  "weak": true
+ },
+ {
+  "key": "standaard-boekhandel",
+  "name": "Standaard Boekhandel",
+  "match": [
+   "standaard boekhandel"
+  ],
+  "category": "vrije-tijd"
+ },
+ {
+  "key": "staatsloterij",
+  "name": "Staatsloterij",
+  "match": [
+   "staatsloterij"
+  ],
+  "category": "vrije-tijd"
+ },
+ {
+  "key": "postcode-loterij",
+  "name": "Postcode Loterij",
+  "match": [
+   "postcode loterij",
+   "postcodeloterij",
+   "nationale postcode loterij"
+  ],
+  "category": "vrije-tijd"
+ },
+ {
+  "key": "vriendenloterij",
+  "name": "VriendenLoterij",
+  "match": [
+   "vriendenloterij",
+   "vrienden loterij"
+  ],
+  "category": "vrije-tijd"
+ },
+ {
+  "key": "bankgiro-loterij",
+  "name": "BankGiro Loterij",
+  "match": [
+   "bankgiro loterij",
+   "bankgiroloterij"
+  ],
+  "category": "vrije-tijd"
+ },
+ {
+  "key": "lotto",
+  "name": "Lotto",
+  "match": [
+   "lotto"
+  ],
+  "category": "vrije-tijd"
+ },
+ {
+  "key": "nederlandse-loterij",
+  "name": "Nederlandse Loterij",
+  "match": [
+   "nederlandse loterij"
+  ],
+  "category": "vrije-tijd"
+ },
+ {
+  "key": "holland-casino",
+  "name": "Holland Casino",
+  "match": [
+   "holland casino"
+  ],
+  "category": "vrije-tijd"
+ },
+ {
+  "key": "toto",
+  "name": "TOTO",
+  "match": [
+   "toto"
+  ],
+  "category": "vrije-tijd",
+  "weak": true
+ },
+ {
+  "key": "netflix",
+  "name": "Netflix",
+  "match": [
+   "netflix"
+  ],
+  "category": "abonnementen"
+ },
+ {
+  "key": "spotify",
+  "name": "Spotify",
+  "match": [
+   "spotify"
+  ],
+  "category": "abonnementen"
+ },
+ {
+  "key": "disney-plus",
+  "name": "Disney+",
+  "match": [
+   "disney plus",
+   "disneyplus"
+  ],
+  "category": "abonnementen"
+ },
+ {
+  "key": "videoland",
+  "name": "Videoland",
+  "match": [
+   "videoland"
+  ],
+  "category": "abonnementen"
+ },
+ {
+  "key": "viaplay",
+  "name": "Viaplay",
+  "match": [
+   "viaplay"
+  ],
+  "category": "abonnementen"
+ },
+ {
+  "key": "hbo-max",
+  "name": "HBO Max",
+  "match": [
+   "hbo max",
+   "hbomax"
+  ],
+  "category": "abonnementen"
+ },
+ {
+  "key": "prime-video",
+  "name": "Prime Video",
+  "match": [
+   "prime video",
+   "primevideo",
+   "amazon prime"
+  ],
+  "category": "abonnementen"
+ },
+ {
+  "key": "apple",
+  "name": "Apple",
+  "match": [
+   "apple com bill",
+   "apple com",
+   "itunes",
+   "itunes com",
+   "icloud"
+  ],
+  "category": "abonnementen"
+ },
+ {
+  "key": "google-one",
+  "name": "Google One",
+  "match": [
+   "google one",
+   "google storage"
+  ],
+  "category": "abonnementen"
+ },
+ {
+  "key": "youtube-premium",
+  "name": "YouTube Premium",
+  "match": [
+   "youtube premium",
+   "youtubepremium",
+   "youtube music"
+  ],
+  "category": "abonnementen"
+ },
+ {
+  "key": "google-play",
+  "name": "Google Play",
+  "match": [
+   "google play"
+  ],
+  "category": "abonnementen"
+ },
+ {
+  "key": "microsoft",
+  "name": "Microsoft",
+  "match": [
+   "microsoft",
+   "msft",
+   "microsoft 365"
+  ],
+  "category": "abonnementen"
+ },
+ {
+  "key": "adobe",
+  "name": "Adobe",
+  "match": [
+   "adobe"
+  ],
+  "category": "abonnementen"
+ },
+ {
+  "key": "dropbox",
+  "name": "Dropbox",
+  "match": [
+   "dropbox"
+  ],
+  "category": "abonnementen"
+ },
+ {
+  "key": "audible",
+  "name": "Audible",
+  "match": [
+   "audible"
+  ],
+  "category": "abonnementen"
+ },
+ {
+  "key": "storytel",
+  "name": "Storytel",
+  "match": [
+   "storytel"
+  ],
+  "category": "abonnementen"
+ },
+ {
+  "key": "kobo-plus",
+  "name": "Kobo Plus",
+  "match": [
+   "kobo plus"
+  ],
+  "category": "abonnementen"
+ },
+ {
+  "key": "bookbeat",
+  "name": "BookBeat",
+  "match": [
+   "bookbeat"
+  ],
+  "category": "abonnementen"
+ },
+ {
+  "key": "kindle-unlimited",
+  "name": "Kindle Unlimited",
+  "match": [
+   "kindle unlimited"
+  ],
+  "category": "abonnementen"
+ },
+ {
+  "key": "deezer",
+  "name": "Deezer",
+  "match": [
+   "deezer"
+  ],
+  "category": "abonnementen"
+ },
+ {
+  "key": "tidal",
+  "name": "TIDAL",
+  "match": [
+   "tidal"
+  ],
+  "category": "abonnementen",
+  "weak": true
+ },
+ {
+  "key": "soundcloud",
+  "name": "SoundCloud",
+  "match": [
+   "soundcloud"
+  ],
+  "category": "abonnementen"
+ },
+ {
+  "key": "openai",
+  "name": "OpenAI",
+  "match": [
+   "openai",
+   "chatgpt"
+  ],
+  "category": "abonnementen"
+ },
+ {
+  "key": "anthropic",
+  "name": "Anthropic",
+  "match": [
+   "anthropic",
+   "claude ai"
+  ],
+  "category": "abonnementen"
+ },
+ {
+  "key": "canva",
+  "name": "Canva",
+  "match": [
+   "canva"
+  ],
+  "category": "abonnementen"
+ },
+ {
+  "key": "nordvpn",
+  "name": "NordVPN",
+  "match": [
+   "nordvpn"
+  ],
+  "category": "abonnementen"
+ },
+ {
+  "key": "expressvpn",
+  "name": "ExpressVPN",
+  "match": [
+   "expressvpn"
+  ],
+  "category": "abonnementen"
+ },
+ {
+  "key": "surfshark",
+  "name": "Surfshark",
+  "match": [
+   "surfshark"
+  ],
+  "category": "abonnementen"
+ },
+ {
+  "key": "1password",
+  "name": "1Password",
+  "match": [
+   "1password"
+  ],
+  "category": "abonnementen"
+ },
+ {
+  "key": "lastpass",
+  "name": "LastPass",
+  "match": [
+   "lastpass"
+  ],
+  "category": "abonnementen"
+ },
+ {
+  "key": "proton",
+  "name": "Proton",
+  "match": [
+   "proton ag",
+   "proton mail",
+   "protonmail"
+  ],
+  "category": "abonnementen"
+ },
+ {
+  "key": "duolingo",
+  "name": "Duolingo",
+  "match": [
+   "duolingo"
+  ],
+  "category": "abonnementen"
+ },
+ {
+  "key": "headspace",
+  "name": "Headspace",
+  "match": [
+   "headspace"
+  ],
+  "category": "abonnementen"
+ },
+ {
+  "key": "strava",
+  "name": "Strava",
+  "match": [
+   "strava"
+  ],
+  "category": "abonnementen"
+ },
+ {
+  "key": "paramount-plus",
+  "name": "Paramount+",
+  "match": [
+   "paramount plus",
+   "paramountplus"
+  ],
+  "category": "abonnementen"
+ },
+ {
+  "key": "skyshowtime",
+  "name": "SkyShowtime",
+  "match": [
+   "skyshowtime"
+  ],
+  "category": "abonnementen"
+ },
+ {
+  "key": "discovery-plus",
+  "name": "discovery+",
+  "match": [
+   "discovery plus",
+   "discoveryplus"
+  ],
+  "category": "abonnementen"
+ },
+ {
+  "key": "npo-plus",
+  "name": "NPO Plus",
+  "match": [
+   "npo plus",
+   "npo start"
+  ],
+  "category": "abonnementen"
+ },
+ {
+  "key": "nlziet",
+  "name": "NLZIET",
+  "match": [
+   "nlziet"
+  ],
+  "category": "abonnementen"
+ },
+ {
+  "key": "dazn",
+  "name": "DAZN",
+  "match": [
+   "dazn"
+  ],
+  "category": "abonnementen"
+ },
+ {
+  "key": "patreon",
+  "name": "Patreon",
+  "match": [
+   "patreon"
+  ],
+  "category": "abonnementen"
+ },
+ {
+  "key": "linkedin",
+  "name": "LinkedIn",
+  "match": [
+   "linkedin"
+  ],
+  "category": "abonnementen"
+ },
+ {
+  "key": "mcafee",
+  "name": "McAfee",
+  "match": [
+   "mcafee"
+  ],
+  "category": "abonnementen"
+ },
+ {
+  "key": "bitdefender",
+  "name": "Bitdefender",
+  "match": [
+   "bitdefender"
+  ],
+  "category": "abonnementen"
+ },
+ {
+  "key": "mijndomein",
+  "name": "Mijndomein",
+  "match": [
+   "mijndomein"
+  ],
+  "category": "abonnementen"
+ },
+ {
+  "key": "transip",
+  "name": "TransIP",
+  "match": [
+   "transip"
+  ],
+  "category": "abonnementen"
+ },
+ {
+  "key": "blendle",
+  "name": "Blendle",
+  "match": [
+   "blendle"
+  ],
+  "category": "abonnementen"
+ },
+ {
+  "key": "readly",
+  "name": "Readly",
+  "match": [
+   "readly"
+  ],
+  "category": "abonnementen"
+ },
+ {
+  "key": "dpg-media",
+  "name": "DPG Media",
+  "match": [
+   "dpg media"
+  ],
+  "category": "abonnementen"
+ },
+ {
+  "key": "mediahuis",
+  "name": "Mediahuis",
+  "match": [
+   "mediahuis"
+  ],
+  "category": "abonnementen"
+ },
+ {
+  "key": "de-telegraaf",
+  "name": "De Telegraaf",
+  "match": [
+   "de telegraaf",
+   "telegraaf"
+  ],
+  "category": "abonnementen"
+ },
+ {
+  "key": "de-volkskrant",
+  "name": "de Volkskrant",
+  "match": [
+   "volkskrant"
+  ],
+  "category": "abonnementen"
+ },
+ {
+  "key": "nrc",
+  "name": "NRC",
+  "match": [
+   "nrc media",
+   "nrc handelsblad"
+  ],
+  "category": "abonnementen"
+ },
+ {
+  "key": "trouw",
+  "name": "Trouw",
+  "match": [
+   "dagblad trouw"
+  ],
+  "category": "abonnementen"
+ },
+ {
+  "key": "ad",
+  "name": "AD",
+  "match": [
+   "algemeen dagblad"
+  ],
+  "category": "abonnementen"
+ },
+ {
+  "key": "het-parool",
+  "name": "Het Parool",
+  "match": [
+   "parool"
+  ],
+  "category": "abonnementen"
+ },
+ {
+  "key": "het-financieele-dagblad",
+  "name": "Het Financieele Dagblad",
+  "match": [
+   "financieele dagblad",
+   "fd mediagroep"
+  ],
+  "category": "abonnementen"
+ },
+ {
+  "key": "de-correspondent",
+  "name": "De Correspondent",
+  "match": [
+   "de correspondent"
+  ],
+  "category": "abonnementen"
+ },
+ {
+  "key": "follow-the-money",
+  "name": "Follow the Money",
+  "match": [
+   "follow the money"
+  ],
+  "category": "abonnementen"
+ },
+ {
+  "key": "dagblad-van-het-noorden",
+  "name": "Dagblad van het Noorden",
+  "match": [
+   "dagblad van het noorden"
+  ],
+  "category": "abonnementen"
+ },
+ {
+  "key": "leeuwarder-courant",
+  "name": "Leeuwarder Courant",
+  "match": [
+   "leeuwarder courant"
+  ],
+  "category": "abonnementen"
+ },
+ {
+  "key": "de-gelderlander",
+  "name": "De Gelderlander",
+  "match": [
+   "gelderlander"
+  ],
+  "category": "abonnementen"
+ },
+ {
+  "key": "brabants-dagblad",
+  "name": "Brabants Dagblad",
+  "match": [
+   "brabants dagblad"
+  ],
+  "category": "abonnementen"
+ },
+ {
+  "key": "eindhovens-dagblad",
+  "name": "Eindhovens Dagblad",
+  "match": [
+   "eindhovens dagblad"
+  ],
+  "category": "abonnementen"
+ },
+ {
+  "key": "bn-destem",
+  "name": "BN DeStem",
+  "match": [
+   "bn destem",
+   "bn de stem"
+  ],
+  "category": "abonnementen"
+ },
+ {
+  "key": "pzc",
+  "name": "PZC",
+  "match": [
+   "provinciale zeeuwse courant"
+  ],
+  "category": "abonnementen"
+ },
+ {
+  "key": "tubantia",
+  "name": "Tubantia",
+  "match": [
+   "tubantia"
+  ],
+  "category": "abonnementen"
+ },
+ {
+  "key": "de-stentor",
+  "name": "De Stentor",
+  "match": [
+   "de stentor"
+  ],
+  "category": "abonnementen"
+ },
+ {
+  "key": "noordhollands-dagblad",
+  "name": "Noordhollands Dagblad",
+  "match": [
+   "noordhollands dagblad"
+  ],
+  "category": "abonnementen"
+ },
+ {
+  "key": "haarlems-dagblad",
+  "name": "Haarlems Dagblad",
+  "match": [
+   "haarlems dagblad"
+  ],
+  "category": "abonnementen"
+ },
+ {
+  "key": "leidsch-dagblad",
+  "name": "Leidsch Dagblad",
+  "match": [
+   "leidsch dagblad"
+  ],
+  "category": "abonnementen"
+ },
+ {
+  "key": "de-limburger",
+  "name": "De Limburger",
+  "match": [
+   "de limburger"
+  ],
+  "category": "abonnementen"
+ },
+ {
+  "key": "friesch-dagblad",
+  "name": "Friesch Dagblad",
+  "match": [
+   "friesch dagblad"
+  ],
+  "category": "abonnementen"
+ },
+ {
+  "key": "reformatorisch-dagblad",
+  "name": "Reformatorisch Dagblad",
+  "match": [
+   "reformatorisch dagblad"
+  ],
+  "category": "abonnementen"
+ },
+ {
+  "key": "nederlands-dagblad",
+  "name": "Nederlands Dagblad",
+  "match": [
+   "nederlands dagblad"
+  ],
+  "category": "abonnementen"
+ },
+ {
+  "key": "shell",
+  "name": "Shell",
+  "match": [
+   "shell",
+   "shell express",
+   "shell station"
+  ],
+  "category": "vervoer",
+  "weak": [
+   "shell"
+  ],
+  "small": {
+   "below_cents": 1500,
+   "category": "uit-eten"
+  }
+ },
+ {
+  "key": "shell-recharge",
+  "name": "Shell Recharge",
+  "match": [
+   "shell recharge",
+   "newmotion",
+   "new motion"
+  ],
+  "category": "vervoer"
+ },
+ {
+  "key": "bp",
+  "name": "BP",
+  "match": [
+   "bp",
+   "bp express"
+  ],
+  "category": "vervoer",
+  "weak": [
+   "bp"
+  ],
+  "small": {
+   "below_cents": 1500,
+   "category": "uit-eten"
+  }
+ },
+ {
+  "key": "esso",
+  "name": "Esso",
+  "match": [
+   "esso",
+   "esso express"
+  ],
+  "category": "vervoer",
+  "small": {
+   "below_cents": 1500,
+   "category": "uit-eten"
+  }
+ },
+ {
+  "key": "totalenergies",
+  "name": "TotalEnergies",
+  "match": [
+   "totalenergies",
+   "total energies",
+   "total nederland"
+  ],
+  "category": "vervoer",
+  "small": {
+   "below_cents": 1500,
+   "category": "uit-eten"
+  }
+ },
+ {
+  "key": "texaco",
+  "name": "Texaco",
+  "match": [
+   "texaco"
+  ],
+  "category": "vervoer",
+  "small": {
+   "below_cents": 1500,
+   "category": "uit-eten"
+  }
+ },
+ {
+  "key": "tango",
+  "name": "Tango",
+  "match": [
+   "tango",
+   "tango tankstation"
+  ],
+  "category": "vervoer",
+  "weak": [
+   "tango"
+  ],
+  "small": {
+   "below_cents": 1500,
+   "category": "uit-eten"
+  }
+ },
+ {
+  "key": "tinq",
+  "name": "Tinq",
+  "match": [
+   "tinq"
+  ],
+  "category": "vervoer",
+  "small": {
+   "below_cents": 1500,
+   "category": "uit-eten"
+  }
+ },
+ {
+  "key": "gulf",
+  "name": "Gulf",
+  "match": [
+   "gulf"
+  ],
+  "category": "vervoer",
+  "weak": true,
+  "small": {
+   "below_cents": 1500,
+   "category": "uit-eten"
+  }
+ },
+ {
+  "key": "argos",
+  "name": "Argos",
+  "match": [
+   "argos"
+  ],
+  "category": "vervoer",
+  "weak": true,
+  "small": {
+   "below_cents": 1500,
+   "category": "uit-eten"
+  }
+ },
+ {
+  "key": "avia",
+  "name": "Avia",
+  "match": [
+   "avia"
+  ],
+  "category": "vervoer",
+  "weak": true,
+  "small": {
+   "below_cents": 1500,
+   "category": "uit-eten"
+  }
+ },
+ {
+  "key": "firezone",
+  "name": "Firezone",
+  "match": [
+   "firezone"
+  ],
+  "category": "vervoer",
+  "small": {
+   "below_cents": 1500,
+   "category": "uit-eten"
+  }
+ },
+ {
+  "key": "q8",
+  "name": "Q8",
+  "match": [
+   "q8",
+   "q8 easy"
+  ],
+  "category": "vervoer",
+  "weak": [
+   "q8"
+  ],
+  "small": {
+   "below_cents": 1500,
+   "category": "uit-eten"
+  }
+ },
+ {
+  "key": "tamoil",
+  "name": "Tamoil",
+  "match": [
+   "tamoil"
+  ],
+  "category": "vervoer",
+  "small": {
+   "below_cents": 1500,
+   "category": "uit-eten"
+  }
+ },
+ {
+  "key": "agip",
+  "name": "Agip",
+  "match": [
+   "agip"
+  ],
+  "category": "vervoer",
+  "small": {
+   "below_cents": 1500,
+   "category": "uit-eten"
+  }
+ },
+ {
+  "key": "repsol",
+  "name": "Repsol",
+  "match": [
+   "repsol"
+  ],
+  "category": "vervoer",
+  "small": {
+   "below_cents": 1500,
+   "category": "uit-eten"
+  }
+ },
+ {
+  "key": "cepsa",
+  "name": "Cepsa",
+  "match": [
+   "cepsa"
+  ],
+  "category": "vervoer",
+  "small": {
+   "below_cents": 1500,
+   "category": "uit-eten"
+  }
+ },
+ {
+  "key": "aral",
+  "name": "Aral",
+  "match": [
+   "aral"
+  ],
+  "category": "vervoer",
+  "small": {
+   "below_cents": 1500,
+   "category": "uit-eten"
+  }
+ },
+ {
+  "key": "omv",
+  "name": "OMV",
+  "match": [
+   "omv"
+  ],
+  "category": "vervoer",
+  "weak": true,
+  "small": {
+   "below_cents": 1500,
+   "category": "uit-eten"
+  }
+ },
+ {
+  "key": "galp",
+  "name": "Galp",
+  "match": [
+   "galp"
+  ],
+  "category": "vervoer",
+  "small": {
+   "below_cents": 1500,
+   "category": "uit-eten"
+  }
+ },
+ {
+  "key": "vattenfall-incharge",
+  "name": "Vattenfall InCharge",
+  "match": [
+   "incharge",
+   "vattenfall incharge"
+  ],
+  "category": "vervoer"
+ },
+ {
+  "key": "allego",
+  "name": "Allego",
+  "match": [
+   "allego"
+  ],
+  "category": "vervoer"
+ },
+ {
+  "key": "fastned",
+  "name": "Fastned",
+  "match": [
+   "fastned"
+  ],
+  "category": "vervoer"
+ },
+ {
+  "key": "ionity",
+  "name": "IONITY",
+  "match": [
+   "ionity"
+  ],
+  "category": "vervoer"
+ },
+ {
+  "key": "tesla",
+  "name": "Tesla",
+  "match": [
+   "tesla"
+  ],
+  "category": "vervoer",
+  "weak": true
+ },
+ {
+  "key": "eneco-emobility",
+  "name": "Eneco eMobility",
+  "match": [
+   "eneco emobility"
+  ],
+  "category": "vervoer"
+ },
+ {
+  "key": "greenflux",
+  "name": "GreenFlux",
+  "match": [
+   "greenflux"
+  ],
+  "category": "vervoer"
+ },
+ {
+  "key": "chargepoint",
+  "name": "ChargePoint",
+  "match": [
+   "chargepoint"
+  ],
+  "category": "vervoer"
+ },
+ {
+  "key": "plugsurfing",
+  "name": "Plugsurfing",
+  "match": [
+   "plugsurfing"
+  ],
+  "category": "vervoer"
+ },
+ {
+  "key": "bonnet",
+  "name": "Bonnet",
+  "match": [
+   "bonnet"
+  ],
+  "category": "vervoer",
+  "weak": true
+ },
+ {
+  "key": "evbox",
+  "name": "EVBox",
+  "match": [
+   "evbox"
+  ],
+  "category": "vervoer"
+ },
+ {
+  "key": "blue-current",
+  "name": "Blue Current",
+  "match": [
+   "blue current"
+  ],
+  "category": "vervoer"
+ },
+ {
+  "key": "last-mile-solutions",
+  "name": "Last Mile Solutions",
+  "match": [
+   "last mile solutions"
+  ],
+  "category": "vervoer"
+ },
+ {
+  "key": "enbw",
+  "name": "EnBW",
+  "match": [
+   "enbw"
+  ],
+  "category": "vervoer"
+ },
+ {
+  "key": "q-park",
+  "name": "Q-Park",
+  "match": [
+   "q park",
+   "qpark"
+  ],
+  "category": "vervoer"
+ },
+ {
+  "key": "parkbee",
+  "name": "ParkBee",
+  "match": [
+   "parkbee"
+  ],
+  "category": "vervoer"
+ },
+ {
+  "key": "parkmobile",
+  "name": "Parkmobile",
+  "match": [
+   "parkmobile"
+  ],
+  "category": "vervoer"
+ },
+ {
+  "key": "yellowbrick",
+  "name": "Yellowbrick",
+  "match": [
+   "yellowbrick"
+  ],
+  "category": "vervoer"
+ },
+ {
+  "key": "easypark",
+  "name": "EasyPark",
+  "match": [
+   "easypark"
+  ],
+  "category": "vervoer"
+ },
+ {
+  "key": "interparking",
+  "name": "Interparking",
+  "match": [
+   "interparking"
+  ],
+  "category": "vervoer"
+ },
+ {
+  "key": "apcoa",
+  "name": "APCOA",
+  "match": [
+   "apcoa"
+  ],
+  "category": "vervoer"
+ },
+ {
+  "key": "indigo",
+  "name": "Indigo",
+  "match": [
+   "indigo parking",
+   "indigo neo"
+  ],
+  "category": "vervoer"
+ },
+ {
+  "key": "parkster",
+  "name": "Parkster",
+  "match": [
+   "parkster"
+  ],
+  "category": "vervoer"
+ },
+ {
+  "key": "schiphol-parking",
+  "name": "Schiphol Parking",
+  "match": [
+   "schiphol parking"
+  ],
+  "category": "vervoer"
+ },
+ {
+  "key": "ns",
+  "name": "NS",
+  "match": [
+   "ns",
+   "ns groep",
+   "ns reizigers",
+   "nederlandse spoorwegen",
+   "ns international"
+  ],
+  "category": "vervoer",
+  "weak": [
+   "ns"
+  ]
+ },
+ {
+  "key": "ov-chipkaart",
+  "name": "OV-chipkaart",
+  "match": [
+   "translink",
+   "ov chipkaart",
+   "ovchipkaart"
+  ],
+  "category": "vervoer"
+ },
+ {
+  "key": "ovpay",
+  "name": "OVpay",
+  "match": [
+   "ovpay",
+   "ov pay"
+  ],
+  "category": "vervoer"
+ },
+ {
+  "key": "gvb",
+  "name": "GVB",
+  "match": [
+   "gvb"
+  ],
+  "category": "vervoer"
+ },
+ {
+  "key": "ret",
+  "name": "RET",
+  "match": [
+   "ret"
+  ],
+  "category": "vervoer",
+  "weak": true
+ },
+ {
+  "key": "htm",
+  "name": "HTM",
+  "match": [
+   "htm"
+  ],
+  "category": "vervoer"
+ },
+ {
+  "key": "arriva",
+  "name": "Arriva",
+  "match": [
+   "arriva"
+  ],
+  "category": "vervoer"
+ },
+ {
+  "key": "connexxion",
+  "name": "Connexxion",
+  "match": [
+   "connexxion"
+  ],
+  "category": "vervoer"
+ },
+ {
+  "key": "qbuzz",
+  "name": "Qbuzz",
+  "match": [
+   "qbuzz"
+  ],
+  "category": "vervoer"
+ },
+ {
+  "key": "keolis",
+  "name": "Keolis",
+  "match": [
+   "keolis"
+  ],
+  "category": "vervoer"
+ },
+ {
+  "key": "syntus",
+  "name": "Syntus",
+  "match": [
+   "syntus"
+  ],
+  "category": "vervoer"
+ },
+ {
+  "key": "allgo",
+  "name": "allGo",
+  "match": [
+   "allgo"
+  ],
+  "category": "vervoer"
+ },
+ {
+  "key": "tranzer",
+  "name": "Tranzer",
+  "match": [
+   "tranzer"
+  ],
+  "category": "vervoer"
+ },
+ {
+  "key": "ov-fiets",
+  "name": "OV-fiets",
+  "match": [
+   "ov fiets"
+  ],
+  "category": "vervoer"
+ },
+ {
+  "key": "deutsche-bahn",
+  "name": "Deutsche Bahn",
+  "match": [
+   "deutsche bahn",
+   "db vertrieb",
+   "db fernverkehr"
+  ],
+  "category": "vervoer"
+ },
+ {
+  "key": "nmbs",
+  "name": "NMBS",
+  "match": [
+   "nmbs",
+   "sncb"
+  ],
+  "category": "vervoer"
+ },
+ {
+  "key": "eurostar",
+  "name": "Eurostar",
+  "match": [
+   "eurostar",
+   "thalys"
+  ],
+  "category": "vervoer"
+ },
+ {
+  "key": "flixbus",
+  "name": "FlixBus",
+  "match": [
+   "flixbus"
+  ],
+  "category": "vervoer"
+ },
+ {
+  "key": "uber",
+  "name": "Uber",
+  "match": [
+   "uber",
+   "uber bv",
+   "uber trip"
+  ],
+  "category": "vervoer",
+  "weak": [
+   "uber"
+  ]
+ },
+ {
+  "key": "bolt",
+  "name": "Bolt",
+  "match": [
+   "bolt",
+   "bolt eu"
+  ],
+  "category": "vervoer",
+  "weak": [
+   "bolt"
+  ]
+ },
+ {
+  "key": "felyx",
+  "name": "Felyx",
+  "match": [
+   "felyx"
+  ],
+  "category": "vervoer"
+ },
+ {
+  "key": "go-sharing",
+  "name": "GO Sharing",
+  "match": [
+   "go sharing"
+  ],
+  "category": "vervoer"
+ },
+ {
+  "key": "donkey-republic",
+  "name": "Donkey Republic",
+  "match": [
+   "donkey republic"
+  ],
+  "category": "vervoer"
+ },
+ {
+  "key": "greenwheels",
+  "name": "Greenwheels",
+  "match": [
+   "greenwheels"
+  ],
+  "category": "vervoer"
+ },
+ {
+  "key": "mywheels",
+  "name": "MyWheels",
+  "match": [
+   "mywheels"
+  ],
+  "category": "vervoer"
+ },
+ {
+  "key": "snappcar",
+  "name": "SnappCar",
+  "match": [
+   "snappcar"
+  ],
+  "category": "vervoer"
+ },
+ {
+  "key": "getaround",
+  "name": "Getaround",
+  "match": [
+   "getaround"
+  ],
+  "category": "vervoer"
+ },
+ {
+  "key": "swapfiets",
+  "name": "Swapfiets",
+  "match": [
+   "swapfiets"
+  ],
+  "category": "vervoer"
+ },
+ {
+  "key": "vanmoof",
+  "name": "VanMoof",
+  "match": [
+   "vanmoof"
+  ],
+  "category": "vervoer"
+ },
+ {
+  "key": "bike-totaal",
+  "name": "Bike Totaal",
+  "match": [
+   "bike totaal"
+  ],
+  "category": "vervoer"
+ },
+ {
+  "key": "de-fietsspecialist",
+  "name": "De Fietsspecialist",
+  "match": [
+   "de fietsspecialist"
+  ],
+  "category": "vervoer"
+ },
+ {
+  "key": "stella-fietsen",
+  "name": "Stella fietsen",
+  "match": [
+   "stella fietsen"
+  ],
+  "category": "vervoer"
+ },
+ {
+  "key": "halfords",
+  "name": "Halfords",
+  "match": [
+   "halfords"
+  ],
+  "category": "vervoer"
+ },
+ {
+  "key": "anwb",
+  "name": "ANWB",
+  "match": [
+   "anwb"
+  ],
+  "category": "vervoer"
+ },
+ {
+  "key": "rdw",
+  "name": "RDW",
+  "match": [
+   "rdw",
+   "rijksdienst voor het wegverkeer"
+  ],
+  "category": "vervoer"
+ },
+ {
+  "key": "kwik-fit",
+  "name": "Kwik-Fit",
+  "match": [
+   "kwik fit",
+   "kwikfit"
+  ],
+  "category": "vervoer"
+ },
+ {
+  "key": "euromaster",
+  "name": "Euromaster",
+  "match": [
+   "euromaster"
+  ],
+  "category": "vervoer"
+ },
+ {
+  "key": "vakgarage",
+  "name": "Vakgarage",
+  "match": [
+   "vakgarage"
+  ],
+  "category": "vervoer"
+ },
+ {
+  "key": "bosch-car-service",
+  "name": "Bosch Car Service",
+  "match": [
+   "bosch car service"
+  ],
+  "category": "vervoer"
+ },
+ {
+  "key": "carglass",
+  "name": "Carglass",
+  "match": [
+   "carglass"
+  ],
+  "category": "vervoer"
+ },
+ {
+  "key": "autodoc",
+  "name": "Autodoc",
+  "match": [
+   "autodoc"
+  ],
+  "category": "vervoer"
+ },
+ {
+  "key": "van-mossel",
+  "name": "Van Mossel",
+  "match": [
+   "van mossel"
+  ],
+  "category": "vervoer"
+ },
+ {
+  "key": "louwman",
+  "name": "Louwman",
+  "match": [
+   "louwman"
+  ],
+  "category": "vervoer",
+  "weak": true
+ },
+ {
+  "key": "ayvens",
+  "name": "Ayvens",
+  "match": [
+   "ayvens",
+   "leaseplan"
+  ],
+  "category": "vervoer"
+ },
+ {
+  "key": "justlease",
+  "name": "Justlease",
+  "match": [
+   "justlease"
+  ],
+  "category": "vervoer"
+ },
+ {
+  "key": "directlease",
+  "name": "Directlease",
+  "match": [
+   "directlease"
+  ],
+  "category": "vervoer"
+ },
+ {
+  "key": "athlon",
+  "name": "Athlon",
+  "match": [
+   "athlon"
+  ],
+  "category": "vervoer"
+ },
+ {
+  "key": "arval",
+  "name": "Arval",
+  "match": [
+   "arval"
+  ],
+  "category": "vervoer"
+ },
+ {
+  "key": "mistergreen",
+  "name": "MisterGreen",
+  "match": [
+   "mistergreen"
+  ],
+  "category": "vervoer"
+ },
+ {
+  "key": "westerscheldetunnel",
+  "name": "Westerscheldetunnel",
+  "match": [
+   "westerscheldetunnel"
+  ],
+  "category": "vervoer"
+ },
+ {
+  "key": "kiltunnel",
+  "name": "Kiltunnel",
+  "match": [
+   "kiltunnel"
+  ],
+  "category": "vervoer"
+ },
+ {
+  "key": "blankenburgverbinding",
+  "name": "Blankenburgverbinding",
+  "match": [
+   "blankenburgverbinding",
+   "blankenburgtunnel"
+  ],
+  "category": "vervoer"
+ },
+ {
+  "key": "asfinag",
+  "name": "ASFINAG",
+  "match": [
+   "asfinag"
+  ],
+  "category": "vervoer"
+ },
+ {
+  "key": "autostrade-per-litalia",
+  "name": "Autostrade per l'Italia",
+  "match": [
+   "autostrade",
+   "autostrade per l italia"
+  ],
+  "category": "vervoer"
+ },
+ {
+  "key": "sanef",
+  "name": "Sanef",
+  "match": [
+   "sanef"
+  ],
+  "category": "vervoer"
+ },
+ {
+  "key": "vinci-autoroutes",
+  "name": "Vinci Autoroutes",
+  "match": [
+   "vinci autoroutes"
+  ],
+  "category": "vervoer"
+ },
+ {
+  "key": "aprr",
+  "name": "APRR",
+  "match": [
+   "aprr"
+  ],
+  "category": "vervoer"
+ },
+ {
+  "key": "eneco",
+  "name": "Eneco",
+  "match": [
+   "eneco"
+  ],
+  "category": "energie",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "vattenfall",
+  "name": "Vattenfall",
+  "match": [
+   "vattenfall",
+   "nuon"
+  ],
+  "category": "energie",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "essent",
+  "name": "Essent",
+  "match": [
+   "essent"
+  ],
+  "category": "energie",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "greenchoice",
+  "name": "Greenchoice",
+  "match": [
+   "greenchoice"
+  ],
+  "category": "energie",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "budget-energie",
+  "name": "Budget Energie",
+  "match": [
+   "budget energie"
+  ],
+  "category": "energie",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "budget-thuis",
+  "name": "Budget Thuis",
+  "match": [
+   "budget thuis"
+  ],
+  "category": "energie",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "energiedirect",
+  "name": "EnergieDirect",
+  "match": [
+   "energiedirect",
+   "energiedirect nl"
+  ],
+  "category": "energie",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "engie",
+  "name": "ENGIE",
+  "match": [
+   "engie"
+  ],
+  "category": "energie",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "oxxio",
+  "name": "Oxxio",
+  "match": [
+   "oxxio"
+  ],
+  "category": "energie",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "vandebron",
+  "name": "Vandebron",
+  "match": [
+   "vandebron"
+  ],
+  "category": "energie",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "pure-energie",
+  "name": "Pure Energie",
+  "match": [
+   "pure energie"
+  ],
+  "category": "energie",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "frank-energie",
+  "name": "Frank Energie",
+  "match": [
+   "frank energie"
+  ],
+  "category": "energie",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "tibber",
+  "name": "Tibber",
+  "match": [
+   "tibber"
+  ],
+  "category": "energie",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "zonneplan",
+  "name": "Zonneplan",
+  "match": [
+   "zonneplan"
+  ],
+  "category": "energie",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "coolblue-energie",
+  "name": "Coolblue Energie",
+  "match": [
+   "coolblue energie"
+  ],
+  "category": "energie",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "nle",
+  "name": "NLE",
+  "match": [
+   "nle",
+   "nederlandse energie maatschappij"
+  ],
+  "category": "energie",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ],
+  "weak": [
+   "nle"
+  ]
+ },
+ {
+  "key": "delta-energie",
+  "name": "DELTA Energie",
+  "match": [
+   "delta energie"
+  ],
+  "category": "energie",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "mega",
+  "name": "Mega",
+  "match": [
+   "mega energie"
+  ],
+  "category": "energie",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "powerpeers",
+  "name": "Powerpeers",
+  "match": [
+   "powerpeers"
+  ],
+  "category": "energie",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "gulf-gas-en-power",
+  "name": "Gulf Gas & Power",
+  "match": [
+   "gulf gas power"
+  ],
+  "category": "energie",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "innova-energie",
+  "name": "Innova Energie",
+  "match": [
+   "innova energie"
+  ],
+  "category": "energie",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "easyenergy",
+  "name": "easyEnergy",
+  "match": [
+   "easyenergy"
+  ],
+  "category": "energie",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "anwb-energie",
+  "name": "ANWB Energie",
+  "match": [
+   "anwb energie"
+  ],
+  "category": "energie",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "huismerk-energie",
+  "name": "Huismerk Energie",
+  "match": [
+   "huismerk energie"
+  ],
+  "category": "energie",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "energie-vanons",
+  "name": "Energie VanOns",
+  "match": [
+   "energie vanons",
+   "energie van ons"
+  ],
+  "category": "energie",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "energyzero",
+  "name": "EnergyZero",
+  "match": [
+   "energyzero"
+  ],
+  "category": "energie",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "qurrent",
+  "name": "Qurrent",
+  "match": [
+   "qurrent"
+  ],
+  "category": "energie",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "om",
+  "name": "Om",
+  "match": [
+   "om nieuwe energie"
+  ],
+  "category": "energie",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "liander",
+  "name": "Liander",
+  "match": [
+   "liander"
+  ],
+  "category": "energie",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "enexis",
+  "name": "Enexis",
+  "match": [
+   "enexis"
+  ],
+  "category": "energie",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "stedin",
+  "name": "Stedin",
+  "match": [
+   "stedin"
+  ],
+  "category": "energie",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "westland-infra",
+  "name": "Westland Infra",
+  "match": [
+   "westland infra"
+  ],
+  "category": "energie",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "coteq",
+  "name": "Coteq",
+  "match": [
+   "coteq"
+  ],
+  "category": "energie",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "rendo",
+  "name": "RENDO",
+  "match": [
+   "rendo"
+  ],
+  "category": "energie",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "ennatuurlijk",
+  "name": "Ennatuurlijk",
+  "match": [
+   "ennatuurlijk"
+  ],
+  "category": "energie",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "eteck",
+  "name": "Eteck",
+  "match": [
+   "eteck"
+  ],
+  "category": "energie",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "vitens",
+  "name": "Vitens",
+  "match": [
+   "vitens"
+  ],
+  "category": "energie",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "evides",
+  "name": "Evides",
+  "match": [
+   "evides"
+  ],
+  "category": "energie",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "dunea",
+  "name": "Dunea",
+  "match": [
+   "dunea"
+  ],
+  "category": "energie",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "pwn",
+  "name": "PWN",
+  "match": [
+   "pwn"
+  ],
+  "category": "energie",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ],
+  "weak": true
+ },
+ {
+  "key": "waternet",
+  "name": "Waternet",
+  "match": [
+   "waternet"
+  ],
+  "category": "energie",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "brabant-water",
+  "name": "Brabant Water",
+  "match": [
+   "brabant water"
+  ],
+  "category": "energie",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "wml",
+  "name": "WML",
+  "match": [
+   "wml",
+   "waterleiding maatschappij limburg",
+   "waterleidingmaatschappij limburg"
+  ],
+  "category": "energie",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ],
+  "weak": [
+   "wml"
+  ]
+ },
+ {
+  "key": "oasen",
+  "name": "Oasen",
+  "match": [
+   "oasen"
+  ],
+  "category": "energie",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ],
+  "weak": true
+ },
+ {
+  "key": "wmd",
+  "name": "WMD",
+  "match": [
+   "wmd drinkwater",
+   "waterleidingmaatschappij drenthe"
+  ],
+  "category": "energie",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "waterbedrijf-groningen",
+  "name": "Waterbedrijf Groningen",
+  "match": [
+   "waterbedrijf groningen"
+  ],
+  "category": "energie",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "kpn",
+  "name": "KPN",
+  "match": [
+   "kpn"
+  ],
+  "category": "telecom"
+ },
+ {
+  "key": "ziggo",
+  "name": "Ziggo",
+  "match": [
+   "ziggo",
+   "vodafoneziggo",
+   "vodafone ziggo"
+  ],
+  "category": "telecom"
+ },
+ {
+  "key": "vodafone",
+  "name": "Vodafone",
+  "match": [
+   "vodafone"
+  ],
+  "category": "telecom"
+ },
+ {
+  "key": "odido",
+  "name": "Odido",
+  "match": [
+   "odido",
+   "t mobile",
+   "tmobile"
+  ],
+  "category": "telecom"
+ },
+ {
+  "key": "tele2",
+  "name": "Tele2",
+  "match": [
+   "tele2"
+  ],
+  "category": "telecom"
+ },
+ {
+  "key": "simyo",
+  "name": "Simyo",
+  "match": [
+   "simyo"
+  ],
+  "category": "telecom"
+ },
+ {
+  "key": "ben",
+  "name": "Ben",
+  "match": [
+   "ben nederland",
+   "ben nl"
+  ],
+  "category": "telecom"
+ },
+ {
+  "key": "lebara",
+  "name": "Lebara",
+  "match": [
+   "lebara"
+  ],
+  "category": "telecom"
+ },
+ {
+  "key": "lycamobile",
+  "name": "Lycamobile",
+  "match": [
+   "lycamobile",
+   "lyca mobile"
+  ],
+  "category": "telecom"
+ },
+ {
+  "key": "hollandsnieuwe",
+  "name": "hollandsnieuwe",
+  "match": [
+   "hollandsnieuwe"
+  ],
+  "category": "telecom"
+ },
+ {
+  "key": "youfone",
+  "name": "Youfone",
+  "match": [
+   "youfone"
+  ],
+  "category": "telecom"
+ },
+ {
+  "key": "budget-mobiel",
+  "name": "Budget Mobiel",
+  "match": [
+   "budget mobiel"
+  ],
+  "category": "telecom"
+ },
+ {
+  "key": "simpel",
+  "name": "Simpel",
+  "match": [
+   "simpel nl",
+   "simpelnl"
+  ],
+  "category": "telecom"
+ },
+ {
+  "key": "delight-mobile",
+  "name": "Delight Mobile",
+  "match": [
+   "delight mobile"
+  ],
+  "category": "telecom"
+ },
+ {
+  "key": "caiway",
+  "name": "Caiway",
+  "match": [
+   "caiway"
+  ],
+  "category": "telecom"
+ },
+ {
+  "key": "delta-fiber",
+  "name": "DELTA Fiber",
+  "match": [
+   "delta fiber",
+   "deltafiber"
+  ],
+  "category": "telecom"
+ },
+ {
+  "key": "freedom-internet",
+  "name": "Freedom Internet",
+  "match": [
+   "freedom internet"
+  ],
+  "category": "telecom"
+ },
+ {
+  "key": "online-nl",
+  "name": "Online.nl",
+  "match": [
+   "online nl"
+  ],
+  "category": "telecom"
+ },
+ {
+  "key": "solcon",
+  "name": "Solcon",
+  "match": [
+   "solcon"
+  ],
+  "category": "telecom"
+ },
+ {
+  "key": "kabelnoord",
+  "name": "Kabelnoord",
+  "match": [
+   "kabelnoord"
+  ],
+  "category": "telecom"
+ },
+ {
+  "key": "canal-digitaal",
+  "name": "Canal Digitaal",
+  "match": [
+   "canal digitaal"
+  ],
+  "category": "telecom"
+ },
+ {
+  "key": "telfort",
+  "name": "Telfort",
+  "match": [
+   "telfort"
+  ],
+  "category": "telecom"
+ },
+ {
+  "key": "xs4all",
+  "name": "XS4ALL",
+  "match": [
+   "xs4all"
+  ],
+  "category": "telecom"
+ },
+ {
+  "key": "robin-mobile",
+  "name": "Robin Mobile",
+  "match": [
+   "robin mobile"
+  ],
+  "category": "telecom"
+ },
+ {
+  "key": "mobiel-nl",
+  "name": "Mobiel.nl",
+  "match": [
+   "mobiel nl"
+  ],
+  "category": "telecom"
+ },
+ {
+  "key": "centraal-beheer",
+  "name": "Centraal Beheer",
+  "match": [
+   "centraal beheer"
+  ],
+  "category": "verzekeringen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "interpolis",
+  "name": "Interpolis",
+  "match": [
+   "interpolis"
+  ],
+  "category": "verzekeringen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "nationale-nederlanden",
+  "name": "Nationale-Nederlanden",
+  "match": [
+   "nationale nederlanden"
+  ],
+  "category": "verzekeringen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "aegon",
+  "name": "Aegon",
+  "match": [
+   "aegon"
+  ],
+  "category": "verzekeringen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "a-s-r",
+  "name": "a.s.r.",
+  "match": [
+   "asr",
+   "a s r",
+   "asr nederland",
+   "asr verzekeringen",
+   "asr schadeverzekering",
+   "asr levensverzekering",
+   "asr ziektekosten"
+  ],
+  "category": "verzekeringen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "anwb-verzekeren",
+  "name": "ANWB Verzekeren",
+  "match": [
+   "anwb verzekeren",
+   "anwb verzekeringen"
+  ],
+  "category": "verzekeringen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "unive",
+  "name": "Univé",
+  "match": [
+   "unive"
+  ],
+  "category": "verzekeringen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "fbto",
+  "name": "FBTO",
+  "match": [
+   "fbto"
+  ],
+  "category": "verzekeringen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "ohra",
+  "name": "OHRA",
+  "match": [
+   "ohra"
+  ],
+  "category": "verzekeringen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "allianz",
+  "name": "Allianz",
+  "match": [
+   "allianz"
+  ],
+  "category": "verzekeringen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "achmea",
+  "name": "Achmea",
+  "match": [
+   "achmea"
+  ],
+  "category": "verzekeringen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "inshared",
+  "name": "InShared",
+  "match": [
+   "inshared"
+  ],
+  "category": "verzekeringen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "ditzo",
+  "name": "Ditzo",
+  "match": [
+   "ditzo"
+  ],
+  "category": "verzekeringen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "reaal",
+  "name": "Reaal",
+  "match": [
+   "reaal"
+  ],
+  "category": "verzekeringen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "promovendum",
+  "name": "Promovendum",
+  "match": [
+   "promovendum"
+  ],
+  "category": "verzekeringen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "unigarant",
+  "name": "Unigarant",
+  "match": [
+   "unigarant"
+  ],
+  "category": "verzekeringen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "klaverblad",
+  "name": "Klaverblad",
+  "match": [
+   "klaverblad"
+  ],
+  "category": "verzekeringen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "de-goudse",
+  "name": "De Goudse",
+  "match": [
+   "de goudse",
+   "goudse verzekeringen"
+  ],
+  "category": "verzekeringen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "allsecur",
+  "name": "Allsecur",
+  "match": [
+   "allsecur"
+  ],
+  "category": "verzekeringen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "generali",
+  "name": "Generali",
+  "match": [
+   "generali"
+  ],
+  "category": "verzekeringen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "vivat",
+  "name": "Vivat",
+  "match": [
+   "vivat"
+  ],
+  "category": "verzekeringen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ],
+  "weak": true
+ },
+ {
+  "key": "zwitserleven",
+  "name": "Zwitserleven",
+  "match": [
+   "zwitserleven"
+  ],
+  "category": "verzekeringen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "dela",
+  "name": "DELA",
+  "match": [
+   "dela"
+  ],
+  "category": "verzekeringen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "monuta",
+  "name": "Monuta",
+  "match": [
+   "monuta"
+  ],
+  "category": "verzekeringen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "yarden",
+  "name": "Yarden",
+  "match": [
+   "yarden"
+  ],
+  "category": "verzekeringen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "petplan",
+  "name": "Petplan",
+  "match": [
+   "petplan"
+  ],
+  "category": "verzekeringen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "das",
+  "name": "DAS",
+  "match": [
+   "das rechtsbijstand"
+  ],
+  "category": "verzekeringen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "arag",
+  "name": "ARAG",
+  "match": [
+   "arag"
+  ],
+  "category": "verzekeringen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "europeesche-verzekeringen",
+  "name": "Europeesche Verzekeringen",
+  "match": [
+   "europeesche",
+   "europeesche verzekeringen"
+  ],
+  "category": "verzekeringen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "enra",
+  "name": "ENRA",
+  "match": [
+   "enra verzekeringen"
+  ],
+  "category": "verzekeringen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "bovemij",
+  "name": "Bovemij",
+  "match": [
+   "bovemij"
+  ],
+  "category": "verzekeringen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "zlm-verzekeringen",
+  "name": "ZLM Verzekeringen",
+  "match": [
+   "zlm",
+   "zlm verzekeringen"
+  ],
+  "category": "verzekeringen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ],
+  "weak": [
+   "zlm"
+  ]
+ },
+ {
+  "key": "turien",
+  "name": "Turien",
+  "match": [
+   "turien"
+  ],
+  "category": "verzekeringen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "zilveren-kruis",
+  "name": "Zilveren Kruis",
+  "match": [
+   "zilveren kruis"
+  ],
+  "category": "verzekeringen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "cz",
+  "name": "CZ",
+  "match": [
+   "cz groep",
+   "cz zorgverzekeringen",
+   "cz zorgverzekeraar"
+  ],
+  "category": "verzekeringen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "vgz",
+  "name": "VGZ",
+  "match": [
+   "vgz",
+   "unive vgz"
+  ],
+  "category": "verzekeringen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "menzis",
+  "name": "Menzis",
+  "match": [
+   "menzis"
+  ],
+  "category": "verzekeringen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "dsw",
+  "name": "DSW",
+  "match": [
+   "dsw",
+   "dsw zorgverzekeraar"
+  ],
+  "category": "verzekeringen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ],
+  "weak": [
+   "dsw"
+  ]
+ },
+ {
+  "key": "zorg-en-zekerheid",
+  "name": "Zorg en Zekerheid",
+  "match": [
+   "zorg en zekerheid"
+  ],
+  "category": "verzekeringen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "onvz",
+  "name": "ONVZ",
+  "match": [
+   "onvz"
+  ],
+  "category": "verzekeringen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "salland-zorgverzekeringen",
+  "name": "Salland Zorgverzekeringen",
+  "match": [
+   "salland zorgverzekeringen",
+   "salland verzekeringen"
+  ],
+  "category": "verzekeringen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "anderzorg",
+  "name": "Anderzorg",
+  "match": [
+   "anderzorg"
+  ],
+  "category": "verzekeringen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "zekur",
+  "name": "Zekur",
+  "match": [
+   "zekur"
+  ],
+  "category": "verzekeringen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "iza",
+  "name": "IZA",
+  "match": [
+   "iza zorgverzekeraar"
+  ],
+  "category": "verzekeringen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "izz",
+  "name": "IZZ",
+  "match": [
+   "izz"
+  ],
+  "category": "verzekeringen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ],
+  "weak": true
+ },
+ {
+  "key": "umc-zorgverzekering",
+  "name": "UMC Zorgverzekering",
+  "match": [
+   "umc zorgverzekering"
+  ],
+  "category": "verzekeringen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "de-friesland",
+  "name": "De Friesland",
+  "match": [
+   "de friesland zorgverzekeraar"
+  ],
+  "category": "verzekeringen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "stad-holland",
+  "name": "Stad Holland",
+  "match": [
+   "stad holland zorgverzekeraar"
+  ],
+  "category": "verzekeringen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "pro-life",
+  "name": "Pro Life",
+  "match": [
+   "pro life zorgverzekeringen",
+   "prolife"
+  ],
+  "category": "verzekeringen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "hollandzorg",
+  "name": "Hollandzorg",
+  "match": [
+   "hollandzorg"
+  ],
+  "category": "verzekeringen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "jaaah",
+  "name": "Jaaah",
+  "match": [
+   "jaaah"
+  ],
+  "category": "verzekeringen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "florius",
+  "name": "Florius",
+  "match": [
+   "florius"
+  ],
+  "category": "wonen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "obvion",
+  "name": "Obvion",
+  "match": [
+   "obvion"
+  ],
+  "category": "wonen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "munt-hypotheken",
+  "name": "Munt Hypotheken",
+  "match": [
+   "munt hypotheken"
+  ],
+  "category": "wonen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "tulp-hypotheken",
+  "name": "Tulp Hypotheken",
+  "match": [
+   "tulp hypotheken"
+  ],
+  "category": "wonen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "venn-hypotheken",
+  "name": "Venn Hypotheken",
+  "match": [
+   "venn hypotheken"
+  ],
+  "category": "wonen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "hypotrust",
+  "name": "Hypotrust",
+  "match": [
+   "hypotrust"
+  ],
+  "category": "wonen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "aegon-hypotheken",
+  "name": "Aegon Hypotheken",
+  "match": [
+   "aegon hypotheken"
+  ],
+  "category": "wonen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "nationale-nederlanden-hypotheken",
+  "name": "Nationale-Nederlanden Hypotheken",
+  "match": [
+   "nationale nederlanden hypotheken"
+  ],
+  "category": "wonen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "a-s-r-hypotheken",
+  "name": "a.s.r. Hypotheken",
+  "match": [
+   "asr hypotheken"
+  ],
+  "category": "wonen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "abn-amro-hypotheken",
+  "name": "ABN AMRO Hypotheken",
+  "match": [
+   "abn amro hypotheken"
+  ],
+  "category": "wonen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "blg-wonen",
+  "name": "BLG Wonen",
+  "match": [
+   "blg wonen"
+  ],
+  "category": "wonen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "merius",
+  "name": "Merius",
+  "match": [
+   "merius"
+  ],
+  "category": "wonen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "woonfonds",
+  "name": "Woonfonds",
+  "match": [
+   "woonfonds"
+  ],
+  "category": "wonen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "stater",
+  "name": "Stater",
+  "match": [
+   "stater"
+  ],
+  "category": "wonen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ],
+  "weak": true
+ },
+ {
+  "key": "quion",
+  "name": "Quion",
+  "match": [
+   "quion"
+  ],
+  "category": "wonen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "attens",
+  "name": "Attens",
+  "match": [
+   "attens"
+  ],
+  "category": "wonen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ],
+  "weak": true
+ },
+ {
+  "key": "vista-hypotheken",
+  "name": "Vista Hypotheken",
+  "match": [
+   "vista hypotheken"
+  ],
+  "category": "wonen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "lot-hypotheken",
+  "name": "Lot Hypotheken",
+  "match": [
+   "lot hypotheken"
+  ],
+  "category": "wonen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "moneyou",
+  "name": "MoneYou",
+  "match": [
+   "moneyou"
+  ],
+  "category": "wonen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "direktbank",
+  "name": "Direktbank",
+  "match": [
+   "direktbank"
+  ],
+  "category": "wonen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "syntrus-achmea",
+  "name": "Syntrus Achmea",
+  "match": [
+   "syntrus achmea",
+   "syntrus"
+  ],
+  "category": "wonen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "vesteda",
+  "name": "Vesteda",
+  "match": [
+   "vesteda"
+  ],
+  "category": "wonen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "mvgm",
+  "name": "MVGM",
+  "match": [
+   "mvgm"
+  ],
+  "category": "wonen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "ymere",
+  "name": "Ymere",
+  "match": [
+   "ymere"
+  ],
+  "category": "wonen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "eigen-haard",
+  "name": "Eigen Haard",
+  "match": [
+   "eigen haard"
+  ],
+  "category": "wonen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "rochdale",
+  "name": "Rochdale",
+  "match": [
+   "rochdale"
+  ],
+  "category": "wonen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "stadgenoot",
+  "name": "Stadgenoot",
+  "match": [
+   "stadgenoot"
+  ],
+  "category": "wonen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "de-alliantie",
+  "name": "de Alliantie",
+  "match": [
+   "de alliantie"
+  ],
+  "category": "wonen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "vestia",
+  "name": "Vestia",
+  "match": [
+   "vestia"
+  ],
+  "category": "wonen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "woonstad-rotterdam",
+  "name": "Woonstad Rotterdam",
+  "match": [
+   "woonstad rotterdam",
+   "woonstad"
+  ],
+  "category": "wonen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "havensteder",
+  "name": "Havensteder",
+  "match": [
+   "havensteder"
+  ],
+  "category": "wonen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "haag-wonen",
+  "name": "Haag Wonen",
+  "match": [
+   "haag wonen"
+  ],
+  "category": "wonen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "staedion",
+  "name": "Staedion",
+  "match": [
+   "staedion"
+  ],
+  "category": "wonen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "mitros",
+  "name": "Mitros",
+  "match": [
+   "mitros"
+  ],
+  "category": "wonen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "bo-ex",
+  "name": "Bo-Ex",
+  "match": [
+   "bo ex"
+  ],
+  "category": "wonen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "woonbron",
+  "name": "Woonbron",
+  "match": [
+   "woonbron"
+  ],
+  "category": "wonen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "woonzorg-nederland",
+  "name": "Woonzorg Nederland",
+  "match": [
+   "woonzorg nederland"
+  ],
+  "category": "wonen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "vivare",
+  "name": "Vivare",
+  "match": [
+   "vivare"
+  ],
+  "category": "wonen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "talis",
+  "name": "Talis",
+  "match": [
+   "talis"
+  ],
+  "category": "wonen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "woonbedrijf",
+  "name": "Woonbedrijf",
+  "match": [
+   "woonbedrijf"
+  ],
+  "category": "wonen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "trudo",
+  "name": "Trudo",
+  "match": [
+   "trudo"
+  ],
+  "category": "wonen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "woonstede",
+  "name": "Woonstede",
+  "match": [
+   "woonstede"
+  ],
+  "category": "wonen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "lefier",
+  "name": "Lefier",
+  "match": [
+   "lefier"
+  ],
+  "category": "wonen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "elkien",
+  "name": "Elkien",
+  "match": [
+   "elkien"
+  ],
+  "category": "wonen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "wonen-limburg",
+  "name": "Wonen Limburg",
+  "match": [
+   "wonen limburg"
+  ],
+  "category": "wonen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "area-wonen",
+  "name": "Area Wonen",
+  "match": [
+   "area wonen"
+  ],
+  "category": "wonen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "mooiland",
+  "name": "Mooiland",
+  "match": [
+   "mooiland"
+  ],
+  "category": "wonen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "woonwaard",
+  "name": "Woonwaard",
+  "match": [
+   "woonwaard"
+  ],
+  "category": "wonen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "parteon",
+  "name": "Parteon",
+  "match": [
+   "parteon"
+  ],
+  "category": "wonen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "santander-consumer-finance",
+  "name": "Santander Consumer Finance",
+  "match": [
+   "santander consumer",
+   "santander consumer finance"
+  ],
+  "category": "leningen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "defam",
+  "name": "Defam",
+  "match": [
+   "defam"
+  ],
+  "category": "leningen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "freo",
+  "name": "Freo",
+  "match": [
+   "freo"
+  ],
+  "category": "leningen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "ferratum",
+  "name": "Ferratum",
+  "match": [
+   "ferratum"
+  ],
+  "category": "leningen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "findio",
+  "name": "Findio",
+  "match": [
+   "findio"
+  ],
+  "category": "leningen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "qander",
+  "name": "Qander",
+  "match": [
+   "qander"
+  ],
+  "category": "leningen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "duo",
+  "name": "DUO",
+  "match": [
+   "duo",
+   "dienst uitvoering onderwijs"
+  ],
+  "category": "leningen",
+  "sign": "out",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ],
+  "weak": [
+   "duo"
+  ]
+ },
+ {
+  "key": "duo-studiefinanciering",
+  "name": "DUO",
+  "match": [
+   "duo",
+   "dienst uitvoering onderwijs"
+  ],
+  "category": "toeslagen",
+  "sign": "in",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ],
+  "weak": [
+   "duo"
+  ]
+ },
+ {
+  "key": "international-card-services",
+  "name": "International Card Services",
+  "match": [
+   "international card services",
+   "icscards"
+  ],
+  "category": "creditcard",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "american-express",
+  "name": "American Express",
+  "match": [
+   "american express",
+   "amex"
+  ],
+  "category": "creditcard",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "geldmaat",
+  "name": "Geldmaat",
+  "match": [
+   "geldmaat"
+  ],
+  "category": "contant"
+ },
+ {
+  "key": "euronet",
+  "name": "Euronet",
+  "match": [
+   "euronet"
+  ],
+  "category": "contant"
+ },
+ {
+  "key": "cardpoint",
+  "name": "Cardpoint",
+  "match": [
+   "cardpoint"
+  ],
+  "category": "contant"
+ },
+ {
+  "key": "degiro",
+  "name": "DEGIRO",
+  "match": [
+   "degiro",
+   "flatexdegiro"
+  ],
+  "category": "beleggen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "flatex",
+  "name": "flatex",
+  "match": [
+   "flatex"
+  ],
+  "category": "beleggen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "meesman",
+  "name": "Meesman",
+  "match": [
+   "meesman"
+  ],
+  "category": "beleggen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ],
+  "weak": true
+ },
+ {
+  "key": "brand-new-day",
+  "name": "Brand New Day",
+  "match": [
+   "brand new day"
+  ],
+  "category": "beleggen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "bux",
+  "name": "BUX",
+  "match": [
+   "bux",
+   "bux zero"
+  ],
+  "category": "beleggen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "trade-republic",
+  "name": "Trade Republic",
+  "match": [
+   "trade republic"
+  ],
+  "category": "beleggen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "peaks",
+  "name": "Peaks",
+  "match": [
+   "peaks"
+  ],
+  "category": "beleggen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ],
+  "weak": true
+ },
+ {
+  "key": "etoro",
+  "name": "eToro",
+  "match": [
+   "etoro"
+  ],
+  "category": "beleggen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "saxo",
+  "name": "Saxo",
+  "match": [
+   "saxo bank",
+   "binckbank",
+   "binck"
+  ],
+  "category": "beleggen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ],
+  "weak": [
+   "binck"
+  ]
+ },
+ {
+  "key": "bitvavo",
+  "name": "Bitvavo",
+  "match": [
+   "bitvavo"
+  ],
+  "category": "beleggen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "lynx",
+  "name": "LYNX",
+  "match": [
+   "lynx"
+  ],
+  "category": "beleggen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ],
+  "weak": true
+ },
+ {
+  "key": "interactive-brokers",
+  "name": "Interactive Brokers",
+  "match": [
+   "interactive brokers"
+  ],
+  "category": "beleggen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "coinbase",
+  "name": "Coinbase",
+  "match": [
+   "coinbase"
+  ],
+  "category": "beleggen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "kraken",
+  "name": "Kraken",
+  "match": [
+   "kraken"
+  ],
+  "category": "beleggen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ],
+  "weak": true
+ },
+ {
+  "key": "binance",
+  "name": "Binance",
+  "match": [
+   "binance"
+  ],
+  "category": "beleggen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "blox",
+  "name": "BLOX",
+  "match": [
+   "blox"
+  ],
+  "category": "beleggen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ],
+  "weak": true
+ },
+ {
+  "key": "bitonic",
+  "name": "Bitonic",
+  "match": [
+   "bitonic"
+  ],
+  "category": "beleggen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "lightyear",
+  "name": "Lightyear",
+  "match": [
+   "lightyear"
+  ],
+  "category": "beleggen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "scalable-capital",
+  "name": "Scalable Capital",
+  "match": [
+   "scalable capital"
+  ],
+  "category": "beleggen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "semmie",
+  "name": "Semmie",
+  "match": [
+   "semmie"
+  ],
+  "category": "beleggen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ],
+  "weak": true
+ },
+ {
+  "key": "belastingdienst",
+  "name": "Belastingdienst",
+  "match": [
+   "belastingdienst"
+  ],
+  "category": "belastingen",
+  "sign": "out",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "belastingdienst-teruggaaf",
+  "name": "Belastingdienst",
+  "match": [
+   "belastingdienst"
+  ],
+  "category": "toeslagen",
+  "sign": "in",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "dienst-toeslagen",
+  "name": "Dienst Toeslagen",
+  "match": [
+   "dienst toeslagen",
+   "belastingdienst toeslagen"
+  ],
+  "category": "toeslagen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "svb",
+  "name": "SVB",
+  "match": [
+   "svb",
+   "sociale verzekeringsbank"
+  ],
+  "category": "toeslagen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "uwv",
+  "name": "UWV",
+  "match": [
+   "uwv"
+  ],
+  "category": "toeslagen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "cjib",
+  "name": "CJIB",
+  "match": [
+   "cjib",
+   "centraal justitieel incassobureau"
+  ],
+  "category": "belastingen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "bsob",
+  "name": "BSOB",
+  "match": [
+   "bsob"
+  ],
+  "category": "belastingen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "gblt",
+  "name": "GBLT",
+  "match": [
+   "gblt"
+  ],
+  "category": "belastingen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "cocensus",
+  "name": "Cocensus",
+  "match": [
+   "cocensus"
+  ],
+  "category": "belastingen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "svhw",
+  "name": "SVHW",
+  "match": [
+   "svhw"
+  ],
+  "category": "belastingen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "hefpunt",
+  "name": "Hefpunt",
+  "match": [
+   "hefpunt"
+  ],
+  "category": "belastingen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "noordelijk-belastingkantoor",
+  "name": "Noordelijk Belastingkantoor",
+  "match": [
+   "noordelijk belastingkantoor"
+  ],
+  "category": "belastingen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "bghu",
+  "name": "BghU",
+  "match": [
+   "bghu"
+  ],
+  "category": "belastingen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "munitax",
+  "name": "Munitax",
+  "match": [
+   "munitax"
+  ],
+  "category": "belastingen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "sabewa-zeeland",
+  "name": "Sabewa Zeeland",
+  "match": [
+   "sabewa"
+  ],
+  "category": "belastingen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "bsgw",
+  "name": "BsGW",
+  "match": [
+   "bsgw"
+  ],
+  "category": "belastingen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "gbtwente",
+  "name": "GBTwente",
+  "match": [
+   "gbtwente"
+  ],
+  "category": "belastingen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "regionale-belastinggroep",
+  "name": "Regionale Belastinggroep",
+  "match": [
+   "regionale belastinggroep"
+  ],
+  "category": "belastingen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "belastingsamenwerking-west-brabant",
+  "name": "Belastingsamenwerking West-Brabant",
+  "match": [
+   "belastingsamenwerking west brabant"
+  ],
+  "category": "belastingen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "belastingsamenwerking-rivierenland",
+  "name": "Belastingsamenwerking Rivierenland",
+  "match": [
+   "belastingsamenwerking rivierenland"
+  ],
+  "category": "belastingen",
+  "methods": [
+   "transfer",
+   "ideal",
+   "debit",
+   "internal",
+   "other"
+  ]
+ },
+ {
+  "key": "partou",
+  "name": "Partou",
+  "match": [
+   "partou"
+  ],
+  "category": "opvang-school"
+ },
+ {
+  "key": "kinderopvang-humanitas",
+  "name": "Kinderopvang Humanitas",
+  "match": [
+   "kinderopvang humanitas"
+  ],
+  "category": "opvang-school"
+ },
+ {
+  "key": "smallsteps",
+  "name": "Smallsteps",
+  "match": [
+   "smallsteps"
+  ],
+  "category": "opvang-school"
+ },
+ {
+  "key": "kidsfoundation",
+  "name": "KidsFoundation",
+  "match": [
+   "kidsfoundation",
+   "kids foundation"
+  ],
+  "category": "opvang-school"
+ },
+ {
+  "key": "kober",
+  "name": "Kober",
+  "match": [
+   "kober",
+   "kober kinderopvang"
+  ],
+  "category": "opvang-school",
+  "weak": [
+   "kober"
+  ]
+ },
+ {
+  "key": "spring-kinderopvang",
+  "name": "Spring Kinderopvang",
+  "match": [
+   "spring kinderopvang"
+  ],
+  "category": "opvang-school"
+ },
+ {
+  "key": "skon",
+  "name": "SKON",
+  "match": [
+   "skon kinderopvang"
+  ],
+  "category": "opvang-school"
+ },
+ {
+  "key": "2samen",
+  "name": "2Samen",
+  "match": [
+   "2samen"
+  ],
+  "category": "opvang-school"
+ },
+ {
+  "key": "prokino",
+  "name": "Prokino",
+  "match": [
+   "prokino"
+  ],
+  "category": "opvang-school"
+ },
+ {
+  "key": "hoera-kindercentra",
+  "name": "Hoera Kindercentra",
+  "match": [
+   "hoera kindercentra",
+   "hoera kinderopvang"
+  ],
+  "category": "opvang-school"
+ },
+ {
+  "key": "doomijn",
+  "name": "Doomijn",
+  "match": [
+   "doomijn"
+  ],
+  "category": "opvang-school"
+ },
+ {
+  "key": "kibeo",
+  "name": "Kibeo",
+  "match": [
+   "kibeo"
+  ],
+  "category": "opvang-school"
+ },
+ {
+  "key": "gro-up",
+  "name": "Gro-up",
+  "match": [
+   "gro up"
+  ],
+  "category": "opvang-school"
+ },
+ {
+  "key": "sinne-kinderopvang",
+  "name": "Sinne Kinderopvang",
+  "match": [
+   "sinne kinderopvang"
+  ],
+  "category": "opvang-school"
+ },
+ {
+  "key": "kanteel-kinderopvang",
+  "name": "Kanteel Kinderopvang",
+  "match": [
+   "kanteel kinderopvang"
+  ],
+  "category": "opvang-school"
+ },
+ {
+  "key": "norlandia",
+  "name": "Norlandia",
+  "match": [
+   "norlandia"
+  ],
+  "category": "opvang-school"
+ },
+ {
+  "key": "bink-kinderopvang",
+  "name": "Bink Kinderopvang",
+  "match": [
+   "bink kinderopvang"
+  ],
+  "category": "opvang-school"
+ },
+ {
+  "key": "kindergarden",
+  "name": "Kindergarden",
+  "match": [
+   "kindergarden"
+  ],
+  "category": "opvang-school"
+ },
+ {
+  "key": "compananny",
+  "name": "CompaNanny",
+  "match": [
+   "compananny"
+  ],
+  "category": "opvang-school"
+ },
+ {
+  "key": "schoolkassa",
+  "name": "Schoolkassa",
+  "match": [
+   "schoolkassa"
+  ],
+  "category": "opvang-school"
+ },
+ {
+  "key": "wis-collect",
+  "name": "WIS Collect",
+  "match": [
+   "wis collect",
+   "wiscollect"
+  ],
+  "category": "opvang-school"
+ },
+ {
+  "key": "iddink",
+  "name": "Iddink",
+  "match": [
+   "iddink"
+  ],
+  "category": "opvang-school"
+ },
+ {
+  "key": "van-dijk-educatie",
+  "name": "Van Dijk Educatie",
+  "match": [
+   "van dijk educatie"
+  ],
+  "category": "opvang-school"
+ },
+ {
+  "key": "studystore",
+  "name": "Studystore",
+  "match": [
+   "studystore"
+  ],
+  "category": "opvang-school"
+ },
+ {
+  "key": "intertoys",
+  "name": "Intertoys",
+  "match": [
+   "intertoys"
+  ],
+  "category": "kinderen"
+ },
+ {
+  "key": "bart-smit",
+  "name": "Bart Smit",
+  "match": [
+   "bart smit"
+  ],
+  "category": "kinderen"
+ },
+ {
+  "key": "top1toys",
+  "name": "Top1Toys",
+  "match": [
+   "top1toys",
+   "top 1 toys"
+  ],
+  "category": "kinderen"
+ },
+ {
+  "key": "lego",
+  "name": "LEGO",
+  "match": [
+   "lego",
+   "lego store"
+  ],
+  "category": "kinderen"
+ },
+ {
+  "key": "toychamp",
+  "name": "Toychamp",
+  "match": [
+   "toychamp"
+  ],
+  "category": "kinderen"
+ },
+ {
+  "key": "smyths-toys",
+  "name": "Smyths Toys",
+  "match": [
+   "smyths",
+   "smyths toys"
+  ],
+  "category": "kinderen"
+ },
+ {
+  "key": "dreamland",
+  "name": "Dreamland",
+  "match": [
+   "dreamland"
+  ],
+  "category": "kinderen",
+  "weak": true
+ },
+ {
+  "key": "prenatal",
+  "name": "Prénatal",
+  "match": [
+   "prenatal"
+  ],
+  "category": "kinderen",
+  "weak": true
+ },
+ {
+  "key": "babypark",
+  "name": "Babypark",
+  "match": [
+   "babypark"
+  ],
+  "category": "kinderen"
+ },
+ {
+  "key": "baby-dump",
+  "name": "Baby-Dump",
+  "match": [
+   "baby dump",
+   "babydump"
+  ],
+  "category": "kinderen"
+ },
+ {
+  "key": "babysuperstore",
+  "name": "Babysuperstore",
+  "match": [
+   "babysuperstore"
+  ],
+  "category": "kinderen"
+ },
+ {
+  "key": "ballorig",
+  "name": "Ballorig",
+  "match": [
+   "ballorig"
+  ],
+  "category": "kinderen"
+ },
+ {
+  "key": "monkey-town",
+  "name": "Monkey Town",
+  "match": [
+   "monkey town"
+  ],
+  "category": "kinderen"
+ },
+ {
+  "key": "pets-place",
+  "name": "Pets Place",
+  "match": [
+   "pets place",
+   "petsplace"
+  ],
+  "category": "huisdieren"
+ },
+ {
+  "key": "zooplus",
+  "name": "zooplus",
+  "match": [
+   "zooplus"
+  ],
+  "category": "huisdieren"
+ },
+ {
+  "key": "brekz",
+  "name": "Brekz",
+  "match": [
+   "brekz"
+  ],
+  "category": "huisdieren"
+ },
+ {
+  "key": "medpets",
+  "name": "Medpets",
+  "match": [
+   "medpets"
+  ],
+  "category": "huisdieren"
+ },
+ {
+  "key": "evidensia",
+  "name": "Evidensia",
+  "match": [
+   "evidensia"
+  ],
+  "category": "huisdieren"
+ },
+ {
+  "key": "anicura",
+  "name": "AniCura",
+  "match": [
+   "anicura"
+  ],
+  "category": "huisdieren"
+ },
+ {
+  "key": "mcdonalds",
+  "name": "McDonald's",
+  "match": [
+   "mcdonalds",
+   "mcdonald s",
+   "mc donalds"
+  ],
+  "category": "uit-eten"
+ },
+ {
+  "key": "burger-king",
+  "name": "Burger King",
+  "match": [
+   "burger king"
+  ],
+  "category": "uit-eten"
+ },
+ {
+  "key": "kfc",
+  "name": "KFC",
+  "match": [
+   "kfc"
+  ],
+  "category": "uit-eten"
+ },
+ {
+  "key": "subway",
+  "name": "Subway",
+  "match": [
+   "subway"
+  ],
+  "category": "uit-eten"
+ },
+ {
+  "key": "dominos",
+  "name": "Domino's",
+  "match": [
+   "dominos",
+   "domino s",
+   "dominos pizza"
+  ],
+  "category": "uit-eten"
+ },
+ {
+  "key": "new-york-pizza",
+  "name": "New York Pizza",
+  "match": [
+   "new york pizza",
+   "newyorkpizza"
+  ],
+  "category": "uit-eten"
+ },
+ {
+  "key": "pizza-hut",
+  "name": "Pizza Hut",
+  "match": [
+   "pizza hut"
+  ],
+  "category": "uit-eten"
+ },
+ {
+  "key": "wagamama",
+  "name": "Wagamama",
+  "match": [
+   "wagamama"
+  ],
+  "category": "uit-eten"
+ },
+ {
+  "key": "vapiano",
+  "name": "Vapiano",
+  "match": [
+   "vapiano"
+  ],
+  "category": "uit-eten"
+ },
+ {
+  "key": "la-place",
+  "name": "La Place",
+  "match": [
+   "la place"
+  ],
+  "category": "uit-eten"
+ },
+ {
+  "key": "happy-italy",
+  "name": "Happy Italy",
+  "match": [
+   "happy italy"
+  ],
+  "category": "uit-eten"
+ },
+ {
+  "key": "loetje",
+  "name": "Loetje",
+  "match": [
+   "loetje"
+  ],
+  "category": "uit-eten",
+  "weak": true
+ },
+ {
+  "key": "febo",
+  "name": "FEBO",
+  "match": [
+   "febo"
+  ],
+  "category": "uit-eten"
+ },
+ {
+  "key": "smullers",
+  "name": "Smullers",
+  "match": [
+   "smullers"
+  ],
+  "category": "uit-eten"
+ },
+ {
+  "key": "kwalitaria",
+  "name": "Kwalitaria",
+  "match": [
+   "kwalitaria"
+  ],
+  "category": "uit-eten"
+ },
+ {
+  "key": "five-guys",
+  "name": "Five Guys",
+  "match": [
+   "five guys"
+  ],
+  "category": "uit-eten"
+ },
+ {
+  "key": "poke-perfect",
+  "name": "Poke Perfect",
+  "match": [
+   "poke perfect"
+  ],
+  "category": "uit-eten"
+ },
+ {
+  "key": "taco-bell",
+  "name": "Taco Bell",
+  "match": [
+   "taco bell"
+  ],
+  "category": "uit-eten"
+ },
+ {
+  "key": "popeyes",
+  "name": "Popeyes",
+  "match": [
+   "popeyes"
+  ],
+  "category": "uit-eten"
+ },
+ {
+  "key": "wok-to-walk",
+  "name": "Wok to Walk",
+  "match": [
+   "wok to walk"
+  ],
+  "category": "uit-eten"
+ },
+ {
+  "key": "dunkin",
+  "name": "Dunkin'",
+  "match": [
+   "dunkin",
+   "dunkin donuts"
+  ],
+  "category": "uit-eten"
+ },
+ {
+  "key": "bram-ladage",
+  "name": "Bram Ladage",
+  "match": [
+   "bram ladage"
+  ],
+  "category": "uit-eten"
+ },
+ {
+  "key": "spare-rib-express",
+  "name": "Spare Rib Express",
+  "match": [
+   "spare rib express"
+  ],
+  "category": "uit-eten"
+ },
+ {
+  "key": "le-pain-quotidien",
+  "name": "Le Pain Quotidien",
+  "match": [
+   "le pain quotidien"
+  ],
+  "category": "uit-eten"
+ },
+ {
+  "key": "hard-rock-cafe",
+  "name": "Hard Rock Cafe",
+  "match": [
+   "hard rock cafe"
+  ],
+  "category": "uit-eten"
+ },
+ {
+  "key": "la-cubanita",
+  "name": "La Cubanita",
+  "match": [
+   "la cubanita"
+  ],
+  "category": "uit-eten"
+ },
+ {
+  "key": "humphreys",
+  "name": "Humphrey's",
+  "match": [
+   "humphreys"
+  ],
+  "category": "uit-eten",
+  "weak": true
+ },
+ {
+  "key": "brownies-en-downies",
+  "name": "Brownies&downieS",
+  "match": [
+   "brownies downies"
+  ],
+  "category": "uit-eten"
+ },
+ {
+  "key": "starbucks",
+  "name": "Starbucks",
+  "match": [
+   "starbucks"
+  ],
+  "category": "uit-eten"
+ },
+ {
+  "key": "coffee-company",
+  "name": "Coffee Company",
+  "match": [
+   "coffee company"
+  ],
+  "category": "uit-eten"
+ },
+ {
+  "key": "bagels-en-beans",
+  "name": "Bagels & Beans",
+  "match": [
+   "bagels beans"
+  ],
+  "category": "uit-eten"
+ },
+ {
+  "key": "doppio-espresso",
+  "name": "Doppio Espresso",
+  "match": [
+   "doppio espresso"
+  ],
+  "category": "uit-eten"
+ },
+ {
+  "key": "anne-en-max",
+  "name": "Anne&Max",
+  "match": [
+   "anne max"
+  ],
+  "category": "uit-eten"
+ },
+ {
+  "key": "thuisbezorgd",
+  "name": "Thuisbezorgd.nl",
+  "match": [
+   "thuisbezorgd",
+   "thuisbezorgd nl",
+   "takeaway com"
+  ],
+  "category": "uit-eten"
+ },
+ {
+  "key": "uber-eats",
+  "name": "Uber Eats",
+  "match": [
+   "uber eats",
+   "ubereats"
+  ],
+  "category": "uit-eten"
+ },
+ {
+  "key": "deliveroo",
+  "name": "Deliveroo",
+  "match": [
+   "deliveroo"
+  ],
+  "category": "uit-eten"
+ },
+ {
+  "key": "just-eat",
+  "name": "Just Eat",
+  "match": [
+   "just eat"
+  ],
+  "category": "uit-eten"
+ },
+ {
+  "key": "booking-com",
+  "name": "Booking.com",
+  "match": [
+   "booking com",
+   "bookingcom"
+  ],
+  "category": "vakantie"
+ },
+ {
+  "key": "airbnb",
+  "name": "Airbnb",
+  "match": [
+   "airbnb"
+  ],
+  "category": "vakantie"
+ },
+ {
+  "key": "expedia",
+  "name": "Expedia",
+  "match": [
+   "expedia"
+  ],
+  "category": "vakantie"
+ },
+ {
+  "key": "hotels-com",
+  "name": "Hotels.com",
+  "match": [
+   "hotels com"
+  ],
+  "category": "vakantie"
+ },
+ {
+  "key": "agoda",
+  "name": "Agoda",
+  "match": [
+   "agoda"
+  ],
+  "category": "vakantie"
+ },
+ {
+  "key": "trip-com",
+  "name": "Trip.com",
+  "match": [
+   "trip com"
+  ],
+  "category": "vakantie"
+ },
+ {
+  "key": "transavia",
+  "name": "Transavia",
+  "match": [
+   "transavia"
+  ],
+  "category": "vakantie"
+ },
+ {
+  "key": "klm",
+  "name": "KLM",
+  "match": [
+   "klm"
+  ],
+  "category": "vakantie"
+ },
+ {
+  "key": "easyjet",
+  "name": "easyJet",
+  "match": [
+   "easyjet"
+  ],
+  "category": "vakantie"
+ },
+ {
+  "key": "ryanair",
+  "name": "Ryanair",
+  "match": [
+   "ryanair"
+  ],
+  "category": "vakantie"
+ },
+ {
+  "key": "vueling",
+  "name": "Vueling",
+  "match": [
+   "vueling"
+  ],
+  "category": "vakantie"
+ },
+ {
+  "key": "lufthansa",
+  "name": "Lufthansa",
+  "match": [
+   "lufthansa"
+  ],
+  "category": "vakantie"
+ },
+ {
+  "key": "air-france",
+  "name": "Air France",
+  "match": [
+   "air france"
+  ],
+  "category": "vakantie"
+ },
+ {
+  "key": "british-airways",
+  "name": "British Airways",
+  "match": [
+   "british airways"
+  ],
+  "category": "vakantie"
+ },
+ {
+  "key": "turkish-airlines",
+  "name": "Turkish Airlines",
+  "match": [
+   "turkish airlines"
+  ],
+  "category": "vakantie"
+ },
+ {
+  "key": "emirates",
+  "name": "Emirates",
+  "match": [
+   "emirates"
+  ],
+  "category": "vakantie"
+ },
+ {
+  "key": "qatar-airways",
+  "name": "Qatar Airways",
+  "match": [
+   "qatar airways"
+  ],
+  "category": "vakantie"
+ },
+ {
+  "key": "wizz-air",
+  "name": "Wizz Air",
+  "match": [
+   "wizz air",
+   "wizzair"
+  ],
+  "category": "vakantie"
+ },
+ {
+  "key": "eurowings",
+  "name": "Eurowings",
+  "match": [
+   "eurowings"
+  ],
+  "category": "vakantie"
+ },
+ {
+  "key": "condor",
+  "name": "Condor",
+  "match": [
+   "condor"
+  ],
+  "category": "vakantie",
+  "weak": true
+ },
+ {
+  "key": "tap-air-portugal",
+  "name": "TAP Air Portugal",
+  "match": [
+   "tap air portugal"
+  ],
+  "category": "vakantie"
+ },
+ {
+  "key": "iberia",
+  "name": "Iberia",
+  "match": [
+   "iberia"
+  ],
+  "category": "vakantie"
+ },
+ {
+  "key": "brussels-airlines",
+  "name": "Brussels Airlines",
+  "match": [
+   "brussels airlines"
+  ],
+  "category": "vakantie"
+ },
+ {
+  "key": "sunexpress",
+  "name": "SunExpress",
+  "match": [
+   "sunexpress"
+  ],
+  "category": "vakantie"
+ },
+ {
+  "key": "pegasus-airlines",
+  "name": "Pegasus Airlines",
+  "match": [
+   "pegasus airlines"
+  ],
+  "category": "vakantie"
+ },
+ {
+  "key": "corendon",
+  "name": "Corendon",
+  "match": [
+   "corendon"
+  ],
+  "category": "vakantie"
+ },
+ {
+  "key": "tui",
+  "name": "TUI",
+  "match": [
+   "tui",
+   "tui nederland"
+  ],
+  "category": "vakantie"
+ },
+ {
+  "key": "sunweb",
+  "name": "Sunweb",
+  "match": [
+   "sunweb"
+  ],
+  "category": "vakantie"
+ },
+ {
+  "key": "d-reizen",
+  "name": "D-reizen",
+  "match": [
+   "d reizen"
+  ],
+  "category": "vakantie"
+ },
+ {
+  "key": "kras",
+  "name": "Kras",
+  "match": [
+   "kras stervakanties",
+   "kras reizen"
+  ],
+  "category": "vakantie"
+ },
+ {
+  "key": "prijsvrij",
+  "name": "Prijsvrij",
+  "match": [
+   "prijsvrij"
+  ],
+  "category": "vakantie"
+ },
+ {
+  "key": "vakantiediscounter",
+  "name": "VakantieDiscounter",
+  "match": [
+   "vakantiediscounter"
+  ],
+  "category": "vakantie"
+ },
+ {
+  "key": "djoser",
+  "name": "Djoser",
+  "match": [
+   "djoser"
+  ],
+  "category": "vakantie"
+ },
+ {
+  "key": "snp",
+  "name": "SNP",
+  "match": [
+   "snp natuurreizen"
+  ],
+  "category": "vakantie"
+ },
+ {
+  "key": "landal",
+  "name": "Landal",
+  "match": [
+   "landal",
+   "landal greenparks"
+  ],
+  "category": "vakantie"
+ },
+ {
+  "key": "center-parcs",
+  "name": "Center Parcs",
+  "match": [
+   "center parcs",
+   "centerparcs"
+  ],
+  "category": "vakantie"
+ },
+ {
+  "key": "roompot",
+  "name": "Roompot",
+  "match": [
+   "roompot"
+  ],
+  "category": "vakantie"
+ },
+ {
+  "key": "europarcs",
+  "name": "EuroParcs",
+  "match": [
+   "europarcs"
+  ],
+  "category": "vakantie"
+ },
+ {
+  "key": "molecaten",
+  "name": "Molecaten",
+  "match": [
+   "molecaten"
+  ],
+  "category": "vakantie"
+ },
+ {
+  "key": "eurocamp",
+  "name": "Eurocamp",
+  "match": [
+   "eurocamp"
+  ],
+  "category": "vakantie"
+ },
+ {
+  "key": "vacansoleil",
+  "name": "Vacansoleil",
+  "match": [
+   "vacansoleil"
+  ],
+  "category": "vakantie"
+ },
+ {
+  "key": "acsi",
+  "name": "ACSI",
+  "match": [
+   "acsi"
+  ],
+  "category": "vakantie"
+ },
+ {
+  "key": "campspace",
+  "name": "Campspace",
+  "match": [
+   "campspace"
+  ],
+  "category": "vakantie"
+ },
+ {
+  "key": "stayokay",
+  "name": "Stayokay",
+  "match": [
+   "stayokay"
+  ],
+  "category": "vakantie"
+ },
+ {
+  "key": "fletcher-hotels",
+  "name": "Fletcher Hotels",
+  "match": [
+   "fletcher hotels",
+   "fletcher hotel"
+  ],
+  "category": "vakantie"
+ },
+ {
+  "key": "bilderberg",
+  "name": "Bilderberg",
+  "match": [
+   "bilderberg"
+  ],
+  "category": "vakantie"
+ },
+ {
+  "key": "nh-hotels",
+  "name": "NH Hotels",
+  "match": [
+   "nh hotel",
+   "nh hotels"
+  ],
+  "category": "vakantie"
+ },
+ {
+  "key": "hilton",
+  "name": "Hilton",
+  "match": [
+   "hilton",
+   "hilton hotel"
+  ],
+  "category": "vakantie",
+  "weak": [
+   "hilton"
+  ]
+ },
+ {
+  "key": "marriott",
+  "name": "Marriott",
+  "match": [
+   "marriott"
+  ],
+  "category": "vakantie"
+ },
+ {
+  "key": "ibis",
+  "name": "ibis",
+  "match": [
+   "ibis"
+  ],
+  "category": "vakantie",
+  "weak": true
+ },
+ {
+  "key": "novotel",
+  "name": "Novotel",
+  "match": [
+   "novotel"
+  ],
+  "category": "vakantie"
+ },
+ {
+  "key": "accor",
+  "name": "Accor",
+  "match": [
+   "accor"
+  ],
+  "category": "vakantie"
+ },
+ {
+  "key": "holiday-inn",
+  "name": "Holiday Inn",
+  "match": [
+   "holiday inn"
+  ],
+  "category": "vakantie"
+ },
+ {
+  "key": "best-western",
+  "name": "Best Western",
+  "match": [
+   "best western"
+  ],
+  "category": "vakantie"
+ },
+ {
+  "key": "motel-one",
+  "name": "Motel One",
+  "match": [
+   "motel one"
+  ],
+  "category": "vakantie"
+ },
+ {
+  "key": "citizenm",
+  "name": "citizenM",
+  "match": [
+   "citizenm"
+  ],
+  "category": "vakantie"
+ },
+ {
+  "key": "b-en-b-hotels",
+  "name": "B&B Hotels",
+  "match": [
+   "b b hotels",
+   "b b hotel"
+  ],
+  "category": "vakantie"
+ },
+ {
+  "key": "stena-line",
+  "name": "Stena Line",
+  "match": [
+   "stena line"
+  ],
+  "category": "vakantie"
+ },
+ {
+  "key": "p-en-o-ferries",
+  "name": "P&O Ferries",
+  "match": [
+   "p o ferries"
+  ],
+  "category": "vakantie"
+ },
+ {
+  "key": "dfds",
+  "name": "DFDS",
+  "match": [
+   "dfds"
+  ],
+  "category": "vakantie"
+ },
+ {
+  "key": "rederij-doeksen",
+  "name": "Rederij Doeksen",
+  "match": [
+   "doeksen"
+  ],
+  "category": "vakantie",
+  "weak": true
+ },
+ {
+  "key": "teso",
+  "name": "TESO",
+  "match": [
+   "teso"
+  ],
+  "category": "vakantie"
+ },
+ {
+  "key": "wagenborg",
+  "name": "Wagenborg",
+  "match": [
+   "wagenborg"
+  ],
+  "category": "vakantie",
+  "weak": true
+ },
+ {
+  "key": "sixt",
+  "name": "Sixt",
+  "match": [
+   "sixt"
+  ],
+  "category": "vakantie"
+ },
+ {
+  "key": "hertz",
+  "name": "Hertz",
+  "match": [
+   "hertz"
+  ],
+  "category": "vakantie",
+  "weak": true
+ },
+ {
+  "key": "avis",
+  "name": "Avis",
+  "match": [
+   "avis"
+  ],
+  "category": "vakantie",
+  "weak": true
+ },
+ {
+  "key": "europcar",
+  "name": "Europcar",
+  "match": [
+   "europcar"
+  ],
+  "category": "vakantie"
+ },
+ {
+  "key": "enterprise-rent-a-car",
+  "name": "Enterprise Rent-A-Car",
+  "match": [
+   "enterprise rent a car"
+  ],
+  "category": "vakantie"
+ },
+ {
+  "key": "sunny-cars",
+  "name": "Sunny Cars",
+  "match": [
+   "sunny cars"
+  ],
+  "category": "vakantie"
+ },
+ {
+  "key": "rentalcars-com",
+  "name": "Rentalcars.com",
+  "match": [
+   "rentalcars",
+   "rentalcars com"
+  ],
+  "category": "vakantie"
+ },
+ {
+  "key": "kwf",
+  "name": "KWF",
+  "match": [
+   "kwf",
+   "kwf kankerbestrijding"
+  ],
+  "category": "cadeaus"
+ },
+ {
+  "key": "hartstichting",
+  "name": "Hartstichting",
+  "match": [
+   "hartstichting"
+  ],
+  "category": "cadeaus"
+ },
+ {
+  "key": "rode-kruis",
+  "name": "Rode Kruis",
+  "match": [
+   "rode kruis"
+  ],
+  "category": "cadeaus"
+ },
+ {
+  "key": "unicef",
+  "name": "UNICEF",
+  "match": [
+   "unicef"
+  ],
+  "category": "cadeaus"
+ },
+ {
+  "key": "artsen-zonder-grenzen",
+  "name": "Artsen zonder Grenzen",
+  "match": [
+   "artsen zonder grenzen"
+  ],
+  "category": "cadeaus"
+ },
+ {
+  "key": "greenpeace",
+  "name": "Greenpeace",
+  "match": [
+   "greenpeace"
+  ],
+  "category": "cadeaus"
+ },
+ {
+  "key": "wwf",
+  "name": "WWF",
+  "match": [
+   "wereld natuur fonds",
+   "wnf"
+  ],
+  "category": "cadeaus"
+ },
+ {
+  "key": "natuurmonumenten",
+  "name": "Natuurmonumenten",
+  "match": [
+   "natuurmonumenten"
+  ],
+  "category": "cadeaus"
+ },
+ {
+  "key": "amnesty-international",
+  "name": "Amnesty International",
+  "match": [
+   "amnesty",
+   "amnesty international"
+  ],
+  "category": "cadeaus"
+ },
+ {
+  "key": "oxfam-novib",
+  "name": "Oxfam Novib",
+  "match": [
+   "oxfam novib",
+   "oxfam"
+  ],
+  "category": "cadeaus"
+ },
+ {
+  "key": "plan-international",
+  "name": "Plan International",
+  "match": [
+   "plan international",
+   "plan nederland"
+  ],
+  "category": "cadeaus"
+ },
+ {
+  "key": "cordaid",
+  "name": "Cordaid",
+  "match": [
+   "cordaid"
+  ],
+  "category": "cadeaus"
+ },
+ {
+  "key": "kerk-in-actie",
+  "name": "Kerk in Actie",
+  "match": [
+   "kerk in actie"
+  ],
+  "category": "cadeaus"
+ },
+ {
+  "key": "leger-des-heils",
+  "name": "Leger des Heils",
+  "match": [
+   "leger des heils"
+  ],
+  "category": "cadeaus"
+ },
+ {
+  "key": "knrm",
+  "name": "KNRM",
+  "match": [
+   "knrm"
+  ],
+  "category": "cadeaus"
+ },
+ {
+  "key": "dierenbescherming",
+  "name": "Dierenbescherming",
+  "match": [
+   "dierenbescherming"
+  ],
+  "category": "cadeaus"
+ },
+ {
+  "key": "alzheimer-nederland",
+  "name": "Alzheimer Nederland",
+  "match": [
+   "alzheimer nederland"
+  ],
+  "category": "cadeaus"
+ },
+ {
+  "key": "longfonds",
+  "name": "Longfonds",
+  "match": [
+   "longfonds"
+  ],
+  "category": "cadeaus"
+ },
+ {
+  "key": "nierstichting",
+  "name": "Nierstichting",
+  "match": [
+   "nierstichting"
+  ],
+  "category": "cadeaus"
+ },
+ {
+  "key": "diabetes-fonds",
+  "name": "Diabetes Fonds",
+  "match": [
+   "diabetes fonds",
+   "diabetesfonds"
+  ],
+  "category": "cadeaus"
+ },
+ {
+  "key": "prinses-beatrix-spierfonds",
+  "name": "Prinses Beatrix Spierfonds",
+  "match": [
+   "prinses beatrix spierfonds",
+   "spierfonds"
+  ],
+  "category": "cadeaus"
+ },
+ {
+  "key": "hersenstichting",
+  "name": "Hersenstichting",
+  "match": [
+   "hersenstichting"
+  ],
+  "category": "cadeaus"
+ },
+ {
+  "key": "mlds",
+  "name": "MLDS",
+  "match": [
+   "maag lever darm stichting"
+  ],
+  "category": "cadeaus"
+ },
+ {
+  "key": "als-nederland",
+  "name": "ALS Nederland",
+  "match": [
+   "als nederland"
+  ],
+  "category": "cadeaus"
+ },
+ {
+  "key": "stichting-vluchteling",
+  "name": "Stichting Vluchteling",
+  "match": [
+   "stichting vluchteling"
+  ],
+  "category": "cadeaus"
+ },
+ {
+  "key": "vluchtelingenwerk",
+  "name": "VluchtelingenWerk",
+  "match": [
+   "vluchtelingenwerk"
+  ],
+  "category": "cadeaus"
+ },
+ {
+  "key": "war-child",
+  "name": "War Child",
+  "match": [
+   "war child"
+  ],
+  "category": "cadeaus"
+ },
+ {
+  "key": "save-the-children",
+  "name": "Save the Children",
+  "match": [
+   "save the children"
+  ],
+  "category": "cadeaus"
+ },
+ {
+  "key": "sos-kinderdorpen",
+  "name": "SOS Kinderdorpen",
+  "match": [
+   "sos kinderdorpen"
+  ],
+  "category": "cadeaus"
+ },
+ {
+  "key": "compassion",
+  "name": "Compassion",
+  "match": [
+   "compassion"
+  ],
+  "category": "cadeaus"
+ },
+ {
+  "key": "world-vision",
+  "name": "World Vision",
+  "match": [
+   "world vision"
+  ],
+  "category": "cadeaus"
+ },
+ {
+  "key": "wakker-dier",
+  "name": "Wakker Dier",
+  "match": [
+   "wakker dier"
+  ],
+  "category": "cadeaus"
+ },
+ {
+  "key": "milieudefensie",
+  "name": "Milieudefensie",
+  "match": [
+   "milieudefensie"
+  ],
+  "category": "cadeaus"
+ },
+ {
+  "key": "vogelbescherming",
+  "name": "Vogelbescherming",
+  "match": [
+   "vogelbescherming"
+  ],
+  "category": "cadeaus"
+ },
+ {
+  "key": "giro555",
+  "name": "Giro555",
+  "match": [
+   "giro555",
+   "giro 555"
+  ],
+  "category": "cadeaus"
+ },
+ {
+  "key": "ronald-mcdonald-kinderfonds",
+  "name": "Ronald McDonald Kinderfonds",
+  "match": [
+   "ronald mcdonald",
+   "ronald mcdonald kinderfonds"
+  ],
+  "category": "cadeaus"
+ },
+ {
+  "key": "kika",
+  "name": "KiKa",
+  "match": [
+   "kika"
+  ],
+  "category": "cadeaus",
+  "weak": true
+ },
+ {
+  "key": "jantje-beton",
+  "name": "Jantje Beton",
+  "match": [
+   "jantje beton"
+  ],
+  "category": "cadeaus"
+ },
+ {
+  "key": "johan-cruyff-foundation",
+  "name": "Johan Cruyff Foundation",
+  "match": [
+   "johan cruyff foundation"
+  ],
+  "category": "cadeaus"
+ },
+ {
+  "key": "make-a-wish",
+  "name": "Make-A-Wish",
+  "match": [
+   "make a wish"
+  ],
+  "category": "cadeaus"
+ },
+ {
+  "key": "voedselbank",
+  "name": "Voedselbank",
+  "match": [
+   "voedselbank"
+  ],
+  "category": "cadeaus"
+ },
+ {
+  "key": "stichting-aap",
+  "name": "Stichting AAP",
+  "match": [
+   "stichting aap"
+  ],
+  "category": "cadeaus"
+ },
+ {
+  "key": "kinderpostzegels",
+  "name": "Kinderpostzegels",
+  "match": [
+   "kinderpostzegels"
+  ],
+  "category": "cadeaus"
+ },
+ {
+  "key": "prinses-maxima-centrum",
+  "name": "Prinses Máxima Centrum",
+  "match": [
+   "prinses maxima centrum"
+  ],
+  "category": "cadeaus"
+ },
+ {
+  "key": "pink-ribbon",
+  "name": "Pink Ribbon",
+  "match": [
+   "pink ribbon"
+  ],
+  "category": "cadeaus"
+ },
+ {
+  "key": "fleurop",
+  "name": "Fleurop",
+  "match": [
+   "fleurop"
+  ],
+  "category": "cadeaus"
+ },
+ {
+  "key": "kaartje2go",
+  "name": "Kaartje2go",
+  "match": [
+   "kaartje2go"
+  ],
+  "category": "cadeaus"
+ },
+ {
+  "key": "greetz",
+  "name": "Greetz",
+  "match": [
+   "greetz"
+  ],
+  "category": "cadeaus"
+ },
+ {
+  "key": "vvv-cadeaukaart",
+  "name": "VVV Cadeaukaart",
+  "match": [
+   "vvv cadeaukaart",
+   "vvv cadeaubon"
+  ],
+  "category": "cadeaus"
+ }
+]

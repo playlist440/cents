@@ -1,0 +1,298 @@
+/* Reset, document, typography, app shell, page transitions, navigation bar. */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  background: var(--bg-grouped);
+  scrollbar-gutter: auto;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: var(--bg-grouped);
+  color: var(--label);
+  font: 400 var(--fs-body)/1.3 var(--font);
+  letter-spacing: -.024em;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+
+body.is-locked { position: fixed; left: 0; right: 0; overflow: hidden; }
+
+h1, h2, h3, h4, p, ul, ol, figure { margin: 0; padding: 0; }
+ul, ol { list-style: none; }
+a { color: var(--tint); text-decoration: none; }
+img, svg { display: block; }
+svg { overflow: visible; }
+
+button, input, textarea, select {
+  font: inherit;
+  color: inherit;
+  letter-spacing: inherit;
+}
+button {
+  -webkit-appearance: none;
+  appearance: none;
+  background: none;
+  border: 0;
+  margin: 0;
+  padding: 0;
+  cursor: pointer;
+  text-align: inherit;
+  touch-action: manipulation;
+}
+button:disabled { cursor: default; }
+input, textarea, select {
+  font-size: max(16px, 1rem);   /* < 16px makes iOS zoom in on focus */
+  -webkit-user-select: text;
+  user-select: text;
+}
+a, button, label, [role="button"], input, select, textarea, summary { touch-action: manipulation; }
+
+:focus { outline: none; }
+:focus-visible {
+  outline: 2px solid var(--focus);   /* solid accent: ≥ 4.7:1 against the background */
+  outline-offset: 2px;
+}
+
+.selectable { -webkit-user-select: text; user-select: text; -webkit-touch-callout: default; }
+.num { font-variant-numeric: tabular-nums; font-feature-settings: "tnum"; white-space: nowrap; }
+.rounded { font-family: var(--font-rounded); }
+.vh {
+  position: absolute !important; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; border: 0;
+}
+
+/* ---------- Text styles ---------- */
+.t-largetitle { font: 700 var(--fs-largetitle)/1.2 var(--font); letter-spacing: .011em; }
+.t-title1 { font: 700 var(--fs-title1)/1.21 var(--font); letter-spacing: .013em; }
+.t-title2 { font: 700 var(--fs-title2)/1.27 var(--font); letter-spacing: -.016em; }
+.t-title3 { font: 600 var(--fs-title3)/1.25 var(--font); letter-spacing: -.022em; }
+.t-headline { font: 600 var(--fs-headline)/1.29 var(--font); letter-spacing: -.024em; }
+.t-body { font: 400 var(--fs-body)/1.29 var(--font); letter-spacing: -.024em; }
+.t-callout { font: 400 var(--fs-callout)/1.31 var(--font); letter-spacing: -.02em; }
+.t-subhead { font: 400 var(--fs-subhead)/1.33 var(--font); letter-spacing: -.016em; }
+.t-footnote { font: 400 var(--fs-footnote)/1.38 var(--font); letter-spacing: -.006em; }
+.t-caption { font: 400 var(--fs-caption1)/1.33 var(--font); letter-spacing: 0; }
+.t-caption2 { font: 400 var(--fs-caption2)/1.18 var(--font); letter-spacing: .006em; }
+.c-2 { color: var(--label-2); }
+.c-3 { color: var(--label-2); } /* text never uses the tertiary label */
+.c-tint { color: var(--tint); }
+.c-pos { color: var(--pos); }
+.c-warn { color: var(--warn-text); }
+.c-danger { color: var(--danger); }
+
+/* ---------- App shell ---------- */
+#app { min-height: 100vh; min-height: 100dvh; }
+
+.main {
+  position: relative;
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+.has-tabbar .main { padding-bottom: var(--chrome-bottom); }
+
+@media (min-width: 1000px) {
+  :root { --col-max: 920px; --gutter: 28px; }
+  .has-sidebar .main { margin-left: var(--sidebar-w); }
+}
+
+.outlet { position: relative; overflow-x: clip; }
+
+.page {
+  position: relative;
+  background: var(--bg-grouped);
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+.has-tabbar .page { min-height: calc(100dvh - var(--chrome-bottom)); }
+.page[hidden] { display: none; }
+
+/* A page that is not in the document flow during a transition, pinned where it was. */
+.page.is-frozen {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: var(--freeze-top, 0px);
+  pointer-events: none;
+  z-index: 1;
+}
+.page.is-top, .page.anim-push-in, .page.anim-cover-in { z-index: 2; box-shadow: var(--page-shadow); }
+.page.is-dimmed::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--dim);
+  opacity: var(--dim-o, 0);
+  pointer-events: none;
+}
+
+@keyframes push-in { from { transform: translate3d(100%, 0, 0); } }
+@keyframes push-out { to { transform: translate3d(-30%, 0, 0); } }
+@keyframes pop-in { from { transform: translate3d(-30%, 0, 0); } }
+@keyframes pop-out { to { transform: translate3d(100%, 0, 0); } }
+@keyframes dim-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes dim-out { from { opacity: 1; } to { opacity: 0; } }
+@keyframes fade-in { from { opacity: 0; } }
+@keyframes cover-in { from { transform: translate3d(0, 100%, 0); } }
+@keyframes cover-out { to { transform: translate3d(0, 100%, 0); } }
+
+.anim-push-in { animation: push-in var(--d-push) var(--ease-ios) both; }
+.anim-push-out { animation: push-out var(--d-push) var(--ease-ios) both; }
+.anim-push-out::after { animation: dim-in var(--d-push) var(--ease-ios) both; --dim-o: 1; }
+.anim-pop-in { animation: pop-in var(--d-push) var(--ease-ios) both; }
+.anim-pop-in::after { animation: dim-out var(--d-push) var(--ease-ios) both; --dim-o: 1; }
+.anim-pop-out { animation: pop-out var(--d-push) var(--ease-ios) both; }
+.anim-fade-in { animation: fade-in 180ms var(--ease-out) both; }
+.anim-cover-in { animation: cover-in var(--d-sheet) var(--ease-ios) both; }
+.anim-cover-out { animation: cover-out 320ms var(--ease-in) both; }
+
+/* ---------- Screen scaffold ---------- */
+.screen { --pad-l: max(var(--gutter), var(--sal)); --pad-r: max(var(--gutter), var(--sar)); }
+
+.navbar {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  height: calc(var(--nav-h) + var(--sat));
+  padding: var(--sat) var(--pad-r) 0 var(--pad-l);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  column-gap: 8px;
+}
+.navbar::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--mat-bar);
+  -webkit-backdrop-filter: var(--mat-blur);
+  backdrop-filter: var(--mat-blur);
+  box-shadow: 0 var(--hair) 0 var(--sep);
+  opacity: 0;
+  transition: opacity var(--d-fast) linear;
+  pointer-events: none;
+}
+.navbar[data-collapsed]::before { opacity: 1; }
+.navbar > * { position: relative; }
+.navbar-leading, .navbar-trailing {
+  /* Stretch inside their own grid columns and clip there: a long back label truncates
+     instead of running under the centred title. */
+  justify-self: stretch;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+.navbar-leading { justify-content: flex-start; margin-left: -8px; padding-right: 4px; }
+.navbar-trailing { justify-content: flex-end; gap: 4px; margin-right: -8px; padding-left: 4px; }
+.navbar-leading > *, .navbar-trailing > * { flex: 0 1 auto; min-width: 0; }
+.navbar-title {
+  font: 600 var(--fs-headline)/1.2 var(--font);
+  letter-spacing: -.024em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 52vw;
+  text-align: center;
+  transition: opacity var(--d-fast) linear;
+}
+.navbar-title.is-hidden { opacity: 0; max-width: 0; } /* takes no room from a back label while hidden */
+
+.largetitle-row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 2px var(--pad-r) 8px var(--pad-l);
+  max-width: calc(var(--col-max) + var(--pad-l) + var(--pad-r));
+  margin: 0 auto;
+}
+.screen-header {
+  padding: 0 var(--pad-r) 0 var(--pad-l);
+  max-width: calc(var(--col-max) + var(--pad-l) + var(--pad-r));
+  margin: 0 auto;
+}
+.largetitle {
+  font: 700 var(--fs-largetitle)/1.2 var(--font);
+  letter-spacing: .011em;
+  min-width: 0;
+  overflow-wrap: break-word;
+  hyphens: auto;
+}
+
+.screen-content {
+  padding: 0 var(--pad-r) 40px var(--pad-l);
+  max-width: calc(var(--col-max) + var(--pad-l) + var(--pad-r));
+  margin: 0 auto;
+}
+.screen.is-wide-content .screen-content,
+.screen.is-wide-content .largetitle-row { max-width: none; }
+
+/* Back button (chevron + previous title) */
+.backbtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  height: var(--tap);
+  padding: 0 8px 0 4px;
+  color: var(--tint);
+  font: 400 var(--fs-body)/1 var(--font);
+  letter-spacing: -.024em;
+  min-width: 0;
+  border-radius: 10px;
+}
+.backbtn { max-width: 100%; }
+.backbtn span { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.backbtn svg { flex: none; }
+
+/* Section headers inside screens (Health style) */
+.section { margin-top: 32px; }
+.section-h {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 0 10px;
+  padding: 0 4px;
+}
+.section-h h2 { font: 700 var(--fs-title3)/1.25 var(--font); letter-spacing: -.022em; }
+.section-h .section-link { font: 400 var(--fs-subhead)/1.2 var(--font); color: var(--tint); padding: 13px 8px; margin: -13px -8px; } /* 44 pt target */
+
+/* ---------- Reduced motion ---------- */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-delay: 0ms !important;
+    transition-duration: .01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .anim-push-in, .anim-pop-in, .anim-cover-in, .anim-fade-in { animation: fade-in 150ms linear both !important; }
+  .anim-push-out, .anim-pop-out, .anim-cover-out { animation: none !important; opacity: 0; }
+}
+
+/* Skip link: visible only when focused from the keyboard. */
+.skip-link {
+  position: fixed;
+  top: calc(var(--sat) + 8px);
+  left: 8px;
+  z-index: 500;
+  padding: 8px 14px;
+  border-radius: 10px;
+  background: var(--bg-elevated);
+  color: var(--tint-text, var(--tint));
+  box-shadow: var(--pop-shadow);
+  font: 600 var(--fs-subhead)/1.2 var(--font);
+  transform: translateY(-200%);
+}
+.skip-link:focus, .skip-link:focus-visible { transform: none; }
+.main:focus, h1:focus { outline: none; }

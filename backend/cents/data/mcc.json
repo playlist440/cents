@@ -1,0 +1,3930 @@
+{
+ "0742": {
+  "label": "Dierenarts",
+  "category": "huisdieren"
+ },
+ "0763": {
+  "label": "Landbouwcoöperatie",
+  "category": null
+ },
+ "0780": {
+  "label": "Hovenier",
+  "category": "huis-tuin"
+ },
+ "1520": {
+  "label": "Aannemer",
+  "category": "huis-tuin"
+ },
+ "1711": {
+  "label": "Installateur verwarming en airco",
+  "category": "huis-tuin"
+ },
+ "1731": {
+  "label": "Elektricien",
+  "category": "huis-tuin"
+ },
+ "1740": {
+  "label": "Metsel- en isolatiewerk",
+  "category": "huis-tuin"
+ },
+ "1750": {
+  "label": "Timmerman",
+  "category": "huis-tuin"
+ },
+ "1761": {
+  "label": "Dakdekker",
+  "category": "huis-tuin"
+ },
+ "1771": {
+  "label": "Betonwerk",
+  "category": "huis-tuin"
+ },
+ "1799": {
+  "label": "Bouwvakbedrijf",
+  "category": "huis-tuin"
+ },
+ "2741": {
+  "label": "Drukkerij en uitgeverij",
+  "category": null
+ },
+ "2791": {
+  "label": "Zetterij",
+  "category": null
+ },
+ "2842": {
+  "label": "Schoonmaakspecialist",
+  "category": "huis-tuin"
+ },
+ "3000": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3001": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3002": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3003": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3004": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3005": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3006": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3007": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3008": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3009": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3010": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3011": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3012": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3013": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3014": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3015": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3016": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3017": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3018": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3019": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3020": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3021": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3022": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3023": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3024": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3025": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3026": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3027": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3028": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3029": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3030": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3031": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3032": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3033": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3034": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3035": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3036": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3037": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3038": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3039": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3040": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3041": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3042": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3043": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3044": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3045": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3046": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3047": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3048": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3049": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3050": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3051": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3052": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3053": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3054": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3055": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3056": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3057": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3058": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3059": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3060": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3061": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3062": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3063": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3064": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3065": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3066": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3067": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3068": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3069": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3070": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3071": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3072": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3073": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3074": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3075": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3076": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3077": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3078": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3079": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3080": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3081": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3082": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3083": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3084": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3085": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3086": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3087": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3088": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3089": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3090": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3091": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3092": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3093": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3094": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3095": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3096": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3097": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3098": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3099": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3100": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3101": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3102": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3103": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3104": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3105": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3106": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3107": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3108": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3109": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3110": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3111": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3112": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3113": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3114": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3115": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3116": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3117": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3118": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3119": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3120": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3121": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3122": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3123": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3124": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3125": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3126": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3127": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3128": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3129": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3130": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3131": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3132": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3133": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3134": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3135": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3136": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3137": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3138": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3139": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3140": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3141": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3142": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3143": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3144": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3145": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3146": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3147": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3148": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3149": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3150": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3151": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3152": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3153": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3154": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3155": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3156": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3157": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3158": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3159": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3160": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3161": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3162": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3163": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3164": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3165": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3166": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3167": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3168": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3169": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3170": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3171": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3172": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3173": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3174": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3175": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3176": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3177": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3178": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3179": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3180": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3181": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3182": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3183": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3184": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3185": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3186": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3187": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3188": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3189": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3190": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3191": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3192": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3193": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3194": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3195": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3196": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3197": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3198": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3199": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3200": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3201": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3202": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3203": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3204": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3205": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3206": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3207": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3208": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3209": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3210": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3211": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3212": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3213": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3214": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3215": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3216": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3217": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3218": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3219": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3220": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3221": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3222": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3223": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3224": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3225": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3226": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3227": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3228": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3229": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3230": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3231": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3232": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3233": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3234": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3235": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3236": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3237": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3238": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3239": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3240": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3241": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3242": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3243": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3244": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3245": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3246": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3247": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3248": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3249": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3250": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3251": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3252": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3253": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3254": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3255": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3256": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3257": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3258": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3259": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3260": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3261": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3262": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3263": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3264": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3265": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3266": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3267": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3268": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3269": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3270": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3271": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3272": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3273": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3274": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3275": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3276": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3277": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3278": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3279": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3280": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3281": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3282": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3283": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3284": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3285": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3286": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3287": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3288": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3289": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3290": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3291": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3292": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3293": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3294": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3295": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3296": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3297": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3298": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3299": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "3351": {
+  "label": "Autoverhuur",
+  "category": "vakantie"
+ },
+ "3352": {
+  "label": "Autoverhuur",
+  "category": "vakantie"
+ },
+ "3353": {
+  "label": "Autoverhuur",
+  "category": "vakantie"
+ },
+ "3354": {
+  "label": "Autoverhuur",
+  "category": "vakantie"
+ },
+ "3355": {
+  "label": "Autoverhuur",
+  "category": "vakantie"
+ },
+ "3356": {
+  "label": "Autoverhuur",
+  "category": "vakantie"
+ },
+ "3357": {
+  "label": "Autoverhuur",
+  "category": "vakantie"
+ },
+ "3358": {
+  "label": "Autoverhuur",
+  "category": "vakantie"
+ },
+ "3359": {
+  "label": "Autoverhuur",
+  "category": "vakantie"
+ },
+ "3360": {
+  "label": "Autoverhuur",
+  "category": "vakantie"
+ },
+ "3361": {
+  "label": "Autoverhuur",
+  "category": "vakantie"
+ },
+ "3362": {
+  "label": "Autoverhuur",
+  "category": "vakantie"
+ },
+ "3363": {
+  "label": "Autoverhuur",
+  "category": "vakantie"
+ },
+ "3364": {
+  "label": "Autoverhuur",
+  "category": "vakantie"
+ },
+ "3365": {
+  "label": "Autoverhuur",
+  "category": "vakantie"
+ },
+ "3366": {
+  "label": "Autoverhuur",
+  "category": "vakantie"
+ },
+ "3367": {
+  "label": "Autoverhuur",
+  "category": "vakantie"
+ },
+ "3368": {
+  "label": "Autoverhuur",
+  "category": "vakantie"
+ },
+ "3369": {
+  "label": "Autoverhuur",
+  "category": "vakantie"
+ },
+ "3370": {
+  "label": "Autoverhuur",
+  "category": "vakantie"
+ },
+ "3371": {
+  "label": "Autoverhuur",
+  "category": "vakantie"
+ },
+ "3372": {
+  "label": "Autoverhuur",
+  "category": "vakantie"
+ },
+ "3373": {
+  "label": "Autoverhuur",
+  "category": "vakantie"
+ },
+ "3374": {
+  "label": "Autoverhuur",
+  "category": "vakantie"
+ },
+ "3375": {
+  "label": "Autoverhuur",
+  "category": "vakantie"
+ },
+ "3376": {
+  "label": "Autoverhuur",
+  "category": "vakantie"
+ },
+ "3377": {
+  "label": "Autoverhuur",
+  "category": "vakantie"
+ },
+ "3378": {
+  "label": "Autoverhuur",
+  "category": "vakantie"
+ },
+ "3379": {
+  "label": "Autoverhuur",
+  "category": "vakantie"
+ },
+ "3380": {
+  "label": "Autoverhuur",
+  "category": "vakantie"
+ },
+ "3381": {
+  "label": "Autoverhuur",
+  "category": "vakantie"
+ },
+ "3382": {
+  "label": "Autoverhuur",
+  "category": "vakantie"
+ },
+ "3383": {
+  "label": "Autoverhuur",
+  "category": "vakantie"
+ },
+ "3384": {
+  "label": "Autoverhuur",
+  "category": "vakantie"
+ },
+ "3385": {
+  "label": "Autoverhuur",
+  "category": "vakantie"
+ },
+ "3386": {
+  "label": "Autoverhuur",
+  "category": "vakantie"
+ },
+ "3387": {
+  "label": "Autoverhuur",
+  "category": "vakantie"
+ },
+ "3388": {
+  "label": "Autoverhuur",
+  "category": "vakantie"
+ },
+ "3389": {
+  "label": "Autoverhuur",
+  "category": "vakantie"
+ },
+ "3390": {
+  "label": "Autoverhuur",
+  "category": "vakantie"
+ },
+ "3391": {
+  "label": "Autoverhuur",
+  "category": "vakantie"
+ },
+ "3392": {
+  "label": "Autoverhuur",
+  "category": "vakantie"
+ },
+ "3393": {
+  "label": "Autoverhuur",
+  "category": "vakantie"
+ },
+ "3394": {
+  "label": "Autoverhuur",
+  "category": "vakantie"
+ },
+ "3395": {
+  "label": "Autoverhuur",
+  "category": "vakantie"
+ },
+ "3396": {
+  "label": "Autoverhuur",
+  "category": "vakantie"
+ },
+ "3397": {
+  "label": "Autoverhuur",
+  "category": "vakantie"
+ },
+ "3398": {
+  "label": "Autoverhuur",
+  "category": "vakantie"
+ },
+ "3399": {
+  "label": "Autoverhuur",
+  "category": "vakantie"
+ },
+ "3400": {
+  "label": "Autoverhuur",
+  "category": "vakantie"
+ },
+ "3401": {
+  "label": "Autoverhuur",
+  "category": "vakantie"
+ },
+ "3402": {
+  "label": "Autoverhuur",
+  "category": "vakantie"
+ },
+ "3403": {
+  "label": "Autoverhuur",
+  "category": "vakantie"
+ },
+ "3404": {
+  "label": "Autoverhuur",
+  "category": "vakantie"
+ },
+ "3405": {
+  "label": "Autoverhuur",
+  "category": "vakantie"
+ },
+ "3406": {
+  "label": "Autoverhuur",
+  "category": "vakantie"
+ },
+ "3407": {
+  "label": "Autoverhuur",
+  "category": "vakantie"
+ },
+ "3408": {
+  "label": "Autoverhuur",
+  "category": "vakantie"
+ },
+ "3409": {
+  "label": "Autoverhuur",
+  "category": "vakantie"
+ },
+ "3410": {
+  "label": "Autoverhuur",
+  "category": "vakantie"
+ },
+ "3411": {
+  "label": "Autoverhuur",
+  "category": "vakantie"
+ },
+ "3412": {
+  "label": "Autoverhuur",
+  "category": "vakantie"
+ },
+ "3413": {
+  "label": "Autoverhuur",
+  "category": "vakantie"
+ },
+ "3414": {
+  "label": "Autoverhuur",
+  "category": "vakantie"
+ },
+ "3415": {
+  "label": "Autoverhuur",
+  "category": "vakantie"
+ },
+ "3416": {
+  "label": "Autoverhuur",
+  "category": "vakantie"
+ },
+ "3417": {
+  "label": "Autoverhuur",
+  "category": "vakantie"
+ },
+ "3418": {
+  "label": "Autoverhuur",
+  "category": "vakantie"
+ },
+ "3419": {
+  "label": "Autoverhuur",
+  "category": "vakantie"
+ },
+ "3420": {
+  "label": "Autoverhuur",
+  "category": "vakantie"
+ },
+ "3421": {
+  "label": "Autoverhuur",
+  "category": "vakantie"
+ },
+ "3422": {
+  "label": "Autoverhuur",
+  "category": "vakantie"
+ },
+ "3423": {
+  "label": "Autoverhuur",
+  "category": "vakantie"
+ },
+ "3424": {
+  "label": "Autoverhuur",
+  "category": "vakantie"
+ },
+ "3425": {
+  "label": "Autoverhuur",
+  "category": "vakantie"
+ },
+ "3426": {
+  "label": "Autoverhuur",
+  "category": "vakantie"
+ },
+ "3427": {
+  "label": "Autoverhuur",
+  "category": "vakantie"
+ },
+ "3428": {
+  "label": "Autoverhuur",
+  "category": "vakantie"
+ },
+ "3429": {
+  "label": "Autoverhuur",
+  "category": "vakantie"
+ },
+ "3430": {
+  "label": "Autoverhuur",
+  "category": "vakantie"
+ },
+ "3431": {
+  "label": "Autoverhuur",
+  "category": "vakantie"
+ },
+ "3432": {
+  "label": "Autoverhuur",
+  "category": "vakantie"
+ },
+ "3433": {
+  "label": "Autoverhuur",
+  "category": "vakantie"
+ },
+ "3434": {
+  "label": "Autoverhuur",
+  "category": "vakantie"
+ },
+ "3435": {
+  "label": "Autoverhuur",
+  "category": "vakantie"
+ },
+ "3436": {
+  "label": "Autoverhuur",
+  "category": "vakantie"
+ },
+ "3437": {
+  "label": "Autoverhuur",
+  "category": "vakantie"
+ },
+ "3438": {
+  "label": "Autoverhuur",
+  "category": "vakantie"
+ },
+ "3439": {
+  "label": "Autoverhuur",
+  "category": "vakantie"
+ },
+ "3440": {
+  "label": "Autoverhuur",
+  "category": "vakantie"
+ },
+ "3441": {
+  "label": "Autoverhuur",
+  "category": "vakantie"
+ },
+ "3501": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3502": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3503": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3504": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3505": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3506": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3507": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3508": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3509": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3510": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3511": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3512": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3513": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3514": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3515": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3516": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3517": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3518": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3519": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3520": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3521": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3522": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3523": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3524": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3525": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3526": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3527": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3528": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3529": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3530": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3531": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3532": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3533": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3534": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3535": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3536": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3537": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3538": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3539": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3540": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3541": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3542": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3543": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3544": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3545": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3546": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3547": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3548": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3549": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3550": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3551": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3552": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3553": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3554": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3555": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3556": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3557": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3558": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3559": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3560": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3561": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3562": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3563": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3564": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3565": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3566": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3567": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3568": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3569": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3570": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3571": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3572": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3573": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3574": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3575": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3576": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3577": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3578": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3579": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3580": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3581": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3582": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3583": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3584": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3585": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3586": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3587": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3588": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3589": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3590": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3591": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3592": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3593": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3594": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3595": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3596": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3597": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3598": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3599": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3600": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3601": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3602": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3603": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3604": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3605": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3606": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3607": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3608": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3609": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3610": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3611": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3612": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3613": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3614": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3615": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3616": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3617": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3618": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3619": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3620": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3621": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3622": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3623": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3624": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3625": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3626": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3627": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3628": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3629": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3630": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3631": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3632": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3633": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3634": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3635": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3636": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3637": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3638": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3639": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3640": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3641": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3642": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3643": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3644": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3645": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3646": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3647": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3648": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3649": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3650": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3651": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3652": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3653": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3654": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3655": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3656": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3657": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3658": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3659": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3660": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3661": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3662": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3663": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3664": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3665": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3666": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3667": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3668": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3669": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3670": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3671": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3672": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3673": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3674": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3675": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3676": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3677": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3678": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3679": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3680": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3681": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3682": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3683": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3684": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3685": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3686": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3687": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3688": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3689": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3690": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3691": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3692": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3693": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3694": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3695": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3696": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3697": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3698": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3699": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3700": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3701": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3702": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3703": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3704": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3705": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3706": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3707": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3708": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3709": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3710": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3711": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3712": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3713": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3714": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3715": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3716": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3717": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3718": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3719": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3720": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3721": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3722": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3723": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3724": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3725": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3726": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3727": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3728": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3729": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3730": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3731": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3732": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3733": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3734": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3735": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3736": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3737": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3738": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3739": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3740": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3741": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3742": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3743": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3744": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3745": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3746": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3747": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3748": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3749": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3750": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3751": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3752": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3753": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3754": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3755": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3756": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3757": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3758": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3759": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3760": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3761": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3762": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3763": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3764": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3765": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3766": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3767": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3768": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3769": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3770": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3771": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3772": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3773": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3774": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3775": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3776": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3777": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3778": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3779": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3780": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3781": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3782": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3783": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3784": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3785": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3786": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3787": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3788": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3789": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3790": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3816": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "3835": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "4011": {
+  "label": "Spoorwegen",
+  "category": "vervoer"
+ },
+ "4111": {
+  "label": "Openbaar vervoer",
+  "category": "vervoer"
+ },
+ "4112": {
+  "label": "Trein",
+  "category": "vervoer"
+ },
+ "4119": {
+  "label": "Ambulance",
+  "category": "verzorging"
+ },
+ "4121": {
+  "label": "Taxi",
+  "category": "vervoer"
+ },
+ "4131": {
+  "label": "Bus en touringcar",
+  "category": "vervoer"
+ },
+ "4214": {
+  "label": "Transport en verhuizing",
+  "category": null
+ },
+ "4215": {
+  "label": "Koerier",
+  "category": null
+ },
+ "4225": {
+  "label": "Opslag",
+  "category": null
+ },
+ "4411": {
+  "label": "Cruise en veerboot",
+  "category": "vakantie"
+ },
+ "4457": {
+  "label": "Bootverhuur",
+  "category": "vrije-tijd"
+ },
+ "4468": {
+  "label": "Jachthaven",
+  "category": "vrije-tijd"
+ },
+ "4511": {
+  "label": "Luchtvaartmaatschappij",
+  "category": "vakantie"
+ },
+ "4582": {
+  "label": "Luchthaven",
+  "category": "vakantie"
+ },
+ "4722": {
+  "label": "Reisbureau",
+  "category": "vakantie"
+ },
+ "4723": {
+  "label": "Pakketreis",
+  "category": "vakantie"
+ },
+ "4784": {
+  "label": "Tol",
+  "category": "vervoer"
+ },
+ "4789": {
+  "label": "Vervoer",
+  "category": "vervoer"
+ },
+ "4812": {
+  "label": "Telefoons en telecomwinkel",
+  "category": "telecom"
+ },
+ "4814": {
+  "label": "Telecomdiensten",
+  "category": "telecom"
+ },
+ "4815": {
+  "label": "Telefoondiensten",
+  "category": "telecom"
+ },
+ "4816": {
+  "label": "Internet- en netwerkdiensten",
+  "category": null
+ },
+ "4821": {
+  "label": "Telegraaf",
+  "category": null
+ },
+ "4829": {
+  "label": "Geldovermaking",
+  "category": null
+ },
+ "4899": {
+  "label": "Betaal-tv en streaming",
+  "category": "abonnementen"
+ },
+ "4900": {
+  "label": "Energie en water",
+  "category": "energie"
+ },
+ "5013": {
+  "label": "Auto-onderdelen (groothandel)",
+  "category": "vervoer"
+ },
+ "5021": {
+  "label": "Kantoormeubelen",
+  "category": "huis-tuin"
+ },
+ "5039": {
+  "label": "Bouwmaterialen (groothandel)",
+  "category": "huis-tuin"
+ },
+ "5044": {
+  "label": "Kantoor- en fotoapparatuur",
+  "category": "winkelen"
+ },
+ "5045": {
+  "label": "Computers en software",
+  "category": "winkelen"
+ },
+ "5046": {
+  "label": "Bedrijfsapparatuur",
+  "category": null
+ },
+ "5047": {
+  "label": "Medische hulpmiddelen",
+  "category": "verzorging"
+ },
+ "5051": {
+  "label": "Metaalhandel",
+  "category": null
+ },
+ "5065": {
+  "label": "Elektrische onderdelen",
+  "category": null
+ },
+ "5072": {
+  "label": "IJzerwaren",
+  "category": "huis-tuin"
+ },
+ "5074": {
+  "label": "Sanitair en verwarming",
+  "category": "huis-tuin"
+ },
+ "5085": {
+  "label": "Industriële benodigdheden",
+  "category": null
+ },
+ "5094": {
+  "label": "Sieraden en edelmetaal",
+  "category": "winkelen"
+ },
+ "5099": {
+  "label": "Duurzame goederen",
+  "category": null
+ },
+ "5111": {
+  "label": "Kantoorartikelen",
+  "category": "winkelen"
+ },
+ "5122": {
+  "label": "Geneesmiddelen (groothandel)",
+  "category": "verzorging"
+ },
+ "5131": {
+  "label": "Stoffen en fournituren",
+  "category": "winkelen"
+ },
+ "5137": {
+  "label": "Bedrijfskleding",
+  "category": "kleding"
+ },
+ "5139": {
+  "label": "Schoenen (groothandel)",
+  "category": "kleding"
+ },
+ "5169": {
+  "label": "Chemische producten",
+  "category": null
+ },
+ "5172": {
+  "label": "Brandstof en olie",
+  "category": "vervoer"
+ },
+ "5192": {
+  "label": "Boeken en tijdschriften",
+  "category": "vrije-tijd"
+ },
+ "5193": {
+  "label": "Kwekerij en bloemen",
+  "category": "huis-tuin"
+ },
+ "5198": {
+  "label": "Verf en lak",
+  "category": "huis-tuin"
+ },
+ "5199": {
+  "label": "Verbruiksgoederen",
+  "category": null
+ },
+ "5200": {
+  "label": "Bouwmarkt",
+  "category": "huis-tuin"
+ },
+ "5211": {
+  "label": "Bouwmaterialen",
+  "category": "huis-tuin"
+ },
+ "5231": {
+  "label": "Verf, glas en behang",
+  "category": "huis-tuin"
+ },
+ "5251": {
+  "label": "IJzerhandel",
+  "category": "huis-tuin"
+ },
+ "5261": {
+  "label": "Tuincentrum",
+  "category": "huis-tuin"
+ },
+ "5271": {
+  "label": "Stacaravanhandel",
+  "category": null
+ },
+ "5300": {
+  "label": "Groothandel",
+  "category": null
+ },
+ "5309": {
+  "label": "Duty free",
+  "category": "vakantie"
+ },
+ "5310": {
+  "label": "Discountwinkel",
+  "category": null
+ },
+ "5311": {
+  "label": "Warenhuis",
+  "category": null
+ },
+ "5331": {
+  "label": "Allesverkoper",
+  "category": null
+ },
+ "5399": {
+  "label": "Algemene winkel",
+  "category": null
+ },
+ "5411": {
+  "label": "Supermarkt",
+  "category": "boodschappen"
+ },
+ "5422": {
+  "label": "Slagerij",
+  "category": "boodschappen"
+ },
+ "5441": {
+  "label": "Snoepwinkel",
+  "category": "boodschappen"
+ },
+ "5451": {
+  "label": "Zuivelwinkel",
+  "category": "boodschappen"
+ },
+ "5462": {
+  "label": "Bakkerij",
+  "category": "boodschappen"
+ },
+ "5499": {
+  "label": "Speciaalzaak levensmiddelen",
+  "category": "boodschappen"
+ },
+ "5511": {
+  "label": "Autodealer",
+  "category": "vervoer"
+ },
+ "5521": {
+  "label": "Occasiondealer",
+  "category": "vervoer"
+ },
+ "5531": {
+  "label": "Autoaccessoires",
+  "category": "vervoer"
+ },
+ "5532": {
+  "label": "Bandenwinkel",
+  "category": "vervoer"
+ },
+ "5533": {
+  "label": "Auto-onderdelen",
+  "category": "vervoer"
+ },
+ "5541": {
+  "label": "Tankstation",
+  "category": "vervoer",
+  "small": {
+   "below_cents": 1500,
+   "category": "uit-eten"
+  }
+ },
+ "5542": {
+  "label": "Onbemand tankstation",
+  "category": "vervoer"
+ },
+ "5551": {
+  "label": "Botenhandel",
+  "category": "vrije-tijd"
+ },
+ "5561": {
+  "label": "Caravans en aanhangers",
+  "category": "vervoer"
+ },
+ "5571": {
+  "label": "Motorhandel",
+  "category": "vervoer"
+ },
+ "5592": {
+  "label": "Camperhandel",
+  "category": "vervoer"
+ },
+ "5598": {
+  "label": "Sneeuwscooterhandel",
+  "category": "vervoer"
+ },
+ "5599": {
+  "label": "Voertuighandel",
+  "category": "vervoer"
+ },
+ "5611": {
+  "label": "Herenkleding",
+  "category": "kleding"
+ },
+ "5621": {
+  "label": "Damesmode",
+  "category": "kleding"
+ },
+ "5631": {
+  "label": "Mode-accessoires",
+  "category": "kleding"
+ },
+ "5641": {
+  "label": "Kinderkleding",
+  "category": "kleding"
+ },
+ "5651": {
+  "label": "Kledingwinkel",
+  "category": "kleding"
+ },
+ "5655": {
+  "label": "Sportkleding",
+  "category": "kleding"
+ },
+ "5661": {
+  "label": "Schoenenwinkel",
+  "category": "kleding"
+ },
+ "5681": {
+  "label": "Bontwinkel",
+  "category": "kleding"
+ },
+ "5691": {
+  "label": "Kledingwinkel",
+  "category": "kleding"
+ },
+ "5697": {
+  "label": "Kleermaker",
+  "category": "kleding"
+ },
+ "5698": {
+  "label": "Pruikenwinkel",
+  "category": "verzorging"
+ },
+ "5699": {
+  "label": "Kleding en accessoires",
+  "category": "kleding"
+ },
+ "5712": {
+  "label": "Meubelzaak",
+  "category": "huis-tuin"
+ },
+ "5713": {
+  "label": "Vloeren",
+  "category": "huis-tuin"
+ },
+ "5714": {
+  "label": "Raamdecoratie en stoffering",
+  "category": "huis-tuin"
+ },
+ "5718": {
+  "label": "Haarden",
+  "category": "huis-tuin"
+ },
+ "5719": {
+  "label": "Woonwinkel",
+  "category": "huis-tuin"
+ },
+ "5722": {
+  "label": "Witgoed",
+  "category": "huis-tuin"
+ },
+ "5732": {
+  "label": "Elektronicawinkel",
+  "category": "winkelen"
+ },
+ "5733": {
+  "label": "Muziekwinkel",
+  "category": "vrije-tijd"
+ },
+ "5734": {
+  "label": "Software",
+  "category": "winkelen"
+ },
+ "5735": {
+  "label": "Platenzaak",
+  "category": "vrije-tijd"
+ },
+ "5811": {
+  "label": "Catering",
+  "category": "uit-eten"
+ },
+ "5812": {
+  "label": "Restaurant",
+  "category": "uit-eten"
+ },
+ "5813": {
+  "label": "Café of bar",
+  "category": "uit-eten"
+ },
+ "5814": {
+  "label": "Fastfood",
+  "category": "uit-eten"
+ },
+ "5815": {
+  "label": "Digitale media",
+  "category": "abonnementen"
+ },
+ "5816": {
+  "label": "Digitale games",
+  "category": "vrije-tijd"
+ },
+ "5817": {
+  "label": "Apps",
+  "category": null
+ },
+ "5818": {
+  "label": "Digitale aankopen",
+  "category": null
+ },
+ "5832": {
+  "label": "Antiek",
+  "category": "winkelen"
+ },
+ "5912": {
+  "label": "Apotheek of drogist",
+  "category": "verzorging"
+ },
+ "5921": {
+  "label": "Slijterij",
+  "category": "boodschappen"
+ },
+ "5931": {
+  "label": "Tweedehandswinkel",
+  "category": "winkelen"
+ },
+ "5932": {
+  "label": "Antiekwinkel",
+  "category": "winkelen"
+ },
+ "5933": {
+  "label": "Pandjeshuis",
+  "category": null
+ },
+ "5935": {
+  "label": "Sloperij",
+  "category": null
+ },
+ "5937": {
+  "label": "Antiek (reproducties)",
+  "category": "winkelen"
+ },
+ "5940": {
+  "label": "Fietsenwinkel",
+  "category": "vervoer"
+ },
+ "5941": {
+  "label": "Sportwinkel",
+  "category": "vrije-tijd"
+ },
+ "5942": {
+  "label": "Boekwinkel",
+  "category": "vrije-tijd"
+ },
+ "5943": {
+  "label": "Kantoorboekhandel",
+  "category": "winkelen"
+ },
+ "5944": {
+  "label": "Juwelier",
+  "category": "winkelen"
+ },
+ "5945": {
+  "label": "Speelgoedwinkel",
+  "category": "kinderen"
+ },
+ "5946": {
+  "label": "Fotozaak",
+  "category": "winkelen"
+ },
+ "5947": {
+  "label": "Cadeauwinkel",
+  "category": "cadeaus"
+ },
+ "5948": {
+  "label": "Lederwaren",
+  "category": "kleding"
+ },
+ "5949": {
+  "label": "Stoffenwinkel",
+  "category": "vrije-tijd"
+ },
+ "5950": {
+  "label": "Glas en servies",
+  "category": "huis-tuin"
+ },
+ "5960": {
+  "label": "Verzekering (direct)",
+  "category": "verzekeringen"
+ },
+ "5961": {
+  "label": "Postorderbedrijf",
+  "category": "winkelen"
+ },
+ "5962": {
+  "label": "Reisarrangementen",
+  "category": "vakantie"
+ },
+ "5963": {
+  "label": "Huis-aan-huisverkoop",
+  "category": null
+ },
+ "5964": {
+  "label": "Catalogusverkoop",
+  "category": "winkelen"
+ },
+ "5965": {
+  "label": "Catalogus- en winkelverkoop",
+  "category": "winkelen"
+ },
+ "5966": {
+  "label": "Telemarketing",
+  "category": null
+ },
+ "5967": {
+  "label": "Telefonische diensten",
+  "category": null
+ },
+ "5968": {
+  "label": "Abonnement",
+  "category": "abonnementen"
+ },
+ "5969": {
+  "label": "Verkoop op afstand",
+  "category": null
+ },
+ "5970": {
+  "label": "Hobby- en knutselwinkel",
+  "category": "vrije-tijd"
+ },
+ "5971": {
+  "label": "Kunsthandel",
+  "category": "vrije-tijd"
+ },
+ "5972": {
+  "label": "Postzegels en munten",
+  "category": "vrije-tijd"
+ },
+ "5973": {
+  "label": "Religieuze artikelen",
+  "category": "winkelen"
+ },
+ "5975": {
+  "label": "Hoortoestellen",
+  "category": "verzorging"
+ },
+ "5976": {
+  "label": "Orthopedische hulpmiddelen",
+  "category": "verzorging"
+ },
+ "5977": {
+  "label": "Parfumerie en cosmetica",
+  "category": "verzorging"
+ },
+ "5978": {
+  "label": "Typemachines",
+  "category": "winkelen"
+ },
+ "5983": {
+  "label": "Brandstof voor thuis",
+  "category": "energie"
+ },
+ "5992": {
+  "label": "Bloemist",
+  "category": null
+ },
+ "5993": {
+  "label": "Tabakszaak",
+  "category": null
+ },
+ "5994": {
+  "label": "Kiosk en tijdschriften",
+  "category": null
+ },
+ "5995": {
+  "label": "Dierenwinkel",
+  "category": "huisdieren"
+ },
+ "5996": {
+  "label": "Zwembaden",
+  "category": "huis-tuin"
+ },
+ "5997": {
+  "label": "Scheerapparaten",
+  "category": "winkelen"
+ },
+ "5998": {
+  "label": "Tenten en zonwering",
+  "category": "huis-tuin"
+ },
+ "5999": {
+  "label": "Speciaalzaak",
+  "category": null
+ },
+ "6010": {
+  "label": "Geldopname aan de balie",
+  "category": "contant"
+ },
+ "6011": {
+  "label": "Geldautomaat",
+  "category": "contant"
+ },
+ "6012": {
+  "label": "Financiële instelling",
+  "category": null
+ },
+ "6051": {
+  "label": "Wisselkantoor of crypto",
+  "category": null
+ },
+ "6211": {
+  "label": "Effectenhandel",
+  "category": "beleggen"
+ },
+ "6300": {
+  "label": "Verzekering",
+  "category": "verzekeringen"
+ },
+ "6381": {
+  "label": "Verzekeringspremie",
+  "category": "verzekeringen"
+ },
+ "6399": {
+  "label": "Verzekering",
+  "category": "verzekeringen"
+ },
+ "6513": {
+  "label": "Makelaar en verhuur",
+  "category": "wonen"
+ },
+ "7011": {
+  "label": "Hotel",
+  "category": "vakantie"
+ },
+ "7012": {
+  "label": "Timeshare",
+  "category": "vakantie"
+ },
+ "7032": {
+  "label": "Vakantiekamp",
+  "category": "vakantie"
+ },
+ "7033": {
+  "label": "Camping",
+  "category": "vakantie"
+ },
+ "7210": {
+  "label": "Wasserij",
+  "category": null
+ },
+ "7211": {
+  "label": "Wasserette",
+  "category": null
+ },
+ "7216": {
+  "label": "Stomerij",
+  "category": "kleding"
+ },
+ "7217": {
+  "label": "Tapijtreiniging",
+  "category": "huis-tuin"
+ },
+ "7221": {
+  "label": "Fotostudio",
+  "category": "vrije-tijd"
+ },
+ "7230": {
+  "label": "Kapper of schoonheidssalon",
+  "category": "verzorging"
+ },
+ "7251": {
+  "label": "Schoenmaker",
+  "category": "kleding"
+ },
+ "7261": {
+  "label": "Uitvaart",
+  "category": null
+ },
+ "7273": {
+  "label": "Datingdienst",
+  "category": null
+ },
+ "7276": {
+  "label": "Belastingadvies",
+  "category": null
+ },
+ "7277": {
+  "label": "Hulpverlening",
+  "category": null
+ },
+ "7278": {
+  "label": "Koopclub",
+  "category": null
+ },
+ "7296": {
+  "label": "Kledingverhuur",
+  "category": "kleding"
+ },
+ "7297": {
+  "label": "Massage",
+  "category": "verzorging"
+ },
+ "7298": {
+  "label": "Schoonheid en wellness",
+  "category": "verzorging"
+ },
+ "7299": {
+  "label": "Persoonlijke dienstverlening",
+  "category": null
+ },
+ "7311": {
+  "label": "Reclame",
+  "category": null
+ },
+ "7321": {
+  "label": "Kredietinformatie",
+  "category": null
+ },
+ "7332": {
+  "label": "Kopieerservice",
+  "category": null
+ },
+ "7333": {
+  "label": "Fotografie en grafisch werk",
+  "category": null
+ },
+ "7338": {
+  "label": "Kopieerservice",
+  "category": null
+ },
+ "7339": {
+  "label": "Secretariaatsdiensten",
+  "category": null
+ },
+ "7342": {
+  "label": "Ongediertebestrijding",
+  "category": "huis-tuin"
+ },
+ "7349": {
+  "label": "Schoonmaakdienst",
+  "category": "huis-tuin"
+ },
+ "7361": {
+  "label": "Uitzendbureau",
+  "category": null
+ },
+ "7372": {
+  "label": "Software en IT-diensten",
+  "category": null
+ },
+ "7375": {
+  "label": "Informatiediensten",
+  "category": null
+ },
+ "7379": {
+  "label": "Computerreparatie",
+  "category": null
+ },
+ "7392": {
+  "label": "Advies en management",
+  "category": null
+ },
+ "7393": {
+  "label": "Beveiliging",
+  "category": null
+ },
+ "7394": {
+  "label": "Verhuur van gereedschap",
+  "category": "huis-tuin"
+ },
+ "7395": {
+  "label": "Fotoafdrukken",
+  "category": "vrije-tijd"
+ },
+ "7399": {
+  "label": "Zakelijke diensten",
+  "category": null
+ },
+ "7511": {
+  "label": "Truckstop",
+  "category": "vervoer"
+ },
+ "7512": {
+  "label": "Autoverhuur",
+  "category": "vervoer"
+ },
+ "7513": {
+  "label": "Aanhangerverhuur",
+  "category": "vervoer"
+ },
+ "7519": {
+  "label": "Camperverhuur",
+  "category": "vakantie"
+ },
+ "7523": {
+  "label": "Parkeren",
+  "category": "vervoer"
+ },
+ "7531": {
+  "label": "Autoschadeherstel",
+  "category": "vervoer"
+ },
+ "7534": {
+  "label": "Bandenreparatie",
+  "category": "vervoer"
+ },
+ "7535": {
+  "label": "Autospuiterij",
+  "category": "vervoer"
+ },
+ "7538": {
+  "label": "Garage",
+  "category": "vervoer"
+ },
+ "7542": {
+  "label": "Autowasstraat",
+  "category": "vervoer"
+ },
+ "7549": {
+  "label": "Takelbedrijf",
+  "category": "vervoer"
+ },
+ "7622": {
+  "label": "Reparatie elektronica",
+  "category": null
+ },
+ "7623": {
+  "label": "Reparatie koeling en airco",
+  "category": "huis-tuin"
+ },
+ "7629": {
+  "label": "Reparatie huishoudapparaten",
+  "category": "huis-tuin"
+ },
+ "7631": {
+  "label": "Horlogemaker",
+  "category": "winkelen"
+ },
+ "7641": {
+  "label": "Meubelstoffeerder",
+  "category": "huis-tuin"
+ },
+ "7692": {
+  "label": "Lasbedrijf",
+  "category": null
+ },
+ "7699": {
+  "label": "Reparatiedienst",
+  "category": null
+ },
+ "7800": {
+  "label": "Staatsloterij",
+  "category": "vrije-tijd"
+ },
+ "7801": {
+  "label": "Online casino",
+  "category": "vrije-tijd"
+ },
+ "7802": {
+  "label": "Paardenraces",
+  "category": "vrije-tijd"
+ },
+ "7829": {
+  "label": "Filmproductie",
+  "category": null
+ },
+ "7832": {
+  "label": "Bioscoop",
+  "category": "vrije-tijd"
+ },
+ "7841": {
+  "label": "Videotheek",
+  "category": "vrije-tijd"
+ },
+ "7911": {
+  "label": "Dansschool",
+  "category": "vrije-tijd"
+ },
+ "7922": {
+  "label": "Theater",
+  "category": "vrije-tijd"
+ },
+ "7929": {
+  "label": "Muziek en entertainment",
+  "category": "vrije-tijd"
+ },
+ "7932": {
+  "label": "Biljart",
+  "category": "vrije-tijd"
+ },
+ "7933": {
+  "label": "Bowling",
+  "category": "vrije-tijd"
+ },
+ "7941": {
+  "label": "Sportclub of stadion",
+  "category": "vrije-tijd"
+ },
+ "7991": {
+  "label": "Attractie of museum",
+  "category": "vrije-tijd"
+ },
+ "7992": {
+  "label": "Golfbaan",
+  "category": "vrije-tijd"
+ },
+ "7993": {
+  "label": "Spelautomaten",
+  "category": "vrije-tijd"
+ },
+ "7994": {
+  "label": "Speelhal",
+  "category": "vrije-tijd"
+ },
+ "7995": {
+  "label": "Gokken en loterij",
+  "category": "vrije-tijd"
+ },
+ "7996": {
+  "label": "Pretpark",
+  "category": "vrije-tijd"
+ },
+ "7997": {
+  "label": "Sportschool of club",
+  "category": "vrije-tijd"
+ },
+ "7998": {
+  "label": "Dierentuin of aquarium",
+  "category": "vrije-tijd"
+ },
+ "7999": {
+  "label": "Recreatie",
+  "category": "vrije-tijd"
+ },
+ "8011": {
+  "label": "Arts",
+  "category": "verzorging"
+ },
+ "8021": {
+  "label": "Tandarts",
+  "category": "verzorging"
+ },
+ "8031": {
+  "label": "Osteopaat",
+  "category": "verzorging"
+ },
+ "8041": {
+  "label": "Chiropractor",
+  "category": "verzorging"
+ },
+ "8042": {
+  "label": "Oogarts",
+  "category": "verzorging"
+ },
+ "8043": {
+  "label": "Opticien",
+  "category": "verzorging"
+ },
+ "8044": {
+  "label": "Opticien",
+  "category": "verzorging"
+ },
+ "8049": {
+  "label": "Podotherapeut",
+  "category": "verzorging"
+ },
+ "8050": {
+  "label": "Verpleging en verzorging",
+  "category": "verzorging"
+ },
+ "8062": {
+  "label": "Ziekenhuis",
+  "category": "verzorging"
+ },
+ "8071": {
+  "label": "Medisch laboratorium",
+  "category": "verzorging"
+ },
+ "8099": {
+  "label": "Zorgverlener",
+  "category": "verzorging"
+ },
+ "8111": {
+  "label": "Advocaat",
+  "category": null
+ },
+ "8211": {
+  "label": "School",
+  "category": "opvang-school"
+ },
+ "8220": {
+  "label": "Hogeschool of universiteit",
+  "category": "opvang-school"
+ },
+ "8241": {
+  "label": "Schriftelijke cursus",
+  "category": "opvang-school"
+ },
+ "8244": {
+  "label": "Opleiding",
+  "category": "opvang-school"
+ },
+ "8249": {
+  "label": "Vakopleiding",
+  "category": "opvang-school"
+ },
+ "8299": {
+  "label": "Onderwijs en cursussen",
+  "category": "opvang-school"
+ },
+ "8351": {
+  "label": "Kinderopvang",
+  "category": "opvang-school"
+ },
+ "8398": {
+  "label": "Goed doel",
+  "category": "cadeaus"
+ },
+ "8641": {
+  "label": "Vereniging",
+  "category": null
+ },
+ "8651": {
+  "label": "Politieke partij",
+  "category": null
+ },
+ "8661": {
+  "label": "Kerk of geloofsgemeenschap",
+  "category": "cadeaus"
+ },
+ "8675": {
+  "label": "Automobielclub",
+  "category": "vervoer"
+ },
+ "8699": {
+  "label": "Vereniging",
+  "category": null
+ },
+ "8734": {
+  "label": "Testlaboratorium",
+  "category": null
+ },
+ "8911": {
+  "label": "Architect en ingenieur",
+  "category": null
+ },
+ "8931": {
+  "label": "Boekhouder",
+  "category": null
+ },
+ "8999": {
+  "label": "Zakelijke dienstverlening",
+  "category": null
+ },
+ "9211": {
+  "label": "Gerechtskosten",
+  "category": null
+ },
+ "9222": {
+  "label": "Boete",
+  "category": "belastingen"
+ },
+ "9223": {
+  "label": "Borgsom",
+  "category": null
+ },
+ "9311": {
+  "label": "Belasting",
+  "category": "belastingen"
+ },
+ "9399": {
+  "label": "Overheid",
+  "category": "belastingen"
+ },
+ "9402": {
+  "label": "Post",
+  "category": null
+ },
+ "9405": {
+  "label": "Overheid (intern)",
+  "category": null
+ },
+ "9700": {
+  "label": "Verwijsdienst",
+  "category": null
+ },
+ "9701": {
+  "label": "Visa-dienst",
+  "category": null
+ },
+ "9702": {
+  "label": "Noodhulp",
+  "category": null
+ },
+ "9950": {
+  "label": "Interne aankoop",
+  "category": null
+ }
+}

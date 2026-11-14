@@ -1,0 +1,197 @@
+"""Request bodies. Responses are plain dicts (see services/txquery.py for the Tx shape).
+
+Optional fields use `model_fields_set` in the routes to tell "not sent" from "sent as null".
+"""
+
+from __future__ import annotations
+
+from datetime import date
+from typing import Annotated, Any, Literal
+
+from pydantic import BaseModel, Field
+
+from .errors import bad_request
+
+MONEY_LIMIT = 10 ** 12          # ten billion euros: anything beyond is a typo or an attack
+Money = Annotated[int, Field(ge=-MONEY_LIMIT, le=MONEY_LIMIT)]
+PositiveMoney = Annotated[int, Field(ge=1, le=MONEY_LIMIT)]
+
+AccountType = Literal["checking", "savings", "credit", "investment"]
+Group = Literal["income", "fixed", "daily", "saving", "internal"]
+
+
+def iso_date(text: str | None, field: str = "datum") -> str | None:
+    if text is None:
+        return None
+    try:
+        return date.fromisoformat(text).isoformat()
+    except (TypeError, ValueError):
+        raise bad_request(f"Ongeldige {field}.", "bad_date") from None
+
+
+class PasswordBody(BaseModel):
+    password: str = Field(max_length=1000)
+
+
+class PasswordChange(BaseModel):
+    current: str = Field(max_length=1000)
+    new: str = Field(max_length=1000)
+
+
+class TxPatch(BaseModel):
+    category_id: int | None = None
+    apply_to_merchant: bool = True
+    # "one" | "merchant" | "merchant_below" (wins over apply_to_merchant when given)
+    apply_scope: Literal["one", "merchant", "merchant_below"] | None = None
+    below_cents: PositiveMoney | None = None
+    tag_ids: list[int] | None = None
+    tag_always: bool = False
+    note: str | None = Field(default=None, max_length=2000)
+    goal_id: int | None = None
+    # manual transactions only
+    account_id: int | None = None
+    date: str | None = None
+    amount_cents: Money | None = None
+    merchant_name: str | None = Field(default=None, max_length=200)
+
+
+class TxCreate(BaseModel):
+    account_id: int
+    date: str
+    amount_cents: Money
+    merchant_name: str = Field(min_length=1, max_length=200)
+    category_id: int | None = None
+    tag_ids: list[int] = []
+    note: str | None = Field(default=None, max_length=2000)
+
+
+class TxBulk(BaseModel):
+    ids: list[int] = Field(min_length=1, max_length=5000)
+    category_id: int | None = None
+    add_tag_ids: list[int] = []
+    remove_tag_ids: list[int] = []
+
+
+class SortBody(BaseModel):
+    merchant_key: str = Field(min_length=1)
+    category_id: int
+
+
+class CategoryCreate(BaseModel):
+    name: str = Field(min_length=1, max_length=60)
+    emoji: str | None = Field(default=None, max_length=16)
+    color: str | None = Field(default=None, max_length=20)
+    grp: Group = "daily"
+
+
+class CategoryPatch(BaseModel):
+    name: str | None = Field(default=None, min_length=1, max_length=60)
+    emoji: str | None = Field(default=None, max_length=16)
+    color: str | None = Field(default=None, max_length=20)
+    grp: Group | None = None
+    hidden: bool | None = None
+    sort: int | None = None
+
+
+class TagCreate(BaseModel):
+    name: str = Field(min_length=1, max_length=60)
+    emoji: str | None = Field(default=None, max_length=16)
+    color: str | None = Field(default=None, max_length=20)
+
+
+class TagPatch(BaseModel):
+    name: str | None = Field(default=None, min_length=1, max_length=60)
+    emoji: str | None = Field(default=None, max_length=16)
+    color: str | None = Field(default=None, max_length=20)
+    archived: bool | None = None
+
+
+class AccountCreate(BaseModel):
+    name: str = Field(min_length=1, max_length=60)
+    type: AccountType
+    iban: str | None = Field(default=None, max_length=40)
+    match: list[str] | None = None
+
+
+class AccountPatch(BaseModel):
+    name: str | None = Field(default=None, min_length=1, max_length=60)
+    type: AccountType | None = None
+    iban: str | None = Field(default=None, max_length=40)
+    match: list[str] | None = None
+    hidden: bool | None = None
+    sort: int | None = None
+    manual_balance_cents: Money | None = None
+    manual_balance_date: str | None = None
+
+
+class AccountValueBody(BaseModel):
+    date: str
+    value_cents: Money
+
+
+class RulePatch(BaseModel):
+    category_id: int | None = None
+    below_cents: PositiveMoney | None = None          # null clears the threshold
+    below_category_id: int | None = None
+
+
+class SettingsPatch(BaseModel):
+    month_start_day: int | None = Field(default=None, ge=1, le=28)
+    household_name: str | None = Field(default=None, max_length=80)
+    dismissed_suggestions: list[Annotated[str, Field(max_length=200)]] | None = Field(default=None, max_length=200)
+    assumptions: dict[str, dict[str, Any]] | None = None
+
+
+# ---------------------------------------------------------------- analytics
+
+class RecurringIgnoreBody(BaseModel):
+    key: str = Field(min_length=1, max_length=300)
+
+
+class GoalCreate(BaseModel):
+    name: str = Field(min_length=1, max_length=60)
+    emoji: str | None = Field(default=None, max_length=16)
+    color: str | None = Field(default=None, max_length=20)
+    target_cents: PositiveMoney
+    target_date: str | None = None
+    repeat: Literal["none", "yearly"] = "none"
+    keywords: list[str] = Field(default=[], max_length=20)
+    code: str | None = Field(default=None, max_length=5)
+
+
+class GoalPatch(BaseModel):
+    name: str | None = Field(default=None, min_length=1, max_length=60)
+    emoji: str | None = Field(default=None, max_length=16)
+    color: str | None = Field(default=None, max_length=20)
+    target_cents: PositiveMoney | None = None
+    target_date: str | None = None
+    repeat: Literal["none", "yearly"] | None = None
+    keywords: list[str] | None = Field(default=None, max_length=20)
+    code: str | None = Field(default=None, max_length=5)
+    archived: bool | None = None
+    sort: int | None = None
+
+
+class GoalEntryBody(BaseModel):
+    amount_cents: Money | None = None
+    date: str | None = None
+    note: str | None = Field(default=None, max_length=500)
+    transaction_id: int | None = None
+
+
+class GoalSaldoBody(BaseModel):
+    saldo_cents: Money
+
+
+class InsightDismissBody(BaseModel):
+    id: str = Field(min_length=1, max_length=300)
+
+
+class InsightMuteBody(BaseModel):
+    kind: str = Field(min_length=1, max_length=40)
+    muted: bool = True
+
+
+class GoalLinkBody(BaseModel):
+    goal_id: int
+    description: str = Field(min_length=1, max_length=500)

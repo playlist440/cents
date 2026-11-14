@@ -1,0 +1,244 @@
+"""Recurring detection: frequencies, clusters, status, change, next date, ignore, lookup."""
+
+from __future__ import annotations
+
+from datetime import date, timedelta
+
+from book import book, today  # noqa: F401  (fixtures)
+from cents.services import recurring
+
+_ids = iter(range(1, 100000))
+
+
+def rows(merchant: str, dates: list[str], amounts: list[int] | int, category_id: int = 1) -> list[dict]:
+    if isinstance(amounts, int):
+        amounts = [amounts] * len(dates)
+    return [{"id": next(_ids), "date": d, "amount_cents": a, "merchant_key": merchant,
+             "merchant_name": merchant.title(), "category_id": category_id}
+            for d, a in zip(dates, amounts)]
+
+
+def months(first: str, n: int) -> list[str]:
+    y, m, d = (int(x) for x in first.split("-"))
+    out = []
+    for i in range(n):
+        yy, mm = divmod(m - 1 + i, 12)
+        out.append(date(y + yy, mm + 1, d).isoformat())
+    return out
+
+
+TODAY = date(2026, 3, 15)
+
+
+def test_monthly_with_price_change():
+    r = rows("netflix", months("2025-09-09", 7), [-1399] * 4 + [-1599] * 3)
+    [item] = recurring.detect(r, TODAY)
+    assert item["frequency"] == "monthly" and item["status"] == "active"
+    assert item["amount_cents"] == -1599 and item["per_month_cents"] == -1599
+    assert item["change"] == {"from_cents": -1399, "to_cents": -1599, "date": "2026-01-09"}
+    assert item["next_date"] == "2026-04-09" and item["last_date"] == "2026-03-09"
+    assert item["key"] == "netflix|out|monthly|14" and item["direction"] == "out" and item["count"] == 7
+    assert item["variable"] is False
+
+
+def test_small_differences_are_no_change():
+    r = rows("odido", months("2025-10-18", 5), [-2200, -2200, -2210, -2200, -2215])
+    [item] = recurring.detect(r, TODAY)
+    assert item["change"] is None
+
+
+def test_new_and_ended_status():
+    new = rows("disney", months("2026-01-03", 3), -1099)
+    ended = rows("spotify", months("2025-06-14", 6), -1299)        # last 2025-11-14
+    gone = rows("oldgym", months("2025-01-05", 4), -2500)          # ended long ago
+    items = {i["merchant_key"]: i for i in recurring.detect(new + ended + gone, TODAY)}
+    assert items["disney"]["status"] == "new"
+    assert items["spotify"]["status"] == "ended"       # overdue 121 days > 1.6 x 30
+    assert "oldgym" not in items                       # ended more than ~3 periods ago
+
+
+def test_frequencies_and_yearly_pair():
+    weekly = rows("oppas", [(date(2026, 1, 3) + timedelta(days=7 * i)).isoformat() for i in range(10)], -3000)
+    quarterly = rows("mrb", ["2025-04-15", "2025-07-15", "2025-10-15", "2026-01-15"], -11800)
+    yearly = rows("anwb", ["2025-04-12", "2026-04-11"], -9450)
+    items = {i["merchant_key"]: i for i in recurring.detect(weekly + quarterly + yearly, date(2026, 4, 20))}
+    assert items["oppas"]["frequency"] == "weekly"
+    assert items["oppas"]["per_month_cents"] == round(-3000 * 52 / 12)
+    assert items["mrb"]["frequency"] == "quarterly" and items["mrb"]["next_date"] == "2026-04-17"
+    assert items["anwb"]["frequency"] == "yearly" and items["anwb"]["per_month_cents"] == round(-9450 / 12)
+
+
+def test_two_payments_only_count_for_yearly():
+    assert recurring.detect(rows("x", ["2026-01-01", "2026-02-01"], -500), TODAY) == []
+
+
+def test_yearly_pair_at_a_busy_shop_is_coincidence():
+    r = rows("hema", ["2025-03-01", "2025-06-10", "2025-09-02", "2026-02-27"], [-1086, -500, -3000, -1090])
+    assert recurring.detect(r, TODAY) == []
+
+
+def test_clusters_split_two_policies():
+    a = rows("insurer", months("2025-10-01", 6), -4812)
+    b = rows("insurer", months("2025-10-01", 6), -1735)
+    items = recurring.detect(a + b, TODAY)
+    assert sorted(i["amount_cents"] for i in items) == [-4812, -1735]
+    assert {i["key"] for i in items} == {"insurer|out|monthly|48", "insurer|out|monthly|17"}
+
+
+def test_variable_monthly_debit_needs_four():
+    energy = rows("eneco", months("2025-10-20", 5), [-11000, -13800, -12000, -12500, -11500])
+    [item] = recurring.detect(energy, TODAY)
+    assert item["variable"] is True and item["amount_cents"] == -12000      # median of the last 6
+    assert item["change"] is None
+    assert recurring.detect(energy[:3], TODAY) == []
+
+
+def test_irregular_gaps_are_not_recurring():
+    r = rows("bol", ["2025-10-01", "2025-10-05", "2025-12-20", "2026-01-02", "2026-03-01"], -2500)
+    assert recurring.detect(r, TODAY) == []
+
+
+def test_monthly_next_date_keeps_usual_day():
+    r = rows("rent", ["2025-11-01", "2025-12-01", "2026-01-02", "2026-01-30"], -100000)
+    [item] = recurring.detect(r, TODAY)
+    assert item["next_date"] == "2026-03-01"      # paid early on 30 Jan for February
+
+
+def test_income_and_api(client, book, today):
+    chk = book.account("Betaal", "checking")
+    sav = book.account("Spaar", "savings")
+    book.monthly(chk, "2025-09-24", 6, 300000, "salaris", "Werkgever")
+    book.monthly(chk, "2025-10-09", 6, -1399, "abonnementen", "Netflix", method="card")
+    book.monthly(chk, "2025-09-25", 6, -50000, "sparen", "Spaar", kind="transfer", to=sav)
+    book.monthly(chk, "2025-10-02", 6, -5000, "contant", "Geldautomaat", method="atm")
+    book.commit()
+    data = client.get("/api/recurring").json()
+    names = {i["name"]: i for i in data["items"]}
+    assert set(names) == {"Werkgever", "Netflix", "Spaar"}       # cash withdrawals are no bills
+    assert names["Werkgever"]["direction"] == "in"
+    assert data["monthly_in_cents"] == 300000
+    assert data["monthly_out_cents"] == 1399                     # savings are not a fixed cost
+    assert data["yearly_out_cents"] == 1399 * 12
+
+    tx = client.get("/api/transactions?merchant_key=netflix").json()["items"][0]
+    detail = client.get(f"/api/transactions/{tx['id']}").json()
+    assert detail["merchant"]["recurring"]["key"] == "netflix|out|monthly|14"
+
+    assert client.post("/api/recurring/ignore", json={"key": "netflix|out|monthly|14"}).json() == {"ok": True}
+    data = client.get("/api/recurring").json()
+    assert "Netflix" not in {i["name"] for i in data["items"]}
+    assert data["monthly_out_cents"] == 0
+    assert client.get(f"/api/transactions/{tx['id']}").json()["merchant"]["recurring"] is None
+
+
+# ---------------------------------------------------------------- review fixes
+
+NOV = date(2026, 11, 20)
+
+
+def test_price_rise_above_15_percent_continues_the_item():
+    netflix = rows("netflix", months("2026-01-09", 11), [-1299] * 7 + [-1599] * 4)
+    eneco = rows("eneco", months("2026-01-20", 10), [-10000] * 6 + [-14000] * 4)
+    items = {i["merchant_key"]: i for i in recurring.detect(netflix + eneco, NOV)}
+    assert len(items) == 2
+    n = items["netflix"]
+    assert n["status"] == "active" and n["count"] == 11 and n["amount_cents"] == -1599
+    assert n["change"] == {"from_cents": -1299, "to_cents": -1599, "date": "2026-08-09"}
+    e = items["eneco"]
+    assert e["status"] == "active" and e["change"]["from_cents"] == -10000 and e["change"]["to_cents"] == -14000
+
+
+def test_price_rise_visible_from_the_first_new_payment():
+    netflix = rows("netflix", months("2026-04-09", 8), [-1299] * 7 + [-1599])
+    [item] = recurring.detect(netflix, NOV)
+    assert item["amount_cents"] == -1599 and item["change"]["date"] == "2026-11-09"
+
+
+def test_two_policies_with_close_amounts_on_different_days():
+    a = rows("insurer", months("2026-01-01", 10), -1000)
+    b = rows("insurer", months("2026-01-05", 10), -1100)
+    items = recurring.detect(a + b, NOV)
+    assert sorted(i["amount_cents"] for i in items) == [-1100, -1000]
+    assert all(i["frequency"] == "monthly" for i in items)
+    assert len({i["key"] for i in items}) == 2
+
+
+def test_four_weekly_and_two_weekly():
+    four = rows("loon", [(date(2026, 6, 5) + timedelta(days=28 * i)).isoformat() for i in range(6)], 150000)
+    two = rows("oppasclub", [(date(2026, 9, 4) + timedelta(days=14 * i)).isoformat() for i in range(6)], -2500)
+    items = {i["merchant_key"]: i for i in recurring.detect(four + two, NOV)}
+    f = items["loon"]
+    assert f["frequency"] == "4-weekly" and f["per_month_cents"] == round(150000 * 13 / 12)
+    assert f["next_date"] == (date(2026, 6, 5) + timedelta(days=28 * 6)).isoformat()
+    t = items["oppasclub"]
+    assert t["frequency"] == "2-weekly" and t["per_month_cents"] == round(-2500 * 26 / 12)
+    assert t["next_date"] == (date(2026, 9, 4) + timedelta(days=14 * 6)).isoformat()
+
+
+def test_daily_bakjes_are_no_fixed_costs():
+    def daily(merchant, dates, amounts, key="boodschappen"):
+        out = rows(merchant, dates, amounts)
+        for r in out:
+            r["grp"], r["category_key"] = "daily", key
+        return out
+    weekly_shop = daily("lidl", [(date(2026, 8, 1) + timedelta(days=7 * i)).isoformat() for i in range(15)],
+                        [-5000, -5200, -4900, -5100, -5050] * 3)
+    fuel = daily("shell", months("2026-03-12", 8), [-6000, -6500, -6200, -6800, -6100, -6600, -6300, -6400],
+                 "vervoer")
+    gym = daily("basic-fit", months("2026-03-28", 8), -2999, "vrije-tijd")
+    unsorted = daily("p:vriend", months("2026-03-02", 8), -2000, "unsorted")
+    found = {i["merchant_key"] for i in recurring.detect(weekly_shop + fuel + gym + unsorted, NOV)}
+    assert found == {"basic-fit", "p:vriend"}       # only stable, monthly-or-longer series
+
+
+def test_new_only_with_history_before_it():
+    rent = rows("rent", months("2026-09-05", 3), -100000)
+    for r in rent:
+        r["account_id"] = 1
+    [item] = recurring.detect(rent, date(2026, 11, 15))
+    assert item["status"] == "active"                # the data simply starts there
+    old = rows("bank", months("2026-01-02", 11), -295)
+    for r in old:
+        r["account_id"] = 1
+    items = {i["merchant_key"]: i for i in recurring.detect(rent + old, date(2026, 11, 15))}
+    assert items["rent"]["status"] == "new"
+
+
+def test_ignore_survives_a_price_change():
+    first = rows("netflix", months("2026-01-09", 5), -1299)
+    [item] = recurring.detect(first, date(2026, 5, 20))
+    more = first + rows("netflix", months("2026-06-09", 3), -1599)
+    assert recurring.detect(more, date(2026, 8, 20), {item["key"]}) == []
+    assert isinstance(item["key"], str)
+
+
+def test_api_totals_count_fixed_bakjes_only(client, book, today):
+    chk = book.account("Betaal", "checking")
+    book.monthly(chk, "2025-09-01", 6, -100000, "wonen", "Verhuurder", method="debit")
+    book.monthly(chk, "2025-09-28", 6, -2999, "vrije-tijd", "Basic-Fit", method="debit")
+    book.monthly(chk, "2025-09-24", 6, 300000, "salaris", "Werkgever")
+    for i in range(20):
+        book.tx(chk, (date(2025, 10, 4) + timedelta(days=7 * i)).isoformat(), -5000 - (i % 3) * 100,
+                "boodschappen", "Lidl", method="card")
+    book.commit()
+    data = client.get("/api/recurring").json()
+    assert {i["name"] for i in data["items"]} == {"Verhuurder", "Basic-Fit", "Werkgever"}
+    assert data["monthly_out_cents"] == 100000 and data["monthly_in_cents"] == 300000
+    o = client.get("/api/overview").json()
+    assert [u["name"] for u in o["upcoming"]] == ["Verhuurder"]
+    assert o["fixed_upcoming_cents"] == 100000
+
+
+def test_daily_series_must_be_the_merchants_only_activity():
+    def daily(merchant, dates, amounts):
+        out = rows(merchant, dates, amounts)
+        for r in out:
+            r["grp"], r["category_key"] = "daily", "uit-eten"
+        return out
+    visits = daily("brasserie", ["2025-12-05", "2026-06-04", "2026-12-03"], -3614)
+    other = daily("brasserie", ["2026-02-01", "2026-03-15", "2026-08-08"], [-2000, -5100, -7600])
+    assert recurring.detect(visits + other, date(2026, 12, 20)) == []
+    sitter = daily("p:oppas", months("2026-01-02", 6), [-3500] * 3 + [-3000] * 3)
+    for r in sitter:
+        r["category_key"] = "unsorted"
+    assert recurring.detect(sitter, date(2026, 6, 20)) == []      # linked prices are no subscription

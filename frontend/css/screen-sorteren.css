@@ -1,0 +1,198 @@
+/* Sorteren: one card per merchant, fly-into-tile, finished state. Prefix .so- */
+
+.so-screen .screen-content { padding-bottom: calc(24px + var(--sab)); }
+.so-count { font: 600 var(--fs-headline)/1.2 var(--font); letter-spacing: -.024em; }
+.so-progress {
+  height: 3px;
+  margin: 0 calc(-1 * var(--pad-r)) 0 calc(-1 * var(--pad-l));
+  background: var(--fill-4);
+  overflow: hidden;
+}
+.so-progress span { display: block; height: 100%; background: var(--tint); transform-origin: left; transition: transform 420ms var(--ease-out); }
+
+.so { max-width: 560px; margin: 0 auto; padding-top: 18px; }
+
+/* Card */
+.so-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 4px;
+  min-height: 228px;
+  padding: 26px 22px 22px;
+  border-radius: 28px;
+  background: var(--bg-grouped-2);
+  box-shadow: var(--card-shadow);
+  touch-action: pan-y;
+  -webkit-user-select: none;
+  user-select: none;
+  transition: transform 380ms var(--spring-lin);
+  will-change: transform;
+  cursor: grab;
+}
+.so-card:active { cursor: grabbing; }
+@keyframes so-in { from { opacity: 0; transform: translateY(14px) scale(.94); } }
+.so-ghost { animation: none !important; box-shadow: var(--pop-shadow); }
+.so-avatar { display: grid; place-items: center; width: 56px; height: 56px; margin-bottom: 10px; font-size: 40px; line-height: 1; }
+.so-card.is-person .so-avatar { border-radius: 50%; background: var(--fill-3); font-size: 30px; }
+.so-name {
+  font: 700 var(--fs-title1)/1.18 var(--font);
+  letter-spacing: .005em;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+.so-facts { margin-top: 4px; font: 500 var(--fs-callout)/1.3 var(--font); color: var(--label); white-space: normal; }
+.so-facts.is-income { color: var(--pos); }
+.so-meta { font: 400 var(--fs-subhead)/1.3 var(--font); color: var(--label-2); }
+.so-sample {
+  margin-top: 10px;
+  max-width: 100%;
+  font: 400 var(--fs-footnote)/1.35 var(--font);
+  color: var(--label-2);
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}
+.so-badge {
+  position: absolute;
+  top: 16px;
+  padding: 5px 10px;
+  border-radius: 10px;
+  font: 700 var(--fs-footnote)/1.2 var(--font);
+  pointer-events: none;
+}
+.so-badge.is-yes { left: 16px; background: color-mix(in srgb, var(--c) 18%, transparent); color: var(--label); transform: rotate(-6deg); }
+.so-badge.is-no { right: 16px; background: var(--fill-3); color: var(--label-2); transform: rotate(6deg); }
+
+/* Suggested bakje + skip */
+.so-actions { display: flex; gap: 10px; margin: 16px 0 22px; }
+.so-primary {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  height: 58px;
+  padding: 0 18px;
+  border-radius: 18px;
+  background: var(--tint);
+  color: var(--on-tint);
+  font: 600 var(--fs-headline)/1.2 var(--font);
+  letter-spacing: -.024em;
+  transition: transform 260ms var(--spring-lin), filter 200ms linear;
+}
+.so-primary-emoji {
+  display: grid;
+  place-items: center;
+  width: 36px; height: 36px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--on-tint) 92%, transparent);
+  font-size: 21px;
+  line-height: 1;
+  flex: none;
+}
+.so-primary-name { min-width: 0; overflow-wrap: anywhere; text-align: center; line-height: 1.2; } /* wraps on 320 px, never truncates */
+.so-primary { height: auto; min-height: 58px; padding-top: 8px; padding-bottom: 8px; }
+.so-primary.is-skip { background: var(--fill-2); color: var(--label); }
+.so-primary.is-skip .so-key { background: var(--bg-grouped-2); color: var(--label-2); }
+.so-skip {
+  position: relative;
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 58px;
+  padding: 0 18px;
+  border-radius: 18px;
+  background: var(--fill-3);
+  color: var(--label);
+  font: 600 var(--fs-callout)/1 var(--font);
+  transition: transform 260ms var(--spring-lin), background-color 200ms linear;
+}
+.so-skip.is-person { background: var(--tint-soft); color: var(--tint); }
+.so-key {
+  display: inline-block;
+  min-width: 18px;
+  padding: 0 5px;
+  border-radius: 5px;
+  background: color-mix(in srgb, var(--on-tint) 22%, transparent);
+  color: var(--on-tint);
+  font: 600 11px/18px var(--font);
+  text-align: center;
+}
+.so-primary .so-key { position: absolute; right: 12px; background: var(--bg-grouped-2); color: var(--label); }
+.so-skip .so-key { background: var(--bg-grouped-2); color: var(--label); }
+@media (hover: none) {
+  .so-primary:active, .so-skip:active { transform: scale(.96); transition-duration: 0s; }
+}
+@media (hover: hover) and (pointer: fine) {
+  .so-primary:hover { filter: brightness(1.07); }
+  .so-skip:hover { background: var(--fill-2); }
+}
+
+.so-grid { padding: 4px 0 0; }
+.so-grid .bk-grid { grid-template-columns: repeat(auto-fill, minmax(74px, 1fr)); }
+.so-grid .bk-key { background: var(--bg-grouped-2); box-shadow: 0 0 0 var(--hair) var(--sep); }
+
+/* Finished */
+.so-end {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: calc(100dvh - var(--sat) - var(--nav-h) - var(--sab) - 120px);
+  padding: 24px 16px 48px;
+  text-align: center;
+}
+.so-check { margin-bottom: 14px; }
+.so-check svg { overflow: visible; }
+.so-check-ring { fill: var(--tint-soft); stroke: var(--tint); stroke-width: 5; stroke-linecap: round; stroke-dasharray: 100; stroke-dashoffset: 0; transform: rotate(-90deg); transform-origin: 48px 48px; animation: so-draw 700ms var(--ease-out) backwards; }
+.so-check-mark { fill: none; stroke: var(--tint); stroke-width: 7; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 100; stroke-dashoffset: 0; animation: so-draw 420ms 520ms var(--ease-out) backwards; }
+.so-check.is-partial .so-check-ring { stroke: var(--label-3); fill: var(--fill-4); }
+.so-check-num { font: 700 34px var(--font-rounded); fill: var(--label-2); }
+@keyframes so-draw { from { stroke-dashoffset: 100; } }
+.so-check { animation: so-pop 520ms var(--spring-bouncy) both; }
+@keyframes so-pop { from { transform: scale(.6); opacity: 0; } }
+.so-end-title { font: 700 var(--fs-title2)/1.25 var(--font); letter-spacing: -.016em; }
+.so-end-sub { font: 400 var(--fs-subhead)/1.3 var(--font); color: var(--label-2); }
+.so-end-emoji { font-size: 56px; }
+.so-end-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 18px; }
+
+/* Quiet celebration: the bakjes you used drift up and fade */
+.so-burst { position: absolute; top: calc(50% - 74px); left: 50%; width: 0; height: 0; pointer-events: none; }
+.so-burst span {
+  position: absolute;
+  left: 0; top: 0;
+  font-size: 22px;
+  line-height: 1;
+  opacity: 0;
+  --a: calc((var(--i) / var(--n)) * 360deg - 90deg);
+  animation: so-float 1600ms calc(380ms + var(--i) * 40ms) var(--ease-out) forwards;
+}
+@keyframes so-float {
+  0% { opacity: 0; transform: translate(-50%, -50%) rotate(var(--a)) translateX(30px) rotate(calc(-1 * var(--a))) scale(.5); }
+  25% { opacity: 1; }
+  100% { opacity: 0; transform: translate(-50%, -50%) rotate(var(--a)) translateX(98px) rotate(calc(-1 * var(--a))) translateY(-18px) scale(1); }
+}
+
+@media (min-width: 700px) {
+  .so { padding-top: 32px; }
+  .so-card { min-height: 250px; padding: 32px 28px 26px; }
+}
+@media (max-width: 359px) {
+  .so-card { min-height: 200px; padding: 20px 16px 18px; }
+  .so-name { font-size: var(--fs-title2); }
+  .so-skip { padding: 0 14px; }
+}

@@ -1,0 +1,212 @@
+[
+ {
+  "key": "salaris",
+  "name": "Salaris",
+  "emoji": "💼",
+  "grp": "income",
+  "color": "green"
+ },
+ {
+  "key": "toeslagen",
+  "name": "Toeslagen & uitkeringen",
+  "emoji": "🏛️",
+  "grp": "income",
+  "color": "mint"
+ },
+ {
+  "key": "inkomen-overig",
+  "name": "Overig inkomen",
+  "emoji": "💶",
+  "grp": "income",
+  "color": "teal"
+ },
+ {
+  "key": "wonen",
+  "name": "Wonen",
+  "emoji": "🏠",
+  "grp": "fixed",
+  "color": "indigo"
+ },
+ {
+  "key": "energie",
+  "name": "Energie & water",
+  "emoji": "⚡",
+  "grp": "fixed",
+  "color": "yellow"
+ },
+ {
+  "key": "verzekeringen",
+  "name": "Verzekeringen",
+  "emoji": "🛡️",
+  "grp": "fixed",
+  "color": "blue"
+ },
+ {
+  "key": "telecom",
+  "name": "Internet, tv & bellen",
+  "emoji": "📶",
+  "grp": "fixed",
+  "color": "cyan"
+ },
+ {
+  "key": "abonnementen",
+  "name": "Abonnementen",
+  "emoji": "🔁",
+  "grp": "fixed",
+  "color": "purple"
+ },
+ {
+  "key": "belastingen",
+  "name": "Belastingen & gemeente",
+  "emoji": "🧾",
+  "grp": "fixed",
+  "color": "brown"
+ },
+ {
+  "key": "opvang-school",
+  "name": "Opvang & school",
+  "emoji": "🎒",
+  "grp": "fixed",
+  "color": "orange"
+ },
+ {
+  "key": "leningen",
+  "name": "Leningen",
+  "emoji": "🏦",
+  "grp": "fixed",
+  "color": "gray"
+ },
+ {
+  "key": "boodschappen",
+  "name": "Boodschappen",
+  "emoji": "🛒",
+  "grp": "daily",
+  "color": "green"
+ },
+ {
+  "key": "uit-eten",
+  "name": "Uit eten & bezorgen",
+  "emoji": "🍽️",
+  "grp": "daily",
+  "color": "orange"
+ },
+ {
+  "key": "vervoer",
+  "name": "Auto & vervoer",
+  "emoji": "🚗",
+  "grp": "daily",
+  "color": "blue"
+ },
+ {
+  "key": "huis-tuin",
+  "name": "Huis & tuin",
+  "emoji": "🛠️",
+  "grp": "daily",
+  "color": "brown"
+ },
+ {
+  "key": "kleding",
+  "name": "Kleding",
+  "emoji": "👕",
+  "grp": "daily",
+  "color": "pink"
+ },
+ {
+  "key": "verzorging",
+  "name": "Gezondheid & verzorging",
+  "emoji": "💊",
+  "grp": "daily",
+  "color": "red"
+ },
+ {
+  "key": "kinderen",
+  "name": "Kinderen",
+  "emoji": "🧸",
+  "grp": "daily",
+  "color": "yellow"
+ },
+ {
+  "key": "vrije-tijd",
+  "name": "Vrije tijd",
+  "emoji": "🎟️",
+  "grp": "daily",
+  "color": "purple"
+ },
+ {
+  "key": "vakantie",
+  "name": "Vakantie",
+  "emoji": "✈️",
+  "grp": "daily",
+  "color": "cyan"
+ },
+ {
+  "key": "cadeaus",
+  "name": "Cadeaus & goede doelen",
+  "emoji": "🎁",
+  "grp": "daily",
+  "color": "pink"
+ },
+ {
+  "key": "huisdieren",
+  "name": "Huisdieren",
+  "emoji": "🐾",
+  "grp": "daily",
+  "color": "mint"
+ },
+ {
+  "key": "winkelen",
+  "name": "Winkelen",
+  "emoji": "🛍️",
+  "grp": "daily",
+  "color": "indigo"
+ },
+ {
+  "key": "contant",
+  "name": "Contant",
+  "emoji": "💵",
+  "grp": "daily",
+  "color": "gray"
+ },
+ {
+  "key": "overig",
+  "name": "Overig",
+  "emoji": "📦",
+  "grp": "daily",
+  "color": "gray"
+ },
+ {
+  "key": "sparen",
+  "name": "Sparen",
+  "emoji": "🐷",
+  "grp": "saving",
+  "color": "teal"
+ },
+ {
+  "key": "beleggen",
+  "name": "Beleggen",
+  "emoji": "📈",
+  "grp": "saving",
+  "color": "indigo"
+ },
+ {
+  "key": "intern",
+  "name": "Eigen rekeningen",
+  "emoji": "🔄",
+  "grp": "internal",
+  "color": "gray"
+ },
+ {
+  "key": "creditcard",
+  "name": "Creditcard",
+  "emoji": "💳",
+  "grp": "internal",
+  "color": "gray"
+ },
+ {
+  "key": "unsorted",
+  "name": "Nog te sorteren",
+  "emoji": "❔",
+  "grp": "daily",
+  "color": "gray"
+ }
+]

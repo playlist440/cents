@@ -1,0 +1,1224 @@
+{
+ "types": {
+  "ACC": {
+   "label": "Acceptgiro",
+   "method": "transfer"
+  },
+  "AFB": {
+   "label": "Kosten",
+   "method": "fee"
+  },
+  "AGI": {
+   "label": "Acceptgiro",
+   "method": "transfer"
+  },
+  "AGM": {
+   "label": "Acceptgiro",
+   "method": "transfer"
+  },
+  "BEA": {
+   "label": "Pinbetaling",
+   "method": "card"
+  },
+  "BIJ": {
+   "label": "Rente",
+   "method": "interest"
+  },
+  "BVZ": {
+   "label": "Betaalverzoek",
+   "method": "transfer"
+  },
+  "EFF": {
+   "label": "Effecten",
+   "method": "other"
+  },
+  "EIC": {
+   "label": "Incasso",
+   "method": "debit"
+  },
+  "GEA": {
+   "label": "Geldautomaat",
+   "method": "atm"
+  },
+  "IDE": {
+   "label": "iDEAL",
+   "method": "ideal"
+  },
+  "IDM": {
+   "label": "iDEAL",
+   "method": "ideal"
+  },
+  "IIC": {
+   "label": "Interne incasso",
+   "method": "debit"
+  },
+  "IOI": {
+   "label": "Directe overboeking",
+   "method": "transfer"
+  },
+  "IOM": {
+   "label": "Directe overboeking",
+   "method": "transfer"
+  },
+  "IOS": {
+   "label": "Directe overboeking",
+   "method": "transfer"
+  },
+  "ITP": {
+   "label": "Directe overboeking",
+   "method": "transfer"
+  },
+  "KAS": {
+   "label": "Kastransactie",
+   "method": "other"
+  },
+  "MSC": {
+   "label": "Overig",
+   "method": "other"
+  },
+  "NGI": {
+   "label": "Overboeking",
+   "method": "transfer"
+  },
+  "NGM": {
+   "label": "Overboeking",
+   "method": "transfer"
+  },
+  "NUL": {
+   "label": "Bericht",
+   "method": "other"
+  },
+  "OVS": {
+   "label": "Overboeking",
+   "method": "transfer"
+  },
+  "PCQ": {
+   "label": "Payconiq",
+   "method": "transfer"
+  },
+  "POV": {
+   "label": "Periodieke overboeking",
+   "method": "transfer"
+  },
+  "RTI": {
+   "label": "Terugboeking",
+   "method": "other"
+  },
+  "TPP": {
+   "label": "Overboeking via app",
+   "method": "transfer"
+  }
+ },
+ "codes": {
+  "0001": {
+   "label": "Storting op kantoor",
+   "method": "atm",
+   "direction": "in"
+  },
+  "1002": {
+   "label": "Opname op kantoor",
+   "method": "atm",
+   "direction": "out"
+  },
+  "1003": {
+   "label": "Geldautomaat",
+   "method": "atm",
+   "direction": "out"
+  },
+  "2025": {
+   "label": "Van eigen rekening",
+   "method": "internal",
+   "direction": "in"
+  },
+  "2026": {
+   "label": "Overboeking ontvangen",
+   "method": "transfer",
+   "direction": "in"
+  },
+  "2050": {
+   "label": "Opheffing van eigen rekening",
+   "method": "internal",
+   "direction": "in"
+  },
+  "2700": {
+   "label": "Automatische overboeking eigen rekening",
+   "method": "internal",
+   "direction": "in"
+  },
+  "2701": {
+   "label": "Automatische overboeking eigen rekening",
+   "method": "internal",
+   "direction": "in"
+  },
+  "2719": {
+   "label": "Payconiq ontvangen",
+   "method": "transfer",
+   "direction": "in"
+  },
+  "2723": {
+   "label": "Overboeking binnen de bank",
+   "method": "transfer",
+   "direction": "in"
+  },
+  "2724": {
+   "label": "Van eigen rekening",
+   "method": "internal",
+   "direction": "in"
+  },
+  "2753": {
+   "label": "Overboeking binnen de bank",
+   "method": "transfer",
+   "direction": "in"
+  },
+  "2754": {
+   "label": "Van eigen rekening",
+   "method": "internal",
+   "direction": "in"
+  },
+  "2757": {
+   "label": "Overboeking binnen de bank",
+   "method": "transfer",
+   "direction": "in"
+  },
+  "2758": {
+   "label": "Van eigen rekening",
+   "method": "internal",
+   "direction": "in"
+  },
+  "2795": {
+   "label": "Van eigen rekening",
+   "method": "internal",
+   "direction": "in"
+  },
+  "2806": {
+   "label": "iDEAL ontvangen",
+   "method": "ideal",
+   "direction": "in"
+  },
+  "3025": {
+   "label": "Overboeking via kantoor",
+   "method": "transfer",
+   "direction": "out"
+  },
+  "3026": {
+   "label": "Overboeking via kantoor",
+   "method": "transfer",
+   "direction": "out"
+  },
+  "3050": {
+   "label": "Opheffing naar eigen rekening",
+   "method": "internal",
+   "direction": "out"
+  },
+  "3700": {
+   "label": "Automatische overboeking eigen rekening",
+   "method": "internal",
+   "direction": "out"
+  },
+  "3701": {
+   "label": "Automatische overboeking eigen rekening",
+   "method": "internal",
+   "direction": "out"
+  },
+  "3719": {
+   "label": "Payconiq-betaling",
+   "method": "transfer",
+   "direction": "out"
+  },
+  "3723": {
+   "label": "Overboeking binnen de bank",
+   "method": "transfer",
+   "direction": "out"
+  },
+  "3724": {
+   "label": "Naar eigen rekening",
+   "method": "internal",
+   "direction": "out"
+  },
+  "3753": {
+   "label": "Overboeking binnen de bank",
+   "method": "transfer",
+   "direction": "out"
+  },
+  "3754": {
+   "label": "Naar eigen rekening",
+   "method": "internal",
+   "direction": "out"
+  },
+  "3757": {
+   "label": "Overboeking binnen de bank",
+   "method": "transfer",
+   "direction": "out"
+  },
+  "3758": {
+   "label": "Naar eigen rekening",
+   "method": "internal",
+   "direction": "out"
+  },
+  "6017": {
+   "label": "Geldmaat storting",
+   "method": "atm",
+   "direction": "in"
+  },
+  "6230": {
+   "label": "Correctie kosten",
+   "method": "fee",
+   "direction": "in"
+  },
+  "6303": {
+   "label": "Bericht",
+   "method": "other",
+   "direction": "in"
+  },
+  "6305": {
+   "label": "Bericht",
+   "method": "other",
+   "direction": "in"
+  },
+  "6600": {
+   "label": "Rente",
+   "method": "interest",
+   "direction": "in"
+  },
+  "6602": {
+   "label": "Rente van andere rekening",
+   "method": "interest",
+   "direction": "in"
+  },
+  "6607": {
+   "label": "Rente",
+   "method": "interest",
+   "direction": "in"
+  },
+  "6761": {
+   "label": "Betaling uit buitenland",
+   "method": "transfer",
+   "direction": "in"
+  },
+  "6768": {
+   "label": "Betaling uit buitenland",
+   "method": "transfer",
+   "direction": "in"
+  },
+  "6853": {
+   "label": "Betaalverzoek ontvangen",
+   "method": "transfer",
+   "direction": "in"
+  },
+  "6900": {
+   "label": "Correctie geldautomaat",
+   "method": "atm",
+   "direction": "in"
+  },
+  "6901": {
+   "label": "Correctie geldautomaat",
+   "method": "atm",
+   "direction": "in"
+  },
+  "6902": {
+   "label": "Correctie geldautomaat",
+   "method": "atm",
+   "direction": "in"
+  },
+  "6903": {
+   "label": "Correctie pinbetaling",
+   "method": "card",
+   "direction": "in"
+  },
+  "6904": {
+   "label": "Correctie pinbetaling",
+   "method": "card",
+   "direction": "in"
+  },
+  "6905": {
+   "label": "Correctie pinbetaling",
+   "method": "card",
+   "direction": "in"
+  },
+  "6906": {
+   "label": "Correctie contactloos",
+   "method": "card",
+   "direction": "in"
+  },
+  "6907": {
+   "label": "Correctie contactloos",
+   "method": "card",
+   "direction": "in"
+  },
+  "6908": {
+   "label": "Correctie contactloos",
+   "method": "card",
+   "direction": "in"
+  },
+  "6909": {
+   "label": "Terugbetaling kaart",
+   "method": "card",
+   "direction": "in"
+  },
+  "6910": {
+   "label": "Correctie geldautomaat",
+   "method": "atm",
+   "direction": "in"
+  },
+  "6911": {
+   "label": "Correctie geldautomaat",
+   "method": "atm",
+   "direction": "in"
+  },
+  "6912": {
+   "label": "Correctie geldautomaat",
+   "method": "atm",
+   "direction": "in"
+  },
+  "6913": {
+   "label": "Correctie pinbetaling",
+   "method": "card",
+   "direction": "in"
+  },
+  "6914": {
+   "label": "Correctie pinbetaling",
+   "method": "card",
+   "direction": "in"
+  },
+  "6915": {
+   "label": "Correctie pinbetaling",
+   "method": "card",
+   "direction": "in"
+  },
+  "6916": {
+   "label": "Correctie contactloos",
+   "method": "card",
+   "direction": "in"
+  },
+  "6917": {
+   "label": "Correctie contactloos",
+   "method": "card",
+   "direction": "in"
+  },
+  "6918": {
+   "label": "Correctie contactloos",
+   "method": "card",
+   "direction": "in"
+  },
+  "6920": {
+   "label": "Terugbetaling kaart",
+   "method": "card",
+   "direction": "in"
+  },
+  "6923": {
+   "label": "Correctie online kaartbetaling",
+   "method": "card",
+   "direction": "in"
+  },
+  "6924": {
+   "label": "Correctie online kaartbetaling",
+   "method": "card",
+   "direction": "in"
+  },
+  "6925": {
+   "label": "Correctie online kaartbetaling",
+   "method": "card",
+   "direction": "in"
+  },
+  "6926": {
+   "label": "Correctie online kaartbetaling",
+   "method": "card",
+   "direction": "in"
+  },
+  "6927": {
+   "label": "Correctie online kaartbetaling",
+   "method": "card",
+   "direction": "in"
+  },
+  "6928": {
+   "label": "Correctie online kaartbetaling",
+   "method": "card",
+   "direction": "in"
+  },
+  "7008": {
+   "label": "Geldautomaat",
+   "method": "atm",
+   "direction": "out"
+  },
+  "7017": {
+   "label": "Geldmaat opname",
+   "method": "atm",
+   "direction": "out"
+  },
+  "7225": {
+   "label": "Correctie kosten",
+   "method": "fee",
+   "direction": "out"
+  },
+  "7227": {
+   "label": "Kosten betaalpas",
+   "method": "fee",
+   "direction": "out"
+  },
+  "7228": {
+   "label": "Kosten betaling buitenland",
+   "method": "fee",
+   "direction": "out"
+  },
+  "7236": {
+   "label": "Kosten papieren afschrift",
+   "method": "fee",
+   "direction": "out"
+  },
+  "7240": {
+   "label": "Kosten papieren overboeking",
+   "method": "fee",
+   "direction": "out"
+  },
+  "7241": {
+   "label": "Kosten rekening",
+   "method": "fee",
+   "direction": "out"
+  },
+  "7260": {
+   "label": "Kosten Basis Bankieren",
+   "method": "fee",
+   "direction": "out"
+  },
+  "7263": {
+   "label": "Kosten betaling op kantoor",
+   "method": "fee",
+   "direction": "out"
+  },
+  "7264": {
+   "label": "Kosten storting Geldmaat",
+   "method": "fee",
+   "direction": "out"
+  },
+  "7600": {
+   "label": "Rente",
+   "method": "interest",
+   "direction": "out"
+  },
+  "7602": {
+   "label": "Rente naar andere rekening",
+   "method": "interest",
+   "direction": "out"
+  },
+  "7606": {
+   "label": "Debetrente",
+   "method": "interest",
+   "direction": "out"
+  },
+  "7727": {
+   "label": "Betaling buitenland (niet-SEPA)",
+   "method": "transfer",
+   "direction": "out"
+  },
+  "7761": {
+   "label": "Betaling buitenland (niet-SEPA)",
+   "method": "transfer",
+   "direction": "out"
+  },
+  "7767": {
+   "label": "Betaling buitenland (niet-SEPA)",
+   "method": "transfer",
+   "direction": "out"
+  },
+  "7768": {
+   "label": "Betaling buitenland (niet-SEPA)",
+   "method": "transfer",
+   "direction": "out"
+  },
+  "7900": {
+   "label": "Geldautomaat",
+   "method": "atm",
+   "direction": "out"
+  },
+  "7901": {
+   "label": "Geldautomaat in Europa",
+   "method": "atm",
+   "direction": "out"
+  },
+  "7902": {
+   "label": "Geldautomaat buiten Europa",
+   "method": "atm",
+   "direction": "out"
+  },
+  "7903": {
+   "label": "Pinbetaling",
+   "method": "card",
+   "direction": "out"
+  },
+  "7904": {
+   "label": "Pinbetaling in Europa",
+   "method": "card",
+   "direction": "out"
+  },
+  "7905": {
+   "label": "Pinbetaling buiten Europa",
+   "method": "card",
+   "direction": "out"
+  },
+  "7906": {
+   "label": "Contactloos betalen",
+   "method": "card",
+   "direction": "out"
+  },
+  "7907": {
+   "label": "Contactloos betalen in Europa",
+   "method": "card",
+   "direction": "out"
+  },
+  "7908": {
+   "label": "Contactloos betalen buiten Europa",
+   "method": "card",
+   "direction": "out"
+  },
+  "7909": {
+   "label": "Terugbetaling kaart",
+   "method": "card",
+   "direction": "out"
+  },
+  "7910": {
+   "label": "Geldautomaat",
+   "method": "atm",
+   "direction": "out"
+  },
+  "7911": {
+   "label": "Geldautomaat in Europa",
+   "method": "atm",
+   "direction": "out"
+  },
+  "7912": {
+   "label": "Geldautomaat buiten Europa",
+   "method": "atm",
+   "direction": "out"
+  },
+  "7913": {
+   "label": "Pinbetaling",
+   "method": "card",
+   "direction": "out"
+  },
+  "7914": {
+   "label": "Pinbetaling in Europa",
+   "method": "card",
+   "direction": "out"
+  },
+  "7915": {
+   "label": "Pinbetaling buiten Europa",
+   "method": "card",
+   "direction": "out"
+  },
+  "7916": {
+   "label": "Contactloos betalen",
+   "method": "card",
+   "direction": "out"
+  },
+  "7917": {
+   "label": "Contactloos betalen in Europa",
+   "method": "card",
+   "direction": "out"
+  },
+  "7918": {
+   "label": "Contactloos betalen buiten Europa",
+   "method": "card",
+   "direction": "out"
+  },
+  "7920": {
+   "label": "Terugbetaling kaart",
+   "method": "card",
+   "direction": "out"
+  },
+  "7921": {
+   "label": "Kosten geldautomaat",
+   "method": "fee",
+   "direction": "out"
+  },
+  "7922": {
+   "label": "Kosten pinbetaling",
+   "method": "fee",
+   "direction": "out"
+  },
+  "7923": {
+   "label": "Online kaartbetaling",
+   "method": "card",
+   "direction": "out"
+  },
+  "7924": {
+   "label": "Online kaartbetaling in Europa",
+   "method": "card",
+   "direction": "out"
+  },
+  "7925": {
+   "label": "Online kaartbetaling buiten Europa",
+   "method": "card",
+   "direction": "out"
+  },
+  "7926": {
+   "label": "Online kaartbetaling",
+   "method": "card",
+   "direction": "out"
+  },
+  "7927": {
+   "label": "Online kaartbetaling in Europa",
+   "method": "card",
+   "direction": "out"
+  },
+  "7928": {
+   "label": "Online kaartbetaling buiten Europa",
+   "method": "card",
+   "direction": "out"
+  },
+  "8200": {
+   "label": "Verkoop effecten",
+   "method": "other",
+   "direction": "in"
+  },
+  "8303": {
+   "label": "Bericht",
+   "method": "other",
+   "direction": "in"
+  },
+  "8706": {
+   "label": "Periodieke overboeking ontvangen",
+   "method": "transfer",
+   "direction": "in"
+  },
+  "8715": {
+   "label": "Incasso teruggeboekt",
+   "method": "debit",
+   "direction": "in"
+  },
+  "8716": {
+   "label": "Incasso teruggeboekt",
+   "method": "debit",
+   "direction": "in"
+  },
+  "8717": {
+   "label": "Incasso teruggeboekt",
+   "method": "debit",
+   "direction": "in"
+  },
+  "8722": {
+   "label": "Overboeking ontvangen",
+   "method": "transfer",
+   "direction": "in"
+  },
+  "8743": {
+   "label": "Overboeking ontvangen",
+   "method": "transfer",
+   "direction": "in"
+  },
+  "8746": {
+   "label": "Periodieke overboeking ontvangen",
+   "method": "transfer",
+   "direction": "in"
+  },
+  "8749": {
+   "label": "Overboeking teruggestort",
+   "method": "other",
+   "direction": "in"
+  },
+  "8750": {
+   "label": "Overboeking ontvangen",
+   "method": "transfer",
+   "direction": "in"
+  },
+  "8783": {
+   "label": "Spoedbetaling ontvangen",
+   "method": "transfer",
+   "direction": "in"
+  },
+  "8806": {
+   "label": "iDEAL ontvangen",
+   "method": "ideal",
+   "direction": "in"
+  },
+  "8809": {
+   "label": "Overboeking ontvangen",
+   "method": "transfer",
+   "direction": "in"
+  },
+  "8820": {
+   "label": "Geïncasseerd bedrag",
+   "method": "debit",
+   "direction": "in"
+  },
+  "8821": {
+   "label": "Geïncasseerd bedrag",
+   "method": "debit",
+   "direction": "in"
+  },
+  "8842": {
+   "label": "Incasso geweigerd",
+   "method": "debit",
+   "direction": "in"
+  },
+  "8845": {
+   "label": "Acceptgiro ontvangen",
+   "method": "transfer",
+   "direction": "in"
+  },
+  "8872": {
+   "label": "Spoedbetaling ontvangen",
+   "method": "transfer",
+   "direction": "in"
+  },
+  "8877": {
+   "label": "iDEAL ontvangen",
+   "method": "ideal",
+   "direction": "in"
+  },
+  "8900": {
+   "label": "Correctie geldautomaat",
+   "method": "atm",
+   "direction": "in"
+  },
+  "8901": {
+   "label": "Correctie geldautomaat",
+   "method": "atm",
+   "direction": "in"
+  },
+  "8902": {
+   "label": "Correctie geldautomaat",
+   "method": "atm",
+   "direction": "in"
+  },
+  "8903": {
+   "label": "Correctie pinbetaling",
+   "method": "card",
+   "direction": "in"
+  },
+  "8904": {
+   "label": "Correctie pinbetaling",
+   "method": "card",
+   "direction": "in"
+  },
+  "8905": {
+   "label": "Correctie pinbetaling",
+   "method": "card",
+   "direction": "in"
+  },
+  "8906": {
+   "label": "Correctie contactloos",
+   "method": "card",
+   "direction": "in"
+  },
+  "8907": {
+   "label": "Correctie contactloos",
+   "method": "card",
+   "direction": "in"
+  },
+  "8908": {
+   "label": "Correctie contactloos",
+   "method": "card",
+   "direction": "in"
+  },
+  "8909": {
+   "label": "Terugbetaling kaart",
+   "method": "card",
+   "direction": "in"
+  },
+  "8910": {
+   "label": "Correctie geldautomaat",
+   "method": "atm",
+   "direction": "in"
+  },
+  "8911": {
+   "label": "Correctie geldautomaat",
+   "method": "atm",
+   "direction": "in"
+  },
+  "8912": {
+   "label": "Correctie geldautomaat",
+   "method": "atm",
+   "direction": "in"
+  },
+  "8913": {
+   "label": "Correctie pinbetaling",
+   "method": "card",
+   "direction": "in"
+  },
+  "8914": {
+   "label": "Correctie pinbetaling",
+   "method": "card",
+   "direction": "in"
+  },
+  "8915": {
+   "label": "Correctie pinbetaling",
+   "method": "card",
+   "direction": "in"
+  },
+  "8916": {
+   "label": "Correctie contactloos",
+   "method": "card",
+   "direction": "in"
+  },
+  "8917": {
+   "label": "Correctie contactloos",
+   "method": "card",
+   "direction": "in"
+  },
+  "8918": {
+   "label": "Correctie contactloos",
+   "method": "card",
+   "direction": "in"
+  },
+  "8920": {
+   "label": "Terugbetaling kaart",
+   "method": "card",
+   "direction": "in"
+  },
+  "8923": {
+   "label": "Correctie online kaartbetaling",
+   "method": "card",
+   "direction": "in"
+  },
+  "8924": {
+   "label": "Correctie online kaartbetaling",
+   "method": "card",
+   "direction": "in"
+  },
+  "8925": {
+   "label": "Correctie online kaartbetaling",
+   "method": "card",
+   "direction": "in"
+  },
+  "8926": {
+   "label": "Correctie online kaartbetaling",
+   "method": "card",
+   "direction": "in"
+  },
+  "8927": {
+   "label": "Correctie online kaartbetaling",
+   "method": "card",
+   "direction": "in"
+  },
+  "8928": {
+   "label": "Correctie online kaartbetaling",
+   "method": "card",
+   "direction": "in"
+  },
+  "8948": {
+   "label": "Directe overboeking ontvangen",
+   "method": "transfer",
+   "direction": "in"
+  },
+  "8949": {
+   "label": "Directe overboeking ontvangen",
+   "method": "transfer",
+   "direction": "in"
+  },
+  "9200": {
+   "label": "Aankoop effecten",
+   "method": "other",
+   "direction": "out"
+  },
+  "9714": {
+   "label": "Incasso",
+   "method": "debit",
+   "direction": "out"
+  },
+  "9715": {
+   "label": "Incasso teruggeboekt",
+   "method": "debit",
+   "direction": "out"
+  },
+  "9716": {
+   "label": "Incasso teruggeboekt",
+   "method": "debit",
+   "direction": "out"
+  },
+  "9717": {
+   "label": "Incasso teruggeboekt",
+   "method": "debit",
+   "direction": "out"
+  },
+  "9718": {
+   "label": "Overboeking teruggehaald",
+   "method": "other",
+   "direction": "out"
+  },
+  "9719": {
+   "label": "Payconiq-betaling",
+   "method": "transfer",
+   "direction": "out"
+  },
+  "9720": {
+   "label": "Overboeking",
+   "method": "transfer",
+   "direction": "out"
+  },
+  "9721": {
+   "label": "Acceptgiro",
+   "method": "transfer",
+   "direction": "out"
+  },
+  "9722": {
+   "label": "Overboeking (batch)",
+   "method": "transfer",
+   "direction": "out"
+  },
+  "9729": {
+   "label": "Spoedbetaling",
+   "method": "transfer",
+   "direction": "out"
+  },
+  "9747": {
+   "label": "Overboeking buitenland (SEPA)",
+   "method": "transfer",
+   "direction": "out"
+  },
+  "9755": {
+   "label": "Overboeking",
+   "method": "transfer",
+   "direction": "out"
+  },
+  "9756": {
+   "label": "Acceptgiro",
+   "method": "transfer",
+   "direction": "out"
+  },
+  "9759": {
+   "label": "Overboeking",
+   "method": "transfer",
+   "direction": "out"
+  },
+  "9772": {
+   "label": "Spoedbetaling",
+   "method": "transfer",
+   "direction": "out"
+  },
+  "9773": {
+   "label": "Spoedbetaling",
+   "method": "transfer",
+   "direction": "out"
+  },
+  "9801": {
+   "label": "Overboeking via kantoor",
+   "method": "transfer",
+   "direction": "out"
+  },
+  "9802": {
+   "label": "Periodieke overboeking",
+   "method": "transfer",
+   "direction": "out"
+  },
+  "9806": {
+   "label": "iDEAL-betaling",
+   "method": "ideal",
+   "direction": "out"
+  },
+  "9827": {
+   "label": "Zakelijke incasso",
+   "method": "debit",
+   "direction": "out"
+  },
+  "9842": {
+   "label": "Incasso teruggeboekt",
+   "method": "debit",
+   "direction": "out"
+  },
+  "9844": {
+   "label": "Acceptgiro",
+   "method": "transfer",
+   "direction": "out"
+  },
+  "9846": {
+   "label": "Overboeking via kantoor",
+   "method": "transfer",
+   "direction": "out"
+  },
+  "9849": {
+   "label": "Overboeking via kantoor",
+   "method": "transfer",
+   "direction": "out"
+  },
+  "9856": {
+   "label": "iDEAL-betaling",
+   "method": "ideal",
+   "direction": "out"
+  },
+  "9885": {
+   "label": "Overheidsvordering",
+   "method": "debit",
+   "direction": "out"
+  },
+  "9900": {
+   "label": "Geldautomaat",
+   "method": "atm",
+   "direction": "out"
+  },
+  "9901": {
+   "label": "Geldautomaat in Europa",
+   "method": "atm",
+   "direction": "out"
+  },
+  "9902": {
+   "label": "Geldautomaat buiten Europa",
+   "method": "atm",
+   "direction": "out"
+  },
+  "9903": {
+   "label": "Pinbetaling",
+   "method": "card",
+   "direction": "out"
+  },
+  "9904": {
+   "label": "Pinbetaling in Europa",
+   "method": "card",
+   "direction": "out"
+  },
+  "9905": {
+   "label": "Pinbetaling buiten Europa",
+   "method": "card",
+   "direction": "out"
+  },
+  "9906": {
+   "label": "Contactloos betalen",
+   "method": "card",
+   "direction": "out"
+  },
+  "9907": {
+   "label": "Contactloos betalen in Europa",
+   "method": "card",
+   "direction": "out"
+  },
+  "9908": {
+   "label": "Contactloos betalen buiten Europa",
+   "method": "card",
+   "direction": "out"
+  },
+  "9909": {
+   "label": "Terugbetaling kaart",
+   "method": "card",
+   "direction": "out"
+  },
+  "9910": {
+   "label": "Geldautomaat",
+   "method": "atm",
+   "direction": "out"
+  },
+  "9911": {
+   "label": "Geldautomaat in Europa",
+   "method": "atm",
+   "direction": "out"
+  },
+  "9912": {
+   "label": "Geldautomaat buiten Europa",
+   "method": "atm",
+   "direction": "out"
+  },
+  "9913": {
+   "label": "Pinbetaling",
+   "method": "card",
+   "direction": "out"
+  },
+  "9914": {
+   "label": "Pinbetaling in Europa",
+   "method": "card",
+   "direction": "out"
+  },
+  "9915": {
+   "label": "Pinbetaling buiten Europa",
+   "method": "card",
+   "direction": "out"
+  },
+  "9916": {
+   "label": "Contactloos betalen",
+   "method": "card",
+   "direction": "out"
+  },
+  "9917": {
+   "label": "Contactloos betalen in Europa",
+   "method": "card",
+   "direction": "out"
+  },
+  "9918": {
+   "label": "Contactloos betalen buiten Europa",
+   "method": "card",
+   "direction": "out"
+  },
+  "9920": {
+   "label": "Terugbetaling kaart",
+   "method": "card",
+   "direction": "out"
+  },
+  "9921": {
+   "label": "Kosten geldautomaat",
+   "method": "fee",
+   "direction": "out"
+  },
+  "9922": {
+   "label": "Kosten pinbetaling",
+   "method": "fee",
+   "direction": "out"
+  },
+  "9923": {
+   "label": "Online kaartbetaling",
+   "method": "card",
+   "direction": "out"
+  },
+  "9924": {
+   "label": "Online kaartbetaling in Europa",
+   "method": "card",
+   "direction": "out"
+  },
+  "9925": {
+   "label": "Online kaartbetaling buiten Europa",
+   "method": "card",
+   "direction": "out"
+  },
+  "9926": {
+   "label": "Online kaartbetaling",
+   "method": "card",
+   "direction": "out"
+  },
+  "9927": {
+   "label": "Online kaartbetaling in Europa",
+   "method": "card",
+   "direction": "out"
+  },
+  "9928": {
+   "label": "Online kaartbetaling buiten Europa",
+   "method": "card",
+   "direction": "out"
+  },
+  "9930": {
+   "label": "Directe overboeking",
+   "method": "transfer",
+   "direction": "out"
+  },
+  "9931": {
+   "label": "Directe overboeking",
+   "method": "transfer",
+   "direction": "out"
+  },
+  "9932": {
+   "label": "Directe overboeking",
+   "method": "transfer",
+   "direction": "out"
+  },
+  "9933": {
+   "label": "Directe overboeking",
+   "method": "transfer",
+   "direction": "out"
+  },
+  "9934": {
+   "label": "Directe overboeking",
+   "method": "transfer",
+   "direction": "out"
+  },
+  "9935": {
+   "label": "Directe overboeking",
+   "method": "transfer",
+   "direction": "out"
+  },
+  "9948": {
+   "label": "Overboeking teruggehaald",
+   "method": "other",
+   "direction": "out"
+  },
+  "9949": {
+   "label": "Overboeking teruggehaald",
+   "method": "other",
+   "direction": "out"
+  }
+ }
+}

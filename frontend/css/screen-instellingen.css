@@ -1,0 +1,35 @@
+/* Instellingen (.inst-) */
+.inst-days { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; padding: 6px 0 4px; }
+.inst-day { height: 44px; text-align: center; border-radius: 12px; background: var(--sheet-row); font: 500 var(--fs-body)/1 var(--font-rounded); transition: transform 260ms var(--spring-lin), background-color 200ms linear; }
+.inst-day.is-selected { background: var(--tint); color: var(--on-tint); font-weight: 700; }
+.inst-day:disabled:not(.is-selected) { opacity: .5; }
+@media (hover: none) { .inst-day:active { transform: scale(.9); transition-duration: 0s; } }
+@media (hover: hover) and (pointer: fine) { .inst-day:hover:not(.is-selected):not(:disabled) { background: var(--fill-3); } }
+.inst-days-note { margin: 14px 4px 10px; text-align: center; font: 400 var(--fs-subhead)/1.35 var(--font); color: var(--label-2); }
+.inst-error .list-footer { color: var(--warn-text); }
+.inst-search { margin: 0 0 16px; }
+.inst-rule-to { overflow: hidden; text-overflow: ellipsis; }
+.inst-imp { align-items: flex-start; padding-top: 12px; padding-bottom: 4px; }
+.inst-imp .row-lead { padding-top: 2px; }
+.inst-imp .row-main { gap: 1px; }
+.inst-undo { position: relative; align-self: flex-start; padding: 8px 0 10px; color: var(--tint); font: 400 var(--fs-subhead)/1.2 var(--font); }
+.inst-undo::after { content: ""; position: absolute; inset: -4px -10px 0; }
+@media (hover: none) { .inst-undo:active { opacity: .35; } }
+@media (hover: hover) and (pointer: fine) { .inst-undo:hover { opacity: .7; } }
+.inst .screen-content > .list-group:first-child, .inst .screen-content > .inset:first-child { margin-top: 6px; }
+.inst-imp .row-title { white-space: normal; overflow-wrap: anywhere; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+
+/* Slimme aannames (.sa-) */
+.sa-grow { flex: 1; min-width: 0; }
+.sa-pop { display: inline-flex; align-items: center; gap: 4px; color: var(--label-2); }
+.sa .row .btn-small { flex: none; }
+.inst-limit { display: flex; align-items: center; gap: 10px; padding: 4px 4px 2px; font: 400 var(--fs-body)/1.2 var(--font); }
+.pop-pad { padding: 12px; }
+.pop-title { padding: 2px 4px 8px; font: 600 var(--fs-subhead)/1.2 var(--font); color: var(--label-2); }
+.pop-foot { display: flex; justify-content: flex-end; gap: 8px; padding: 12px 0 0; }
+.inst-imp { align-items: center; padding-bottom: 10px; }
+.inst-file { white-space: nowrap; }
+.inst-undo-btn { flex: none; }
+.inst-danger { margin-top: 32px; }
+.sa-chev svg { transition: transform 200ms var(--ease-out); }
+.sa-chev.is-open svg { transform: rotate(90deg); }

@@ -1,0 +1,19 @@
+# data never belongs in the repository
+*.db
+*.db-wal
+*.db-shm
+*.sqlite
+data/
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.DS_Store
+*.csv
+*.xml
+!tests/fixtures/**
+demo-data/
+
+# the package data directory is source code
+!backend/cents/data/
+.claude/

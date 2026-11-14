@@ -1,0 +1,28 @@
+/* Vermogen (.vm-) */
+.vm-hero { --surface: var(--bg-grouped); padding: 2px 4px 0; margin-bottom: 8px; }
+.vm-hero-label { font: 600 var(--fs-subhead)/1.3 var(--font); color: var(--label-2); letter-spacing: -.016em; }
+.vm-hero-amount { font: 700 var(--fs-hero)/1.08 var(--font-rounded); letter-spacing: -.025em; margin: 2px 0 4px; }
+.vm-hero-sub { min-height: 1.3em; font: 400 var(--fs-subhead)/1.3 var(--font); color: var(--label-2); }
+.vm-chart { margin-top: 14px; }
+.vm-range { display: flex; justify-content: center; margin-top: 12px; }
+.vm-range .segmented { width: 100%; max-width: 280px; }
+
+.vm-suggestions { display: flex; flex-direction: column; gap: 10px; margin-top: 22px; }
+.vm-sugg { display: flex; align-items: center; gap: 12px; padding: 12px 12px 12px 14px; border-radius: var(--r-list); }
+.vm-sugg-icon { background: color-mix(in srgb, var(--c) 18%, transparent); font-size: 17px; }
+.vm-sugg-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.vm-sugg-q { font: 600 var(--fs-callout)/1.3 var(--font); letter-spacing: -.02em; }
+.vm-sugg-sub { font: 400 var(--fs-footnote)/1.3 var(--font); color: var(--label-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.vm-sugg-actions { display: flex; gap: 8px; flex: none; }
+@media (max-width: 359px) { .vm-sugg { flex-wrap: wrap; } .vm-sugg-actions { width: 100%; justify-content: flex-end; } }
+
+.vm-balance { color: var(--label); }
+.vm .section { margin-top: 26px; }
+
+.vm-sheet-head { text-align: center; padding: 6px 0 18px; }
+.vm-sheet-amount { font: 700 2.25rem/1.1 var(--font-rounded); letter-spacing: -.02em; }
+.vm-sheet-sub { font: 400 var(--fs-subhead)/1.3 var(--font); color: var(--label-2); margin-top: 4px; }
+.vm-add-row { padding: 10px 16px; }
+.vm-value { display: flex; flex-direction: column; align-items: flex-end; gap: 1px; }
+.vm-result { font: 400 var(--fs-footnote)/1.2 var(--font); color: var(--label-2); }
+.vm-axis { display: flex; justify-content: space-between; margin-top: 4px; font: 400 var(--fs-caption1)/1.2 var(--font); color: var(--label-2); }

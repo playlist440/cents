@@ -1,0 +1,38 @@
+{
+ "Bankkosten": "overig",
+ "Belastingen & Toeslagen": {
+  "out": "belastingen",
+  "in": "toeslagen"
+ },
+ "Beleggen": "beleggen",
+ "Boodschappen": "boodschappen",
+ "Cadeaus": "cadeaus",
+ "Contanten": "contant",
+ "Dier & tuin": null,
+ "Eten & drinken": "uit-eten",
+ "Gas water & licht": "energie",
+ "Gas, water & licht": "energie",
+ "Goede doelen": "cadeaus",
+ "Hobby sport & vrije tijd": "vrije-tijd",
+ "Hobby, sport & vrije tijd": "vrije-tijd",
+ "Huishouden & elektronica": "winkelen",
+ "Huur & hypotheek": "wonen",
+ "Internet TV & Bellen": "telecom",
+ "Internet, TV & Bellen": "telecom",
+ "Kinderen": "kinderen",
+ "Kleding": "kleding",
+ "Klussen & onderhoud": "huis-tuin",
+ "Lening": {
+  "out": "leningen",
+  "in": "inkomen-overig"
+ },
+ "Onderwijs": "opvang-school",
+ "Overig": null,
+ "Salaris": "salaris",
+ "Sparen": "sparen",
+ "Vakantie": "vakantie",
+ "Vervoer": "vervoer",
+ "Verzekeringen": "verzekeringen",
+ "Verzorging & gezondheid": "verzorging",
+ "Zak- & kleedgeld": "kinderen"
+}

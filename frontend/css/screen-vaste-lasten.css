@@ -1,0 +1,168 @@
+/* Vaste lasten (.vl-) */
+.vl-hero { padding: 2px 4px 0; margin-bottom: 18px; }
+.vl-hero-amount { display: flex; align-items: baseline; flex-wrap: wrap; column-gap: 8px; font: 700 var(--fs-hero)/1.08 var(--font-rounded); letter-spacing: -.025em; }
+.vl-hero-unit { font: 600 var(--fs-title3)/1.2 var(--font-rounded); color: var(--label-2); letter-spacing: -.01em; }
+.vl-hero-sub { margin-top: 4px; font: 400 var(--fs-subhead)/1.3 var(--font); color: var(--label-2); }
+.vl-share { margin-top: 16px; }
+.vl-share-track { display: block; height: 8px; border-radius: 4px; background: var(--fill-3); overflow: hidden; }
+.vl-share-track span { display: block; height: 100%; border-radius: 4px; background: var(--indigo); transform-origin: left; }
+.vl-share.is-high .vl-share-track span { background: var(--warn); }
+.vl-share-label { display: block; margin-top: 7px; font: 400 var(--fs-footnote)/1.3 var(--font); color: var(--label-2); }
+.vl-seg { margin: 0 0 22px; }
+.vl-seg .segmented { width: 100%; }
+
+.vl-group { margin-bottom: 22px; }
+.vl-group-h { display: flex; align-items: center; gap: 10px; margin: 0 4px 8px; font: 600 var(--fs-headline)/1.25 var(--font); letter-spacing: -.02em; }
+.vl-group-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.vl-group-sum { font: 400 var(--fs-subhead)/1.2 var(--font); color: var(--label-2); }
+.vl-row-top { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.vl-row-top .row-title { flex: 0 1 auto; min-width: 0; }
+.vl-row .row-amount { align-self: center; }
+.vl-row.is-ended .row-title, .vl-row.is-ended .row-amount { color: var(--label-2); }
+
+.vl-sheet-head { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 4px; padding: 0 0 18px; }
+.vl-sheet-head .etile { margin-bottom: 6px; }
+.vl-sheet-name { font: 700 var(--fs-title3)/1.25 var(--font); letter-spacing: -.02em; overflow-wrap: anywhere; }
+.vl-sheet-amount { font: 700 2.25rem/1.1 var(--font-rounded); letter-spacing: -.02em; }
+.vl-sheet-sub, .vl-sheet-change { font: 400 var(--fs-subhead)/1.3 var(--font); color: var(--label-2); }
+.vl-sheet-chart { margin-bottom: 24px; border-radius: var(--r-list); --surface: var(--bg-grouped-2); }
+.vl-chart-head { margin-bottom: 10px; font: 400 var(--fs-subhead)/1.3 var(--font); color: var(--label-2); min-height: 1.3em; }
+.vl-chart-head b { color: var(--label); font-weight: 600; }
+.vl-sheet .sheet-body { background: var(--sheet-bg); }
+.vl-sheet-ignore { margin: 8px 0 12px; }
+.vl-when { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+
+/* ---------- Lijst · Kalender (vl2-) ---------- */
+.vl2-subs { margin-top: 10px; font: 400 var(--fs-footnote)/1.35 var(--font); color: var(--label-2); white-space: normal; }
+.vl-row .row-lead { align-self: center; }
+
+/* Calendar summary + agenda (phone) */
+.vl2-cal-sum { margin: 2px 4px 18px; font: 400 var(--fs-subhead)/1.4 var(--font); color: var(--label-2); white-space: normal; }
+.vl2-cal-sum b { color: var(--label); font-weight: 600; }
+.vl2-missed-sum, .vl2-missed-sum b { color: var(--warn-text); }
+.vl2-cal-empty { margin: 24px 4px; font: 400 var(--fs-subhead)/1.4 var(--font); color: var(--label-2); }
+.vl2-dot { display: inline-block; flex: none; width: 7px; height: 7px; border-radius: 50%; background: var(--warn); margin-right: 5px; vertical-align: 1px; }
+.vl2-ag-day { margin-bottom: 20px; }
+.vl2-ag-h { margin: 0 4px 8px; font: 600 var(--fs-headline)/1.25 var(--font); letter-spacing: -.02em; }
+.vl2-ag-day.is-past .vl2-ag-h { color: var(--label-2); }
+.vl2-ag-status { display: flex; align-items: center; gap: 4px; }
+.vl2-ag-row.is-paid .row-title, .vl2-ag-row.is-paid .row-amount:not(.is-income) { color: var(--label-2); }
+.vl2-ag-row.is-paid .vl2-ag-status { color: var(--tint); }
+.vl2-ag-row.is-missed .vl2-ag-status { color: var(--warn-text); }
+.vl2-calstat { margin-bottom: 18px; }
+
+@media (min-width: 1000px) {
+  .vl2-tbview { display: flex; align-items: center; gap: 14px; }
+  .vl2-tbview .segmented { min-width: 150px; }
+  .vl2 .vl-hero.is-desk { margin-bottom: 18px; }
+  .vl2 .vl2-subs { flex-basis: 100%; margin: -2px 0 0; font-size: var(--fs-subhead); }
+
+  .vl2-split { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--dk-gap); align-items: start; }
+  .vl2-split.has-inspector { grid-template-columns: minmax(0, 1fr) 380px; }
+  .vl2-main { min-width: 0; }
+  .vl2-split:not(.has-inspector) .vl2-main { max-width: var(--col-max); }
+  .vl2-inspector {
+    position: sticky;
+    top: calc(var(--sat) + var(--nav-h) + 8px);
+    max-height: calc(100dvh - var(--sat) - var(--nav-h) - 24px);
+    overflow-y: auto;
+    padding: 20px 18px;
+    border-radius: var(--r-card);
+    background: var(--sheet-bg);
+    box-shadow: var(--card-shadow);
+    --bg-grouped-2: var(--sheet-row);
+    animation: vl2-in 180ms var(--ease-out) both;
+  }
+  @keyframes vl2-in { from { opacity: 0; transform: translateX(8px); } }
+  .vl2-insp-close {
+    position: absolute; top: 12px; right: 12px; z-index: 1;
+    display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%;
+    background: var(--fill-3); color: var(--label-2);
+  }
+  .vl2-inspector .vl-sheet-amount { font-size: 2rem; }
+  .vl2-inspector .vl-sheet-chart { margin-bottom: 18px; }
+
+  /* Table */
+  .vl2-table { padding: 6px 12px 10px; }
+  .dt.vl2-dt { --dt-cols: minmax(150px, 2fr) minmax(150px, 1.5fr) minmax(80px, .7fr) 92px 100px 100px; }
+  .vl2-dt .dt-head { margin: 0 -2px 2px; }
+  .vl2-sort { display: inline-flex; align-items: center; gap: 4px; height: 100%; color: inherit; font: inherit; }
+  .vl2-sort.is-num { justify-self: end; flex-direction: row; }
+  .vl2-sort svg { opacity: 0; transition: opacity 120ms linear; }
+  .vl2-sort.is-on { color: var(--label); }
+  .vl2-sort.is-on svg { opacity: .8; }
+  .vl2-sec-h {
+    display: grid; grid-template-columns: var(--dt-cols); column-gap: 16px; align-items: end;
+    padding: 18px 10px 6px; font: 600 var(--fs-subhead)/1.2 var(--font); color: var(--label);
+  }
+  .vl2-section:first-of-type .vl2-sec-h { padding-top: 10px; }
+  .vl2-sec-h .is-num { justify-self: end; }
+  .vl2-sec-title { display: flex; align-items: baseline; gap: 6px; font-size: var(--fs-headline); }
+  .vl2-sec-n { font: 400 var(--fs-footnote)/1 var(--font); color: var(--label-2); }
+  .vl2-sec-h + .dt-row::before { opacity: 0; }
+  .vl2-name { display: flex; align-items: center; gap: 6px; }
+  .vl2-title { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+  .vl2-cat { display: flex; align-items: center; gap: 8px; color: var(--label-2); }
+  .vl2-cat .etile { border-radius: 6px; }
+  .vl2-cat span:last-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+  .vl2-dim { color: var(--label-2); }
+  .vl2-year { color: var(--label-2); }
+  .vl2-year.is-income { color: var(--pos); }
+  .dt-row.is-ended .vl2-title, .dt-row.is-ended .is-num { color: var(--label-2); }
+  .vl2-skel-row { display: flex; gap: 24px; padding: 12px 10px; }
+  /* With the inspector open the frequency moves into the name cell as a chip. */
+  .has-inspector .dt.vl2-dt { --dt-cols: minmax(120px, 1.6fr) minmax(110px, 1.2fr) 78px 92px 84px; }
+  .has-inspector .vl2-dt .dt-head > :nth-child(3), .has-inspector .vl2-dt .dt-row > :nth-child(3), .has-inspector .vl2-sec-h > :nth-child(3) { display: none; }
+  .vl2-freq-chip { display: none; }
+  .has-inspector .vl2-freq-chip { display: inline-flex; }
+
+  /* Calendar grid */
+  .vl2-cal-sum { margin: 0 2px 14px; font-size: var(--fs-body); }
+  .vl2-cal { padding: 0; overflow: hidden; }
+  .vl2-cal-head { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); padding: 8px 0 6px; border-bottom: var(--hair) solid var(--sep); }
+  .vl2-cal-head span { padding: 0 10px; font: 500 var(--fs-footnote)/1 var(--font); color: var(--label-2); text-align: right; }
+  .vl2-cal-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); grid-auto-rows: minmax(104px, auto); }
+  .vl2-day {
+    position: relative; display: flex; flex-direction: column; gap: 2px; min-width: 0;
+    padding: 6px 6px 8px; outline: none;
+    box-shadow: inset calc(-1 * var(--hair)) calc(-1 * var(--hair)) 0 var(--sep);
+  }
+  .vl2-day:nth-child(7n) { box-shadow: inset 0 calc(-1 * var(--hair)) 0 var(--sep); }
+  .vl2-day.is-out { background: var(--fill-4); }
+  .vl2-day.is-out .vl2-daynum { color: var(--label-3); }
+  .vl2-day:focus-visible { box-shadow: inset 0 0 0 2px var(--focus); border-radius: 4px; }
+  .vl2-daynum { align-self: flex-end; min-width: 22px; height: 22px; padding: 0 6px; margin-bottom: 2px; border-radius: 11px;
+    font: 500 var(--fs-footnote)/22px var(--font); color: var(--label-2); text-align: center; }
+  .vl2-daynum small { font-size: var(--fs-caption1); }
+  .vl2-day.is-today .vl2-daynum { background: var(--tint); color: var(--on-tint); font-weight: 700; }
+  .vl2-ci {
+    display: grid; grid-template-columns: 16px minmax(0, 1fr); grid-template-rows: auto auto; align-items: center; column-gap: 6px;
+    width: 100%; padding: 3px 5px; border-radius: 6px; text-align: left;
+    font: 500 var(--fs-footnote)/1.25 var(--font); color: var(--label);
+  }
+  .vl2-ci .etile { grid-row: 1; border-radius: 4px; font-size: 10px; }
+  .vl2-ci-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .vl2-ci-amt { grid-column: 2; display: flex; align-items: center; gap: 3px; min-width: 0; white-space: nowrap; overflow: hidden;
+    font: 400 var(--fs-caption1)/1.3 var(--font); color: var(--label-2); }
+  .vl2-ci-amt .vl2-dot { width: 6px; height: 6px; margin: 0 1px 0 0; }
+  .vl2-ci-miss { color: var(--warn-text); }
+  .vl2-ci.is-wide { grid-template-columns: 22px minmax(0, 1fr) auto; grid-template-rows: auto; min-height: 34px; font-size: var(--fs-body); }
+  .vl2-ci.is-wide .vl2-ci-amt { grid-column: 3; font-size: var(--fs-subhead); }
+  .vl2-ci.is-paid .vl2-ci-name { color: var(--label-2); font-weight: 400; }
+  .vl2-ci.is-paid .vl2-ci-amt svg { color: var(--tint); }
+  .vl2-ci.is-paid .etile { opacity: .6; }
+  .vl2-ci.is-in .vl2-ci-amt { color: var(--pos); }
+  .vl2-ci:not(.is-paid):not(.is-in) .vl2-ci-amt { color: var(--label); }
+  .vl2-ci.is-selected { background: var(--tint-soft); }
+  .vl2-more-btn { align-self: flex-start; margin: 1px 0 0 4px; padding: 1px 6px; border-radius: 5px; font: 500 var(--fs-caption1)/1.4 var(--font); color: var(--label-2); background: var(--fill-4); }
+  .vl2-more { padding: 10px 8px 8px; display: flex; flex-direction: column; gap: 2px; }
+  .vl2-more-h { padding: 0 6px 6px; font: 600 var(--fs-subhead)/1.2 var(--font); }
+  @media (max-width: 1279px) {
+    .vl2-cal-grid { grid-auto-rows: minmax(92px, auto); }
+  }
+}
+@media (hover: hover) and (pointer: fine) and (min-width: 1000px) {
+  .vl2-ci:hover:not(.is-selected), .vl2-more-btn:hover { background: var(--fill-3); }
+  .vl2-sort:hover svg { opacity: .5; }
+  .vl2-insp-close:hover { background: var(--fill-2); }
+}
