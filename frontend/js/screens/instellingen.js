@@ -78,7 +78,7 @@ export function Instellingen() {
       <${ListRow} icon="logout" iconColor="gray" title="Uitloggen" onClick=${logout} />
     </${List}>
     ${mock && !desk && html`<${List}><${ListRow} icon="sparkles" iconColor="purple" title="Componenten" chevron onClick=${() => navigate('/_gallery')} /></${List}>`}
-    <p class="meer-version">Cents ${session?.version || ''}</p>
+    <p class="meer-version">Cents ${session?.version || ''} · <a href="https://github.com/playlist440/cents" target="_blank" rel="noopener noreferrer">Broncode</a> · AGPL-3.0</p>
   `)}</${Screen}>`;
 }
 

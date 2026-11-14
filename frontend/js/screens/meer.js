@@ -28,6 +28,6 @@ export function Meer() {
     <${List}>
       <${ListRow} icon="instellingen" iconColor="gray" title="Instellingen" chevron onClick=${() => navigate('/instellingen')} />
     </${List}>
-    ${version && html`<p class="meer-version">Cents ${version}</p>`}
+    ${version && html`<p class="meer-version">Cents ${version} · <a href="https://github.com/playlist440/cents" target="_blank" rel="noopener noreferrer">Broncode</a> · AGPL-3.0</p>`}
   </${Screen}>`;
 }

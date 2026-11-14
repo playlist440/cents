@@ -18,3 +18,4 @@
 .kit-confirm-error { margin-top: 10px; font: 400 var(--fs-subhead)/1.3 var(--font); color: var(--warn-text); }
 .kit-confirm-actions { display: flex; flex-direction: column; gap: 6px; width: 100%; margin-top: 22px; }
 .kit-confirm-line.is-plain { color: var(--label-2); font-weight: 400; }
+.meer-version a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }

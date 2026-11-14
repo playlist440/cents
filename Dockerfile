@@ -1,5 +1,9 @@
 FROM python:3.12-slim
 
+LABEL org.opencontainers.image.title="Cents" \
+      org.opencontainers.image.source="https://github.com/playlist440/cents" \
+      org.opencontainers.image.licenses="AGPL-3.0-or-later"
+
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PYTHONPATH=/app/backend \
@@ -13,6 +17,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY backend/ backend/
 COPY frontend/ frontend/
+COPY LICENSE THIRD-PARTY-NOTICES.md ./
 
 # Run as a normal user; a fresh named volume inherits this ownership.
 # The code stays owned by root (read-only for the app); only /data is writable.

@@ -10,3 +10,4 @@ demo-data
 **/*.db-shm
 .claude
 *.md
+!THIRD-PARTY-NOTICES.md

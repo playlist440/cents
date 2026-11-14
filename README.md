@@ -53,3 +53,15 @@ Testen: `uv run --python 3.12 --with-requirements requirements.txt --with-requir
 Een verzonnen huishouden om mee te proberen: `python3 tools/make_demo_data.py`
 
 Ontwerp en afspraken staan in [`SPEC.md`](SPEC.md) en [`docs/`](docs/).
+
+## Licentie
+
+Cents is vrije software onder de [GNU Affero General Public License v3.0](LICENSE) of later.
+Je mag het gebruiken, aanpassen en verspreiden. Wie een aangepaste versie verspreidt of als
+dienst aan anderen aanbiedt, moet zijn broncode onder dezelfde licentie beschikbaar stellen.
+Het wordt geleverd zonder enige garantie.
+
+Copyright © 2026 playlist440
+
+Werk van anderen dat is meegeleverd, staat met zijn licentie in
+[THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).
