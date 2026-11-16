@@ -11,7 +11,7 @@ import sqlite3
 from datetime import date, timedelta
 
 from .. import db
-from . import cache, ledger as ledger_mod, networth, recurring, txquery
+from . import cache, ledger as ledger_mod, networth, outlook, recurring, txquery
 from .imports import unsorted_merchant_count
 from .ledger import DAILY, FIXED, INCOME, SAVING, Flows, Ledger
 from .periods import Period, period_json
@@ -157,6 +157,10 @@ def build_overview(conn: sqlite3.Connection, lg: Ledger, p: Period) -> dict:
                      "cents": unsorted_rows["cents"]},
         "balance": {"checking_cents": checking or 0, "expected_end_cents": expected_end},
     }
+    now = outlook.compute(conn, lg) if is_current else {}
+    ov["free"] = now.get("free")
+    ov["tempo"] = now.get("tempo")
+    ov["checking_warning"] = now.get("checking_warning")
     ov["insights"] = insights.compute(conn, lg, p, ov)
     return ov
 

@@ -72,7 +72,7 @@ def test_assumption_setting(client, fuel_library):
     upload(client, ("a.csv", asn_csv(Account(CHECKING, 0, [pay(1, "SHELL 1", -800, "5541"),
                                                             pay(2, "SHELL 1", -1200, "5541")]))))
     s = client.get("/api/settings").json()
-    assert s["assumptions"] == {"small_amount_at_fuel": {"enabled": True, "below_cents": 1500}}
+    assert s["assumptions"]["small_amount_at_fuel"] == {"enabled": True, "below_cents": 1500}
     uit, vervoer = cid(client, "uit-eten"), cid(client, "vervoer")
     one = next(t for t in client.get("/api/transactions").json()["items"] if t["amount_cents"] == -800)
     client.patch(f"/api/transactions/{one['id']}", json={"category_id": cid(client, "kleding"), "apply_scope": "one"})

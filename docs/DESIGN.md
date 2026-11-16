@@ -24,7 +24,7 @@ confirm dialogs — never `alert`/`confirm`).
 - Emoji are the icons of bakjes, potjes and tags (shown in a rounded tile tinted with the item's
   colour). Chrome icons (tab bar, buttons) are a small inline-SVG set in SF-Symbols-like line
   style, stroke 1.75, drawn by us. No icon font, no external assets.
-- Words: bakje (category), potje (savings goal), vaste lasten, nog te besteden, over, normaal.
+- Words: bakje (category), potje (savings goal), vaste lasten, vrij geld, over, normaal.
   Address the user as "je". Avoid: transactie-jargon, budget, cashflow, overschrijding.
 
 ## 2. Navigation
@@ -60,10 +60,15 @@ field shakes. Nothing else on the screen.
 A month switcher pill in the nav bar ("‹ november ›"); swiping the hero left/right also changes
 month. Top to bottom:
 
-1. **Hero.** Label "Nog te besteden", a very large count-up amount, subline
-   "€ 26 per dag · nog 16 dagen". Underneath a slim pace chart: this month's cumulative spending
-   as a solid line with a soft gradient fill, "normaal" as a dotted line, today marked with a
-   dot. Past months show "Over" or "Tekort" instead. With too little history: "Uitgegeven".
+1. **Hero.** Label "Vrij geld", a very large count-up amount (all checking + savings minus
+   potjes, buffer and vaste lasten until payday), subline "tot 27 nov" (plus "saldo van 9 nov"
+   when balances are older than five days). Tapping the amount opens a popover with the
+   breakdown. Under it **Tempo**: "+ € 420 per maand over" / "€ 150 per maand tekort" (mean of
+   the last three months) with a twelve-month mini bar chart, then the slim pace chart: this
+   month's cumulative spending as a solid line with a soft gradient fill, "normaal" as a dotted
+   line, today marked with a dot. A **betaalrekening** warning card appears under the hero only
+   when the projected checking balance before payday drops below the floor. Past months show
+   "Over" or "Tekort" instead.
 2. **Four tiles** (2 × 2 on iPhone, one row on wide screens): Inkomen · Vaste lasten ·
    Uitgegeven · Gespaard. Amount, and a hairline progress bar where an expected value exists
    (income received of expected, fixed paid of expected). Each tile opens the matching list.

@@ -8,7 +8,7 @@ import statistics
 from datetime import date
 
 from .. import db
-from . import goals, ledger as ledger_mod, periods, recurring
+from . import goals, ledger as ledger_mod, outlook, periods, recurring
 
 
 def _names(conn: sqlite3.Connection, keys: list[str]) -> dict[str, str]:
@@ -67,4 +67,12 @@ def assumptions(conn: sqlite3.Connection) -> dict:
                        for link in goals.learned_links(conn)],
         "month_start_day": periods.start_day_of(conn),
         "suggestion": {"month_start_day": suggested_start_day(conn)},
+        "payday": _payday_json(conn),
     }
+
+
+def _payday_json(conn: sqlite3.Connection) -> dict:
+    """The next salary date Vrij geld counts to, and how it was found."""
+    lg = ledger_mod.get(conn)
+    day, source = outlook.payday(conn, lg, recurring.items(conn))
+    return {"date": day.isoformat(), "source": source}

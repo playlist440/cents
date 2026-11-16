@@ -18,7 +18,7 @@ that is simplest for the family using the app, and note the choice in `docs/DECI
 4. **One household.** One shared password, no user management.
 5. **Private.** All data stays in one SQLite file on the owner's server. No external requests at
    runtime: no CDN, no fonts, no analytics, no telemetry. Everything is vendored.
-6. **Dutch, plain words.** "bakje", "vaste lasten", "nog te besteden", "over". No finance jargon.
+6. **Dutch, plain words.** "bakje", "vaste lasten", "vrij geld", "over". No finance jargon.
 
 ## 2. Architecture
 
@@ -330,8 +330,32 @@ fly and cached until the next write:
   the rest of the period; `saving_upcoming` likewise for recurring transfers to savings.
 - Current period: `left = max(income, expected_income) − fixed − fixed_upcoming − saved −
   saving_upcoming − daily`; `per_day_left = left / days remaining`. With fewer than two
-  complete periods of history `left` is `null`.
+  complete periods of history `left` is `null`. *(Kept in the API for compatibility; the
+  UI no longer shows it: it counted this month's salary before it arrived and looked at one
+  account only. Replaced by `free`, `tempo`, `checking_warning` below.)*
 - Past period: `net = income − fixed − daily − saved` ("over" / "tekort").
+- **Vrij geld** (`free`, current period only; `services/outlook.py`): sum of the balances of
+  all visible checking and savings accounts − money in active potjes (sum of positive saldos,
+  at most the savings balance) − buffer − recurring `fixed` items expected after the balance
+  date and before the next payday − outstanding manual credit-card purchases. Transfers between
+  own accounts never change it; transfers to savings are no cost. Buffer = assumption
+  `buffer`: `amount_cents` when set, else `months` × average monthly fixed costs (previous up
+  to six complete periods; recurring items when there is no history), minus the saldo of a
+  potje whose name contains "buffer". Next payday = assumption `payday_day` when set (next
+  date with that day after today, clamped to month end), else the next expected date of the
+  largest live recurring income, else the end of the current period. `stale` when the latest
+  balance is more than 5 days old (UI: "saldo van 9 nov").
+- **Tempo** (`tempo`): mean of `income − fixed − daily` over the last three complete periods
+  (saving is not spending, money back from savings is not income), plus the series of up to
+  twelve complete periods. `null` with fewer than two complete periods. `since` = the first
+  of the three, or the start of a longer run of short months.
+- **Waarschuwing betaalrekening** (`checking_warning`): the main checking account (most
+  transactions) projected day by day from its balance date until the day before payday:
+  recurring fixed costs and recurring savings transfers on their expected dates, plus the
+  mean daily spending of the last three complete periods per day. If the lowest point from
+  today on is below assumption `checking_floor_cents` (default 0) →
+  `{date, low_cents, floor_cents, suggest_cents, account_id, payday}`; `suggest_cents` = the
+  shortfall rounded up to € 50, `null` when the savings balance does not cover it. Else `null`.
 - `pace`: cumulative daily-spending series for this period and the typical series (mean of the
   previous up to six complete periods at the same day index).
 - Per category: spent, the average of the previous six complete periods, count.
@@ -359,6 +383,8 @@ Only show an insight when the data really supports it (minimum history per rule)
     geleden"), links to import.
 15. `fixed_share` — fixed costs as a share of income; info below 50 %, warn above 60 %.
 16. `last_year` — this period's daily spending vs the same period last year (needs 13 periods).
+17. `tempo` — the three-month mean result (`tempo`) is € 25 or more negative: "Jullie geven
+    sinds <maand> gemiddeld € X per maand meer uit dan er binnenkomt." Id `tempo:<since>`.
 Tone: `good`, `warn`, `info`. Never moralise.
 
 **Goals** (`services/goals.py`):
@@ -444,8 +470,16 @@ Overview: `GET /overview?period` →
 ```ts
 { period: Period,
   income_cents, expected_income_cents, fixed_cents, fixed_upcoming_cents, daily_cents,
-  saved_cents, saving_upcoming_cents, left_cents: number|null, per_day_left_cents: number|null,
+  saved_cents, saving_upcoming_cents,
+  left_cents: number|null, per_day_left_cents: number|null,   // legacy, not shown in the UI
   net_cents,
+  free: { total_cents, balances_cents, goals_cents, buffer_cents, fixed_until_payday_cents,
+          credit_cents, payday: string, payday_source: "setting"|"salary"|"period",
+          as_of: string|null, stale: boolean } | null,          // current period only
+  tempo: { avg_net_cents, periods, since: string /* period id */,
+           months: [{ period, net_cents }] /* oldest first, ≤ 12 */ } | null,
+  checking_warning: { date, low_cents, floor_cents, suggest_cents: number|null,
+                      account_id, payday } | null,
   pace: { days: string[], actual: number[] /* cumulative cents, up to today */,
           typical: number[] /* cumulative cents, full period */ } | null,
   categories: [{ category_id, spent_cents, avg_cents, count }],   // fixed + daily, spent desc
@@ -518,8 +552,13 @@ Every smart assumption must be visible and correctable by the family.
   `one` | `merchant` | `merchant_below` (+ `below_cents`). `PATCH /rules/{id}` edits a rule.
 - **Insights** have stable ids and can be dismissed one by one
   (`POST /insights/dismiss {id}`) or muted per kind (`POST /insights/mute {kind, muted}`).
+- **Vrij geld assumptions** in setting `assumptions` (PATCH /settings): `payday_day =
+  {day: null|1–31}` (null = from the salary), `buffer = {months: 0–24, amount_cents:
+  null|≥0}` (an amount wins over months), `checking_floor_cents = {cents}`. Shown and editable
+  on "Slimme aannames".
 - **Overview.** `GET /assumptions` lists what the app assumed (salary series, account types,
-  ignored recurring items, learned goal links, suggested month start day) for the settings
+  ignored recurring items, learned goal links, suggested month start day, `payday: {date,
+  source}` = the next salary date Vrij geld counts to) for the settings
   screen "Slimme aannames"; each item can be undone there.
 
 ## 14. Calendar, yearly cost, recap (added later; additive)

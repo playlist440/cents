@@ -1,11 +1,12 @@
-// Overzicht (DESIGN §3): hero "Nog te besteden" with pace chart, four tiles, sort banner,
-// "Waar het heen ging", insights, Binnenkort, Potjes peek. Empty state: one drop zone.
+// Overzicht (DESIGN §3): hero "Vrij geld" (breakdown popover) with Tempo and the pace chart,
+// a betaalrekening warning when relevant, four tiles, sort banner, "Waar het heen ging",
+// insights, Binnenkort, Potjes peek. Empty state: one drop zone.
 
 import { html, useRef, useState } from '../vendor/preact-htm.js';
 import { api } from '../api.js';
 import { useStore, useQuery, categoryById } from '../store.js';
 import { navigate, replaceQuery } from '../router.js';
-import { euros, money, plural, monthLabel, monthSmart, relativeDays, parseISO, MONTHS_SHORT, todayISO, addDays, dayLabel, percent } from '../format.js';
+import { euros, money, plural, monthLabel, monthSmart, relativeDays, parseISO, MONTHS_SHORT, MONTHS, todayISO, addDays, dayLabel, percent, shortDate } from '../format.js';
 import { useLayout } from '../hooks.js';
 import { EmojiTile } from '../components/EmojiTile.js';
 import { Icon } from '../icons.js';
@@ -21,7 +22,7 @@ import { StackedCapsule } from '../charts/StackedCapsule.js';
 import { RankedBars } from '../charts/RankedBars.js';
 import { colorVar } from '../colors.js';
 import { openAddMenu, openImport, openLink } from '../shell/actions.js';
-import { openMenu, openContextMenu } from '../components/Menu.js';
+import { openMenu, openContextMenu, openPopover } from '../components/Menu.js';
 import { toast } from '../components/Toast.js';
 import { invalidate } from '../store.js';
 import { commitLater, usePending } from './_kit.js';
@@ -55,6 +56,7 @@ export function Overzicht({ query }) {
         canPrev=${!!data.period.prev && data.period.prev >= periods.first} canNext=${data.period.id < periods.last} setPeriod=${setPeriod} />`
     : html`<div class=${'ov-body' + (stale ? ' is-stale' : '')}>
       <${Hero} o=${data} canPrev=${!!data.period.prev && data.period.prev >= periods.first} canNext=${data.period.id < periods.last} setPeriod=${setPeriod} />
+      <${CheckingWarning} o=${data} />
       <${Tiles} o=${data} />
       ${data.unsorted.merchants > 0 && html`<${SortBanner} n=${data.unsorted.merchants} />`}
       <${WhereItWent} o=${data} />
@@ -70,11 +72,11 @@ export function Overzicht({ query }) {
 function heroModel(o) {
   const p = o.period;
   const daysLeft = p.days_total - p.day_index + 1;
-  if (p.is_current && o.left_cents != null) {
-    const sub = [];
-    if (o.per_day_left_cents > 0) sub.push(`${euros(o.per_day_left_cents)} per dag`);
-    sub.push(daysLeft === 1 ? 'laatste dag' : `nog ${daysLeft} dagen`);
-    return { label: 'Nog te besteden', cents: o.left_cents, warn: o.left_cents < 0, sub: sub.join(' · ') };
+  if (p.is_current && o.free) {
+    const f = o.free;
+    const sub = [`tot ${shortDate(f.payday)}`];
+    if (f.stale && f.as_of) sub.push(`saldo van ${shortDate(f.as_of)}`);
+    return { label: 'Vrij geld', cents: f.total_cents, warn: f.total_cents < 0, sub: sub.join(' · '), free: f };
   }
   if (p.is_current) {
     return { label: 'Uitgegeven', cents: o.fixed_cents + o.daily_cents, sub: daysLeft === 1 ? 'laatste dag' : `nog ${daysLeft} dagen` };
@@ -86,6 +88,84 @@ function heroModel(o) {
     warn: !over,
     sub: `${euros(o.income_cents)} inkomen · ${euros(o.fixed_cents + o.daily_cents)} uitgegeven`,
   };
+}
+
+/** Breakdown of Vrij geld: saldi − potjes − buffer − vaste lasten tot salaris (− creditcard). */
+function FreeBreakdown({ f }) {
+  const rows = [
+    ['Saldi', f.balances_cents, 'betaal + spaar'],
+    ['Potjes', -f.goals_cents],
+    ['Buffer', -f.buffer_cents],
+    [`Vaste lasten tot ${shortDate(f.payday)}`, -f.fixed_until_payday_cents],
+    f.credit_cents > 0 && ['Creditcard', -f.credit_cents],
+  ].filter(Boolean);
+  return html`<div class="free-pop">
+    <dl class="free-rows">
+      ${rows.map(([label, cents, note]) => html`<div class="free-row" key=${label}>
+        <dt>${label}${note && html`<span class="free-note">${note}</span>`}</dt>
+        <dd class="num">${money(cents, { whole: true, negative: true })}</dd>
+      </div>`)}
+      <div class="free-row is-total"><dt>Vrij</dt><dd class=${'num' + (f.total_cents < 0 ? ' is-warn' : '')}>${money(f.total_cents, { whole: true, negative: true })}</dd></div>
+    </dl>
+    ${f.as_of && html`<p class="free-foot">Saldo van ${shortDate(f.as_of)}${f.payday_source === 'period' ? ' · salaris niet herkend' : ''}</p>`}
+    <button class="dk-link free-link" onClick=${() => navigate('/instellingen/aannames')}>Aannames aanpassen</button>
+  </div>`;
+}
+
+const openFree = (e, f) => openPopover(e.currentTarget, () => html`<${FreeBreakdown} f=${f} />`, { width: 300, label: 'Opbouw vrij geld' });
+
+/** Tempo: mean monthly result of the last three months + a 12-month mini bar chart. */
+function Tempo({ t }) {
+  if (!t) return html`<div class="tempo is-quiet">Tempo volgt na twee volle maanden</div>`;
+  const over = t.avg_net_cents >= 0;
+  const text = over ? `+ ${euros(t.avg_net_cents)} per maand over` : `${euros(-t.avg_net_cents)} per maand tekort`;
+  return html`<div class="tempo">
+    <span class="tempo-main">
+      <span class="tempo-label">Tempo</span>
+      <span class=${'tempo-value num' + (over ? '' : ' is-warn')}>${text}</span>
+      <span class="tempo-sub">gemiddeld, laatste ${t.periods} maanden</span>
+    </span>
+    <${NetBars} months=${t.months} />
+  </div>`;
+}
+
+function NetBars({ months }) {
+  const w = 132;
+  const h = 36;
+  const n = months.length;
+  const max = Math.max(1, ...months.map((m) => Math.abs(m.net_cents)));
+  const hasNeg = months.some((m) => m.net_cents < 0);
+  const hasPos = months.some((m) => m.net_cents > 0);
+  const zero = hasNeg && hasPos ? h / 2 : hasNeg ? 1 : h - 1;
+  const span = hasNeg && hasPos ? h / 2 - 1 : h - 2;
+  const slot = w / Math.max(n, 1);
+  const bw = Math.max(3, Math.min(8, slot - 3));
+  const label = 'Resultaat per maand: ' + months.map((m) => `${MONTHS[Number(m.period.slice(5)) - 1]} ${money(m.net_cents, { whole: true, negative: true })}`).join(', ');
+  return html`<svg class="netbars" width=${w} height=${h} viewBox=${`0 0 ${w} ${h}`} role="img" aria-label=${label}>
+    <line x1="0" x2=${w} y1=${zero} y2=${zero} class="netbars-zero" />
+    ${months.map((m, i) => {
+      const len = Math.max(1.5, (Math.abs(m.net_cents) / max) * span);
+      const x = i * slot + (slot - bw) / 2;
+      const y = m.net_cents >= 0 ? zero - len : zero;
+      return html`<rect key=${m.period} x=${x} y=${y} width=${bw} height=${len} rx="1.5" class=${m.net_cents >= 0 ? 'is-pos' : 'is-neg'} />`;
+    })}
+  </svg>`;
+}
+
+/** Only when the checking account is expected to drop below the floor before payday. */
+function CheckingWarning({ o, desk = false }) {
+  const w = o.checking_warning;
+  if (!o.period.is_current || !w) return null;
+  const low = money(w.low_cents, { whole: true, negative: true });
+  return html`<div class=${'chk-warn card' + (desk ? ' dk-card' : '')} role="status">
+    <span class="chk-warn-icon" aria-hidden="true"><${Icon} name="warning" size=${18} stroke=${2.1} /></span>
+    <span class="chk-warn-text">
+      <span class="chk-warn-title">Rond ${shortDate(w.date)} staat de betaalrekening naar verwachting op ${low}.</span>
+      ${w.suggest_cents
+        ? html`<span class="chk-warn-sub">Zet ${euros(w.suggest_cents)} terug van de spaarrekening.</span>`
+        : html`<span class="chk-warn-sub">Er staat niet genoeg op de spaarrekening om het aan te vullen.</span>`}
+    </span>
+  </div>`;
 }
 
 function Hero({ o, canPrev, canNext, setPeriod, desk = false }) {
@@ -127,10 +207,17 @@ function Hero({ o, canPrev, canNext, setPeriod, desk = false }) {
   return html`<section class="hero" aria-label=${m.label} onPointerDown=${down} onPointerMove=${move} onPointerUp=${up} onPointerCancel=${up}>
     <div class="hero-inner" ref=${ref}>
       <div class="hero-label">${m.label}</div>
-      <div class=${'hero-amount rounded' + (m.warn ? ' is-warn' : '')}>
-        <${Amount} key=${p.id} cents=${m.cents} whole animate negative />
-      </div>
+      ${m.free
+        ? html`<button class=${'hero-amount rounded is-button' + (m.warn ? ' is-warn' : '')} aria-haspopup="dialog"
+            aria-label=${`Vrij geld ${money(m.cents, { whole: true, negative: true })}. Toon opbouw`} onClick=${(e) => openFree(e, m.free)}>
+            <${Amount} key=${p.id} cents=${m.cents} whole animate negative />
+            <span class="hero-info" aria-hidden="true"><${Icon} name="info" size=${18} stroke=${2} /></span>
+          </button>`
+        : html`<div class=${'hero-amount rounded' + (m.warn ? ' is-warn' : '')}>
+            <${Amount} key=${p.id} cents=${m.cents} whole animate negative />
+          </div>`}
       <div class="hero-sub num">${m.sub}</div>
+      ${p.is_current && m.free && html`<${Tempo} t=${o.tempo} />`}
       ${pace && html`<div class="hero-pace">
         ${desk
           ? html`<${PaceChart} actual=${pace.actual} typical=${pace.typical} label=${paceLabel} showToday=${p.is_current}
@@ -159,7 +246,7 @@ function paceDay(p, i, long = false) {
 function Dashboard({ o, goals, stale, canPrev, canNext, setPeriod }) {
   return html`<div class=${'ov-body ov-dash dk-grid' + (stale ? ' is-stale' : '')}>
     <div class="dk-col-7 ov-hero-card dk-card"><${Hero} o=${o} canPrev=${canPrev} canNext=${canNext} setPeriod=${setPeriod} desk /></div>
-    <div class="dk-col-5 ov-tiles-col"><${Tiles} o=${o} /></div>
+    <div class="dk-col-5 ov-tiles-col dk-stack"><${CheckingWarning} o=${o} desk /><${Tiles} o=${o} /></div>
     ${o.unsorted.merchants > 0 && html`<div class="dk-col-12"><${SortBanner} n=${o.unsorted.merchants} /></div>`}
     <div class="dk-col-7"><${WhereTable} o=${o} /></div>
     <div class="dk-col-5 dk-stack ov-side">

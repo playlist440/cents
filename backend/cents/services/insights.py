@@ -30,6 +30,7 @@ SCORES = {
     "new_recurring": 76, "category_spike": 70, "large": 68, "yearly_bill": 66, "left_over": 64,
     "pace": 60, "goal_behind": 58, "goal_reached": 56, "buffer": 55, "unsorted": 50,
     "fixed_share": 45, "last_year": 40, "savings_rate": 35, "fx_costs": 33, "bank_fees": 30,
+    "tempo": 62,
 }
 
 
@@ -303,6 +304,19 @@ def buffer(conn: sqlite3.Connection, lg: Ledger, p: Period, ov: dict) -> list[di
     return [make("buffer", f"buffer:{p.id}", "good", "🛟", title, "networth", {}, savings, bonus=-25)]
 
 
+def tempo(ov: dict) -> list[dict]:
+    """The last three complete periods together: more out than in."""
+    t = ov.get("tempo")
+    if not ov["period"]["is_current"] or not t or t["avg_net_cents"] >= 0:
+        return []
+    short = -t["avg_net_cents"]
+    if short < 2500:
+        return []
+    return [make("tempo", f"tempo:{t['since']}", "warn", "📉",
+                 f"Jullie geven sinds {period_month(t['since'])} gemiddeld {euro(short)} per maand "
+                 "meer uit dan er binnenkomt.", "trends", {}, -short)]
+
+
 def left_over(lg: Ledger, p: Period, ov: dict) -> list[dict]:
     complete = _complete_ids(lg)
     target = p
@@ -475,6 +489,7 @@ KIND_LABELS = {
     "large": "Grote eenmalige uitgaven",
     "savings_rate": "Hoeveel je spaart",
     "buffer": "Buffer",
+    "tempo": "Meer uit dan erin",
     "left_over": "Geld over",
     "unsorted": "Nog te sorteren",
     "yearly_bill": "Jaarlijkse rekeningen",
@@ -525,6 +540,7 @@ def candidates(conn: sqlite3.Connection, lg: Ledger, p: Period, ov: dict) -> lis
     found += large(lg, p, ov, by_tx)
     found += left_over(lg, p, ov)
     found += pace(lg, p, ov)
+    found += tempo(ov)
     found += goal_news(conn, lg, p, ov)
     found += buffer(conn, lg, p, ov)
     found += unsorted(conn, p, ov)

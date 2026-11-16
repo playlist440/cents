@@ -374,9 +374,129 @@ function overview(pid) {
     left_cents: left, per_day_left_cents: perDay, net_cents: net,
     pace, categories, income, upcoming, insights: [], unsorted,
     balance: { checking_cents: checking, expected_end_cents: expectedEnd },
+    free: null, tempo: null, checking_warning: null,
   };
+  if (p.is_current) Object.assign(result, outlook());
   result.insights = insights(result, prev);
   return result;
+}
+
+/* ---------- Vrij geld, tempo, betaalrekening (SPEC §9, services/outlook.py) ---------- */
+
+const OCC_STEP_DAYS = { weekly: 7, '2-weekly': 14, '4-weekly': 28, quarterly: 91, 'half-year': 182, yearly: 365 };
+
+/** Expected dates of a live recurring item in [from, to) (ISO strings). */
+function occurrences(it, from, to) {
+  if (it.status === 'ended') return [];
+  const out = [];
+  let d = it.next_date;
+  while (d < to && out.length < 10) {
+    if (d >= from) out.push(d);
+    if (it.frequency === 'monthly') {
+      const np = shiftPeriod(d.slice(0, 7), 1);
+      const dim = new Date(Date.UTC(+np.slice(0, 4), +np.slice(5), 0)).getUTCDate();
+      d = `${np}-${String(Math.min(Number(it.next_date.slice(8)), dim)).padStart(2, '0')}`;
+    } else d = addDays(d, OCC_STEP_DAYS[it.frequency] || 30);
+  }
+  return out;
+}
+
+function dayInMonth(ym, day) {
+  const dim = new Date(Date.UTC(+ym.slice(0, 4), +ym.slice(5), 0)).getUTCDate();
+  return `${ym}-${String(Math.min(day, dim)).padStart(2, '0')}`;
+}
+
+function payday(rec) {
+  const set = assumptionsOut().payday_day.day;
+  const today = db.today;
+  if (Number.isInteger(set)) {
+    let d = dayInMonth(today.slice(0, 7), set);
+    if (d <= today) d = dayInMonth(shiftPeriod(today.slice(0, 7), 1), set);
+    return [d, 'setting'];
+  }
+  const income = rec.filter((i) => i.direction === 'in' && i.status !== 'ended' && catById(i.category_id)?.grp === 'income');
+  if (income.length) {
+    const main = income.reduce((a, b) => (b.amount_cents > a.amount_cents ? b : a));
+    const next = occurrences(main, addDays(today, 1), addDays(today, 400))[0];
+    if (next) return [next, 'salary'];
+  }
+  return [addDays(periodObj(currentPeriod()).to, 1), 'period'];
+}
+
+function outlook() {
+  const rec = recurringItems();
+  const a = assumptionsOut();
+  const grp = (it) => catById(it.category_id)?.grp;
+  const due = (from, to, groups) => rec.filter((it) => it.direction === 'out' && groups.includes(grp(it)))
+    .flatMap((it) => occurrences(it, from, to).map((d) => [it, d]));
+  const accs = db.accounts.filter((x) => !x.hidden && (x.type === 'checking' || x.type === 'savings'))
+    .map((x) => ({ ...x, ...accountBalance(x) })).filter((x) => x.balance_cents != null);
+  const hist = previousComplete(currentPeriod(), 12);
+  const net = (pid) => { const f = flows(pid); return f.income - f.fixed - f.daily; };
+
+  let free = null;
+  const [pay, source] = payday(rec);
+  if (accs.length) {
+    const balances = accs.reduce((s, x) => s + x.balance_cents, 0);
+    const savings = accs.filter((x) => x.type === 'savings').reduce((s, x) => s + x.balance_cents, 0);
+    const as_of = accs.map((x) => x.as_of).filter(Boolean).sort().at(-1) || null;
+    const credit = db.accounts.filter((x) => x.type === 'credit' && !x.hidden).reduce((s, x) => s + (accountBalance(x).outstanding_cents || 0), 0);
+    const goals = goalsData().goals;
+    const inGoals = goals.reduce((s, g) => s + Math.max(0, g.saldo_cents), 0);
+    const goals_cents = savings > 0 ? Math.min(inGoals, savings) : 0;
+    const bufferGoal = goals.filter((g) => /buffer/i.test(g.name)).reduce((s, g) => s + Math.max(0, g.saldo_cents), 0);
+    const h6 = hist.slice(0, 6);
+    const monthlyFixed = h6.length ? h6.reduce((s, x) => s + flows(x).fixed, 0) / h6.length : 0;
+    const target = a.buffer.amount_cents != null ? a.buffer.amount_cents : Math.round(monthlyFixed * a.buffer.months);
+    const buffer_cents = Math.max(0, target - bufferGoal);
+    const start = as_of ? addDays(as_of, 1) : db.today;
+    const fixed = due(start, pay, ['fixed']).reduce((s, [it]) => s - it.amount_cents, 0);
+    free = {
+      total_cents: balances - goals_cents - buffer_cents - fixed - credit, balances_cents: balances, goals_cents, buffer_cents,
+      fixed_until_payday_cents: fixed, credit_cents: credit, payday: pay, payday_source: source, as_of,
+      stale: !!as_of && daysBetween(as_of, db.today) > 5,
+    };
+  }
+
+  let tempo = null;
+  if (hist.length >= 2) {
+    const recent = hist.slice(0, 3);
+    const avg = Math.round(recent.reduce((s, x) => s + net(x), 0) / recent.length);
+    let since = recent.at(-1);
+    if (avg < 0) {
+      const run = [];
+      for (const x of hist) { if (net(x) >= 0) break; run.push(x); }
+      if (run.length > recent.length) since = run.at(-1);
+    }
+    tempo = { avg_net_cents: avg, periods: recent.length, since, months: [...hist].reverse().map((x) => ({ period: x, net_cents: net(x) })) };
+  }
+
+  let checking_warning = null;
+  const chk = accs.filter((x) => x.type === 'checking')
+    .sort((x, y) => db.transactions.filter((t) => t.account_id === y.id).length - db.transactions.filter((t) => t.account_id === x.id).length)[0];
+  if (chk && hist.length) {
+    const floor = a.checking_floor_cents.cents;
+    const start = chk.as_of ? addDays(chk.as_of, 1) : db.today;
+    const dueBy = new Map();
+    for (const [it, d] of due(start, pay, ['fixed', 'saving'])) dueBy.set(d, (dueBy.get(d) || 0) + it.amount_cents);
+    const r3 = hist.slice(0, 3);
+    const days = r3.reduce((s, x) => s + periodObj(x).days_total, 0);
+    const perDay = days ? r3.reduce((s, x) => s + flows(x).daily, 0) / days : 0;
+    let bal = chk.balance_cents;
+    let low = null;
+    let lowDay = null;
+    for (let d = start; d < pay; d = addDays(d, 1)) {
+      bal += (dueBy.get(d) || 0) - perDay;
+      if (d >= db.today && (low == null || bal < low)) { low = bal; lowDay = d; }
+    }
+    if (low != null && low < floor) {
+      const lowC = Math.floor(low);
+      const suggest = Math.ceil((floor - lowC) / 5000) * 5000;
+      const sav = accs.filter((x) => x.type === 'savings').reduce((s, x) => s + x.balance_cents, 0);
+      checking_warning = { date: lowDay, low_cents: lowC, floor_cents: floor, suggest_cents: sav >= suggest ? suggest : null, account_id: chk.id, payday: pay };
+    }
+  }
+  return { free, tempo, checking_warning };
 }
 
 function insights(o, prev) {
@@ -418,6 +538,9 @@ function insights(o, prev) {
       const d = daysBetween(db.today, it.next_date);
       if (d > 0 && d <= 60) out.push({ id: 'yearly-' + it.key, kind: 'yearly_bill', tone: 'info', emoji: '📅', title: `${it.name} ${euros(-it.amount_cents)} komt eraan in ${MONTHS[Number(it.next_date.slice(5, 7)) - 1]}`, value_cents: -it.amount_cents, link: '/vaste-lasten', rank: 50 });
     }
+  }
+  if (p.is_current && o.tempo && o.tempo.avg_net_cents <= -2500) {
+    out.push({ id: 'tempo:' + o.tempo.since, kind: 'tempo', tone: 'warn', emoji: '📉', title: `Jullie geven sinds ${MONTHS[Number(o.tempo.since.slice(5)) - 1]} gemiddeld ${euros(-o.tempo.avg_net_cents)} per maand meer uit dan er binnenkomt.`, value_cents: o.tempo.avg_net_cents, link: '/jaaroverzicht', rank: 62 });
   }
   if (!p.is_current && o.net_cents > 10000) {
     out.push({ id: 'left-' + p.id, kind: 'left_over', tone: 'good', emoji: '🎉', title: `${euros(o.net_cents)} over in ${MONTHS[Number(p.id.slice(5)) - 1]}. Zet het in een potje.`, value_cents: o.net_cents, link: '/potjes', rank: 80 });
@@ -1408,6 +1531,10 @@ const ROUTES = [
         if (!cur[k] || typeof v !== 'object') fail(422, 'invalid', 'Deze instelling bestaat niet.');
         if ('enabled' in v && typeof v.enabled !== 'boolean') fail(422, 'invalid', 'Kies aan of uit.');
         if ('below_cents' in v && !(Number.isInteger(v.below_cents) && v.below_cents >= 100 && v.below_cents <= 10000)) fail(422, 'invalid', 'Kies een bedrag tussen € 1 en € 100.');
+        if ('day' in v && v.day !== null && !(Number.isInteger(v.day) && v.day >= 1 && v.day <= 31)) fail(422, 'invalid', 'Kies een dag tussen 1 en 31.');
+        if ('months' in v && !(typeof v.months === 'number' && v.months >= 0 && v.months <= 24)) fail(422, 'invalid', 'Kies tussen 0 en 24 maanden.');
+        if ('amount_cents' in v && v.amount_cents !== null && !(Number.isInteger(v.amount_cents) && v.amount_cents >= 0)) fail(422, 'invalid', 'Kies een geldig bedrag.');
+        if ('cents' in v && !Number.isInteger(v.cents)) fail(422, 'invalid', 'Kies een geldig bedrag.');
         cur[k] = { ...cur[k], ...v };
       }
       db.settings.assumptions = cur;
@@ -1438,11 +1565,17 @@ const INSIGHT_KINDS = {
   large: 'Grote eenmalige uitgaven', savings_rate: 'Hoeveel je spaart', buffer: 'Buffer', left_over: 'Geld over',
   unsorted: 'Nog te sorteren', yearly_bill: 'Jaarlijkse rekeningen', goal_behind: 'Potjes die achterlopen',
   goal_reached: 'Gehaalde potjes', stale: 'Importherinnering', fixed_share: 'Aandeel vaste lasten', last_year: 'Vergelijking met vorig jaar',
+  tempo: 'Meer uit dan erin',
 };
 
 function assumptionsOut() {
   const a = db.settings.assumptions || {};
-  return { small_amount_at_fuel: { enabled: true, below_cents: 1500, ...(a.small_amount_at_fuel || {}) } };
+  return {
+    small_amount_at_fuel: { enabled: true, below_cents: 1500, ...(a.small_amount_at_fuel || {}) },
+    payday_day: { day: null, ...(a.payday_day || {}) },
+    buffer: { months: 3, amount_cents: null, ...(a.buffer || {}) },
+    checking_floor_cents: { cents: 0, ...(a.checking_floor_cents || {}) },
+  };
 }
 
 function settingsOut() {
@@ -1481,6 +1614,7 @@ function assumptionsList() {
     goal_links: goalLinks().map((l) => ({ ...l, goal_name: db.goals.find((g) => g.id === l.goal_id)?.name || 'Potje' })),
     month_start_day: startDay(),
     suggestion: { month_start_day: startDay() === 1 && rec.some((i) => i.category_id === salaris?.id) ? 24 : null },
+    payday: (([date, source]) => ({ date, source }))(payday(rec)),
   };
 }
 

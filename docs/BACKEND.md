@@ -39,6 +39,7 @@ Set `PYTHONDONTWRITEBYTECODE=1` (the folder is cloud-synced).
 | `services/ledger.py` | The cash-flow ledger, built once per state: every counting transaction in its group (income/fixed/daily/saving, credit-card unexplained part, savings interest) and per-period `Flows` (totals, per bakje, daily spending per day). `complete_before(p, n)`, `first_complete()`. |
 | `services/recurring.py` | Recurring detection (`detect()` is pure), `items(conn)` cached, `recurring_json`, `occurrences()`, the `provide_recurring_lookup` hook. |
 | `services/summary.py` | `overview`, `trends`, `category_summary`, `tag_summary`. |
+| `services/outlook.py` | Current-period "now" figures for `/overview`: `free` (Vrij geld), `tempo`, `checking_warning`, next `payday`. |
 | `services/insights.py` | One function per rule; `candidates()` (all, ranked) and `compute()` (top five). |
 | `services/goals.py` | Goal matching (code > name/keyword > learned), `after_import` matching, `after_write` reconcile of `transactions.goal_id`, roll-over, `overview()` (GET /goals). |
 | `services/networth.py` | Balances per account, investments, credit card, month-end series. |

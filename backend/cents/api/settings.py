@@ -37,7 +37,8 @@ def patch_settings(body: SettingsPatch, conn: sqlite3.Connection = Depends(get_c
             continue
         if key == "assumptions":
             assumptions.merge(conn, val)
-            engine.classify_all(conn)              # the defaults changed: re-sort everything
+            if "small_amount_at_fuel" in val:
+                engine.classify_all(conn)          # the defaults changed: re-sort everything
             continue
         if key == "household_name":
             val = val.strip()

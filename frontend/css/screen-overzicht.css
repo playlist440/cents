@@ -86,3 +86,41 @@
 @media (hover: none) { .insight-more:active { background: var(--fill-3); } }
 @media (hover: hover) and (pointer: fine) { .insight-more:hover { background: var(--fill-4); color: var(--label-2); } }
 .ov-total-lbl { font-size: var(--fs-footnote); color: var(--label-2); margin-right: 4px; }
+
+/* ---------- Vrij geld: tappable amount, breakdown popover ---------- */
+.hero-amount.is-button { display: inline-flex; align-items: center; gap: 8px; border: 0; background: none; padding: 0; color: inherit; cursor: pointer; text-align: left; border-radius: 10px; }
+.hero-amount.is-button.is-warn { color: var(--warn-text); }
+.hero-amount.is-button:focus-visible { outline: 3px solid var(--focus, var(--tint)); outline-offset: 3px; }
+.hero-info { color: var(--label-3); display: inline-flex; transition: color .15s; }
+.hero-amount.is-button:hover .hero-info { color: var(--tint); }
+.free-pop { padding: 12px 14px 10px; }
+.free-rows { margin: 0; }
+.free-row { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 5px 0; font: 400 var(--fs-subhead)/1.3 var(--font); }
+.free-row dt { color: var(--label); display: flex; flex-direction: column; }
+.free-row dd { margin: 0; font-variant-numeric: tabular-nums; }
+.free-note { font-size: var(--fs-caption1); color: var(--label-2); }
+.free-row.is-total { border-top: .5px solid var(--sep); margin-top: 4px; padding-top: 9px; font-weight: 600; }
+.free-row dd.is-warn { color: var(--warn-text); }
+.free-foot { margin: 8px 0 0; font: 400 var(--fs-caption1)/1.3 var(--font); color: var(--label-2); }
+.free-link { margin-top: 8px; padding: 0; border: 0; background: none; color: var(--tint-text, var(--tint)); font: 400 var(--fs-footnote)/1.3 var(--font); cursor: pointer; }
+
+/* ---------- Tempo ---------- */
+.tempo { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 14px; padding-top: 12px; border-top: .5px solid var(--sep); }
+.tempo.is-quiet { font: 400 var(--fs-footnote)/1.3 var(--font); color: var(--label-2); justify-content: flex-start; }
+.tempo-main { display: flex; flex-direction: column; min-width: 0; }
+.tempo-label { font: 600 var(--fs-footnote)/1.3 var(--font); color: var(--label-2); }
+.tempo-value { font: 600 var(--fs-headline)/1.3 var(--font-rounded); color: var(--green-text); }
+.tempo-value.is-warn { color: var(--warn-text); }
+.tempo-sub { font: 400 var(--fs-caption1)/1.3 var(--font); color: var(--label-2); }
+.netbars { flex: none; }
+.netbars-zero { stroke: var(--sep); stroke-width: 1; }
+.netbars .is-pos { fill: var(--green); }
+.netbars .is-neg { fill: var(--orange); }
+
+/* ---------- Betaalrekening warning ---------- */
+.chk-warn { display: flex; gap: 12px; align-items: flex-start; padding: 14px 16px; margin-bottom: 18px; border-radius: var(--r-card); background: var(--bg-grouped-2); box-shadow: inset 3px 0 0 var(--orange); }
+.chk-warn-icon { color: var(--warn-text); flex: none; margin-top: 1px; }
+.chk-warn-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.chk-warn-title { font: 600 var(--fs-subhead)/1.35 var(--font); color: var(--label); }
+.chk-warn-sub { font: 400 var(--fs-subhead)/1.35 var(--font); color: var(--label-2); }
+.ov-tiles-col .chk-warn { margin-bottom: 0; }

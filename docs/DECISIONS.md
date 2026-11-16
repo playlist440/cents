@@ -612,4 +612,13 @@
   only, was fixed + daily) and the deficit highlight wording ("€ x meer uitgegeven dan er
   binnenkwam"); it implements `/calendar`, `/recap`, `/recap/index`, `per_year_cents` and
   `subscriptions` (subscriptions = live outgoing items in `abonnementen`/`telecom`).
-
+- 2026-11-16 · **Vrij geld replaces "Nog te besteden".** The old headline added this month's salary
+  before it arrived (~27th) and looked at one account. The hero now shows Vrij geld = checking +
+  savings − potjes (≤ savings balance) − buffer (assumption; a potje named "buffer" counts towards
+  it) − recurring fixed costs after the balance date and before payday − outstanding credit-card
+  purchases; moving money between own accounts never changes it. A tap opens the breakdown as a
+  popover (Mac and iPhone). Tempo (3-month mean of income − fixed − daily, 12-month mini bars) sits
+  under it, the pace chart stays. The checking warning card shows only when the day-by-day
+  projection drops below the floor (desktop: above the tiles; iPhone: under the hero).
+  `left_cents`/`per_day_left_cents` stay in the API for compatibility but are not shown.
+  New assumptions `payday_day`, `buffer`, `checking_floor_cents` (Slimme aannames → Vrij geld).

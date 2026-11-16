@@ -1,6 +1,7 @@
 // Slimme aannames (SPEC §13, #/instellingen/aannames): everything the app assumed, each on one
 // row with a switch or an undo action. Salary series, account soorten (import or own choice),
-// suggested month start day, the small-amount split at fuel stations, ignored vaste lasten,
+// suggested month start day, Vrij geld (salarisdag, buffer, ondergrens betaalrekening), the
+// small-amount split at fuel stations, ignored vaste lasten,
 // learned potje links, insight kinds, and a link to Geleerde regels.
 // iPhone: a pushed screen; Mac: a section of the Instellingen split.
 
@@ -8,7 +9,7 @@ import { html, useState } from '../vendor/preact-htm.js';
 import { api } from '../api.js';
 import { useQuery, useStore, invalidate } from '../store.js';
 import { navigate } from '../router.js';
-import { money, euros, freqLabel, plural } from '../format.js';
+import { money, euros, freqLabel, plural, shortDate } from '../format.js';
 import { Screen } from '../components/Screen.js';
 import { List, ListRow } from '../components/List.js';
 import { Button, Switch } from '../components/Controls.js';
@@ -21,6 +22,9 @@ import { commitLater, usePending } from './_kit.js';
 import { InstSplit } from './instellingen.js';
 
 const TYPE_LABEL = { checking: 'Betaalrekening', savings: 'Spaarrekening', investment: 'Beleggingen', credit: 'Creditcard' };
+const FLOOR_STEPS = [0, 5000, 10000, 25000, 50000, 100000, 150000, 200000];
+const BUFFER_MONTHS = [0, 1, 2, 3, 4, 6, 9, 12];
+const BUFFER_AMOUNTS = [100000, 250000, 500000, 1000000];
 const FUEL_STEPS = [100, 200, 300, 500, 750, 1000, 1250, 1500, 2000, 2500, 3000, 4000, 5000, 7500, 10000];
 
 // Plain-language names for a few insight kinds (the server labels are kept for the rest).
@@ -45,6 +49,10 @@ export function Aannames() {
 function Content({ a, settings, pending }) {
   const boot = useStore((s) => s.boot);
   const fuel = settings?.assumptions?.small_amount_at_fuel || boot?.settings?.assumptions?.small_amount_at_fuel || null;
+  const as = settings?.assumptions || boot?.settings?.assumptions || {};
+  const payday = as.payday_day || { day: null };
+  const buffer = as.buffer || { months: 3, amount_cents: null };
+  const floor = as.checking_floor_cents || { cents: 0 };
   const muted = new Set(settings?.muted_insight_kinds || []);
   const kinds = settings?.insight_kinds || [];
   const suggested = a.suggestion?.month_start_day;
@@ -69,6 +77,29 @@ function Content({ a, settings, pending }) {
   };
   const setFuel = async (patch) => {
     try { await api.updateSettings({ assumptions: { small_amount_at_fuel: patch } }); invalidate(); } catch (err) { fail(err); }
+  };
+  const setAssumption = async (patch) => {
+    try { await api.updateSettings({ assumptions: patch }); invalidate(); } catch (err) { fail(err); }
+  };
+  const bufferLabel = buffer.amount_cents != null ? euros(buffer.amount_cents)
+    : buffer.months ? `${buffer.months} ${buffer.months === 1 ? 'maand' : 'maanden'}` : 'Geen';
+  const paydayLabel = payday.day ? `De ${payday.day}e` : 'Automatisch';
+  const paydaySub = a.payday?.date ? `Volgende: ${shortDate(a.payday.date)}${!payday.day && a.payday.source === 'period' ? ' · einde maand' : ''}` : '';
+  const pickPayday = (e) => openMenu(e.currentTarget, [
+    { label: 'Automatisch (van het salaris)', checked: !payday.day, onSelect: () => setAssumption({ payday_day: { day: null } }) },
+    '-',
+    ...Array.from({ length: 31 }, (_, i) => i + 1).map((d) => ({ label: `De ${d}e`, checked: payday.day === d, onSelect: () => setAssumption({ payday_day: { day: d } }) })),
+  ]);
+  const pickBuffer = (e) => openMenu(e.currentTarget, [
+    ...BUFFER_MONTHS.map((m) => ({ label: m ? `${m} ${m === 1 ? 'maand' : 'maanden'} vaste lasten` : 'Geen buffer', checked: buffer.amount_cents == null && buffer.months === m, onSelect: () => setAssumption({ buffer: { months: m, amount_cents: null } }) })),
+    '-',
+    ...BUFFER_AMOUNTS.map((c) => ({ label: euros(c), checked: buffer.amount_cents === c, onSelect: () => setAssumption({ buffer: { amount_cents: c } }) })),
+  ]);
+  const stepFloor = (dir) => {
+    const cur = floor.cents ?? 0;
+    const i = FLOOR_STEPS.findIndex((x) => x >= cur);
+    const n = FLOOR_STEPS[Math.max(0, Math.min(FLOOR_STEPS.length - 1, (i < 0 ? FLOOR_STEPS.length - 1 : i) + dir))];
+    if (n !== cur) setAssumption({ checking_floor_cents: { cents: n } });
   };
   const unignore = async (it) => {
     try {
@@ -110,6 +141,21 @@ function Content({ a, settings, pending }) {
       <${ListRow} icon="calendar" iconColor="blue" title=${`Salaris komt meestal op de ${suggested}e`}
         accessory=${html`<${Button} size="small" variant="tinted" onClick=${useDay} aria-label=${`Laat de maand op de ${suggested}e beginnen`}>Gebruik</${Button}>`} />
     </${List}>`}
+
+    <${List} header="Vrij geld">
+      <${ListRow} icon="calendar" iconColor="green" title="Salarisdag" subtitle=${paydaySub}
+        value=${html`<span class="sa-pop">${paydayLabel}<${Icon} name="chevron-up-down" size=${12} stroke=${2.4} /></span>`}
+        onClick=${pickPayday} label=${`Salarisdag: ${paydayLabel}. Wijzig`} />
+      <${ListRow} icon="piggy" iconColor="teal" title="Buffer" subtitle=${buffer.amount_cents != null ? 'Vast bedrag apart' : 'Vaste lasten apart'}
+        value=${html`<span class="sa-pop">${bufferLabel}<${Icon} name="chevron-up-down" size=${12} stroke=${2.4} /></span>`}
+        onClick=${pickBuffer} label=${`Buffer: ${bufferLabel}. Wijzig`} />
+      <li class="field-row"><span class="field-label sa-grow">Betaalrekening niet onder</span>
+        <span class="td-stepper">
+          <button aria-label="Lager" onClick=${() => stepFloor(-1)} disabled=${(floor.cents ?? 0) <= FLOOR_STEPS[0]}><${Icon} name="minus" size=${16} stroke=${2.4} /></button>
+          <span class="td-stepper-value num">${euros(floor.cents ?? 0)}</span>
+          <button aria-label="Hoger" onClick=${() => stepFloor(1)} disabled=${(floor.cents ?? 0) >= FLOOR_STEPS.at(-1)}><${Icon} name="plus" size=${16} stroke=${2.4} /></button>
+        </span></li>
+    </${List}>
 
     ${fuel && html`<${List} header="Kleine bedragen">
       <li class="field-row"><label class="field-label sa-grow" for="sa-fuel">Apart tonen onder ${euros(fuel.below_cents)}</label>
