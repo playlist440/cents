@@ -13,7 +13,26 @@ en hoe je potjes ervoor staan.
 - Potjes met een doelbedrag en een advies per maand.
 - Een terugblik per maand en per jaar, ook om af te drukken.
 - Elke aanname van de app is zichtbaar en aan te passen onder Instellingen → Slimme aannames.
-- Alle gegevens staan in één bestand op je eigen server. De app haalt niets van internet.
+- Beleggingen bij DEGIRO: importeer de Transacties-, Rekeningoverzicht- of Portefeuille-CSV en
+  Cents toont de echte waarde van je fondsen, wat je inlegde en je resultaat.
+- Alle gegevens staan in één bestand op je eigen server.
+
+### Wat de app van internet haalt
+
+Alleen als je fondsen hebt (na een DEGIRO-import of een zelf ingevoerde aankoop) haalt de
+server één keer per dag na 18:30 (en bij het opstarten als de koersen oud zijn) de slotkoersen
+op:
+
+- bij **Yahoo Finance** (`query1.finance.yahoo.com`, de openbare zoek- en grafiek-adressen,
+  zonder sleutel of account): alleen de ISIN of tickercode van je fondsen;
+- bij de **Europese Centrale Bank** (`www.ecb.europa.eu`, de dagelijkse wisselkoersen): alleen
+  als een fonds in een andere munt dan de euro noteert.
+
+Er gaan geen bedragen, aantallen, rekeningen of andere gegevens over jou mee; de User-Agent is
+"Cents". Dit gebeurt op de server, niet in je browser. Uitzetten: **Instellingen → Slimme
+aannames → Koersen automatisch ophalen**. Dan gaat er niets meer naar internet en gebruikt Cents
+de koersen uit je DEGIRO-portefeuille-export of de waarde die je zelf invult. Lukt ophalen niet
+(offline), dan gebruikt Cents de laatst bekende koers en toont "koers van <datum>".
 
 ## Installeren met Portainer
 

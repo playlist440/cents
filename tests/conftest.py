@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import sys
 from pathlib import Path
 
@@ -14,6 +15,24 @@ from cents.main import create_app  # noqa: E402
 from helpers import tiny_library  # noqa: E402
 
 PASSWORD = "test-wachtwoord"
+
+
+os.environ["CENTS_PRICE_TASK"] = "0"       # no background price task in tests
+
+
+@pytest.fixture(autouse=True)
+def no_network():
+    """Tests never reach the internet: the price provider and FX source are offline."""
+    from cents.services import prices
+    old_provider, old_fx = prices.PROVIDER, prices.FX_SOURCE
+    prices.set_provider(prices.OfflineProvider())
+
+    def no_fx(start):
+        raise prices.OfflineError("offline")
+    prices.FX_SOURCE = no_fx
+    yield
+    prices.set_provider(old_provider)
+    prices.FX_SOURCE = old_fx
 
 
 @pytest.fixture(autouse=True)

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Callable, Iterator
 
-from . import ImportFormatError, Source, Statement, asn_csv, camt053, collect, read_head
+from . import ImportFormatError, Source, Statement, asn_csv, camt053, collect, degiro, read_head
 
 PARSERS: dict[str, Callable[[Source], Iterator[tuple[Statement, dict]]]] = {
     "asn_csv": asn_csv.iter_rows,
@@ -18,6 +18,9 @@ def detect(source: Source) -> str:
         if camt053.looks_like(stripped):
             return "camt053"
         raise ImportFormatError("Dit XML-bestand is geen CAMT.053-afschrift.")
+    investment = degiro.looks_like(degiro.decode(stripped[:8192]))
+    if investment:
+        return investment
     if asn_csv.looks_like(asn_csv.decode(stripped[:8192])):
         return "asn_csv"
     raise ImportFormatError("Dit bestand herken ik niet. Kies een CSV- of CAMT.053-export van je bank.")
@@ -27,6 +30,8 @@ def iter_file(source: Source) -> tuple[str, Iterator[tuple[Statement, dict]]]:
     """Detect the format and return a lazy (statement, transaction) stream. Format errors in
     the body surface while iterating (as ImportFormatError)."""
     fmt = detect(source)
+    if fmt not in PARSERS:
+        raise ImportFormatError("Dit is een beleggingsbestand, geen bankafschrift.")
     return fmt, PARSERS[fmt](source)
 
 

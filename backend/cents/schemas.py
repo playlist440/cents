@@ -129,6 +129,20 @@ class AccountValueBody(BaseModel):
     value_cents: Money
 
 
+class TradeBody(BaseModel):
+    date: str
+    isin: str = Field(min_length=12, max_length=12)
+    name: str | None = Field(default=None, max_length=120)
+    side: Literal["buy", "sell"] = "buy"
+    quantity: float = Field(gt=0, le=10 ** 9)
+    price_cents: PositiveMoney
+    fees_cents: int = Field(default=0, ge=0, le=MONEY_LIMIT)
+
+
+class SecurityPatch(BaseModel):
+    price_symbol: str | None = Field(default=None, max_length=30)
+
+
 class RulePatch(BaseModel):
     category_id: int | None = None
     below_cents: PositiveMoney | None = None          # null clears the threshold

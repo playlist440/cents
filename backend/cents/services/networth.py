@@ -4,6 +4,8 @@
 - Investment: invested = transfers out of checking to the account minus transfers back.
   Value = the latest manual value plus the net transfers made after that value's date (money
   moved in later is known; nothing is interpolated). Without any value: value = invested.
+  With holdings (trades imported or entered): value = market value of the funds + estimated
+  cash (services/investments.py); history from daily prices.
 - Credit card: outstanding = manual purchases not yet explained by a settlement; the balance
   is minus that.
 - Series: one point per calendar month (month end, today for the current month), each account
@@ -18,7 +20,7 @@ import sqlite3
 from datetime import date
 
 from .. import db
-from . import cache, ledger as ledger_mod
+from . import cache, investments, ledger as ledger_mod
 
 TYPES = ("checking", "savings", "investment", "credit")
 
@@ -97,6 +99,21 @@ def compute(conn: sqlite3.Connection) -> dict:
             timelines.append((a["type"], timeline.value_at))
             if points:
                 first_days.append(points[0][0])
+        elif a["type"] == "investment" and investments.has_holdings(conn, a["id"]):
+            h = investments.holdings(conn, a["id"], today)
+            value_at, first = investments.value_timeline(conn, a["id"])
+            item.update({
+                "balance_cents": h["value_cents"], "as_of": h["price_date"],
+                "invested_cents": h["invested_cents"], "result_cents": h["result_cents"],
+                "result_pct": h["result_pct"], "price_result_cents": h["price_result_cents"],
+                "market_value_cents": h["market_value_cents"], "cash_cents": h["cash_cents"],
+                "dividends_cents": h["dividends_cents"], "costs_cents": h["costs_cents"],
+                "price_stale": h["price_stale"], "has_holdings": True,
+                "holdings_count": sum(1 for x in h["holdings"] if x["quantity"] > 0),
+                "values": []})
+            timelines.append(("investment", value_at))
+            dep = investments._deposits(conn, a["id"])
+            first_days += [d for d in ([first] + [p[0] for p in dep[:1]]) if d]
         elif a["type"] == "investment":
             inv = _investment(conn, a)
             invested = inv["invested"].value_at(today) or 0

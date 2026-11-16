@@ -5,8 +5,10 @@ Run: uvicorn cents.main:app --app-dir backend
 
 from __future__ import annotations
 
+import asyncio
 import logging
-from contextlib import asynccontextmanager
+import os
+from contextlib import asynccontextmanager, suppress
 from pathlib import Path
 
 from fastapi import Depends, FastAPI, Request
@@ -20,6 +22,7 @@ from .api import PROTECTED_ROUTERS, PUBLIC_ROUTERS
 from .api.deps import require_session
 from .guard import Guard
 from .errors import ApiError
+from .services import prices
 
 log = logging.getLogger("cents")
 
@@ -37,13 +40,23 @@ def error_response(status: int, code: str, message: str) -> JSONResponse:
     return JSONResponse({"error": {"code": code, "message": message}}, status_code=status)
 
 
-def create_app(data_dir: str | Path | None = None, frontend_dir: str | Path | None = None) -> FastAPI:
+def create_app(data_dir: str | Path | None = None, frontend_dir: str | Path | None = None,
+               price_task: bool | None = None) -> FastAPI:
     @asynccontextmanager
     async def lifespan(app: FastAPI):
         directory = Path(data_dir) if data_dir else config.data_dir()
         app.state.db_path = str(directory / "cents.db")
         db.init_db(app.state.db_path)
-        yield
+        task = None
+        if price_task if price_task is not None else os.environ.get("CENTS_PRICE_TASK", "1") != "0":
+            task = asyncio.create_task(prices.daily_task(app.state.db_path))
+        try:
+            yield
+        finally:
+            if task:
+                task.cancel()
+                with suppress(asyncio.CancelledError, Exception):
+                    await task
 
     app = FastAPI(title="Cents", version=VERSION, lifespan=lifespan, docs_url=None,
                   redoc_url=None, openapi_url=None)

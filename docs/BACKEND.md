@@ -155,3 +155,12 @@ income = sum(r["amount_cents"] for r in rows if r["grp"] == "income" or
   (bakjes `intern`, `creditcard`) never counts; `saving` (sparen/beleggen) counts as saved.
 - Account balances: `balance_after_cents` of the latest transaction per account (ASN files are
   consistent: CSV `Saldo voor boeking + Bedrag`, CAMT `OPBD` + running sum).
+
+## Investments and prices (SPEC 7.1)
+
+- `importers/degiro.py` parses the three DEGIRO CSVs; `detect.py` routes them (checked before
+  ASN CSV) and `services/imports.py` hands them to `services/investments.py` (no bank rows).
+- `services/investments.py`: holdings, value, results, weekly chart, net-worth timeline.
+- `services/prices.py`: provider interface (Yahoo default), ECB FX, `refresh(db_path)` and the
+  daily asyncio task started in `main.py`'s lifespan (`CENTS_PRICE_TASK=0` disables it; tests
+  do, and use an offline provider so they never touch the network).

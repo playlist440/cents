@@ -1,0 +1,7 @@
+Datum,Tijd,Valutadatum,Product,ISIN,Omschrijving,FX,Mutatie,,Saldo,,Order Id
+20-03-2026,07:30,19-03-2026,VANGUARD FTSE ALL-WORLD UCITS ETF,IE00B3RBWM25,Dividend,,EUR,"8,40",EUR,"20,15",
+20-03-2026,07:30,19-03-2026,VANGUARD FTSE ALL-WORLD UCITS ETF,IE00B3RBWM25,Dividendbelasting,,EUR,"-1,26",EUR,"11,75",
+02-03-2026,06:00,01-03-2026,,,DEGIRO Aansluitingskosten 2026 (Euronext Amsterdam - EAM),,EUR,"-2,50",EUR,"13,01",
+06-01-2026,10:12,06-01-2026,VANGUARD FTSE ALL-WORLD UCITS ETF,IE00B3RBWM25,DEGIRO Transactiekosten en/of kosten van derden,,EUR,"-2,00",EUR,"15,51",0000aaaa-test-0000-0000-000000000001
+05-01-2026,14:00,05-01-2026,,,iDEAL storting,,EUR,"1500,00",EUR,"1517,51",
+05-01-2026,14:01,05-01-2026,,,Overboeking naar uw geldrekening bij flatexDEGIRO Bank: 1500 EUR,,EUR,"-1500,00",EUR,"17,51",

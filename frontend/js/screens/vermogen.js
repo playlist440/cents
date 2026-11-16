@@ -23,6 +23,7 @@ import { LineChart } from '../charts/LineChart.js';
 import { openAddExpense } from '../shell/actions.js';
 import { commitLater, usePending } from './_kit.js';
 import { useLayout } from '../hooks.js';
+import { HoldingsPart, TradeSheet, resultText } from './_holdings.js';
 
 export const TYPES = [
   { type: 'checking', label: 'Betaalrekening', group: 'Betaalrekeningen', icon: 'wallet', color: 'blue' },
@@ -173,7 +174,11 @@ function Suggestion({ s }) {
 /* ---------- Account rows ---------- */
 
 function subtitleFor(a) {
-  if (a.type === 'investment') return a.invested_cents == null ? '' : `inleg ${euros(a.invested_cents)}`;
+  if (a.type === 'investment') {
+    if (a.invested_cents == null) return '';
+    const stale = a.has_holdings && a.price_stale && a.as_of ? ` · koers van ${shortDate(a.as_of)}` : '';
+    return `inleg ${euros(a.invested_cents)}${stale}`;
+  }
   if (a.type === 'credit') return a.outstanding_cents > 0 ? 'open' : 'niets open';
   if (a.iban) return maskIban(a.iban);
   return a.as_of ? `bijgewerkt ${shortDate(a.as_of)}` : 'handmatig';
@@ -187,7 +192,7 @@ function AccountRow({ a }) {
   const res = a.type === 'investment' ? a.result_cents : null;
   const value = html`<span class="vm-value">
     <span class="num vm-balance">${main}</span>
-    ${res != null && html`<span class=${'num vm-result' + (res > 0 ? ' is-income' : '')}>${money(res, { whole: true, signed: true, negative: true })}</span>`}
+    ${res != null && html`<span class=${'num vm-result' + (res > 0 ? ' is-income' : '')}>${a.has_holdings ? resultText(res, a.result_pct) : money(res, { whole: true, signed: true, negative: true })}</span>`}
   </span>`;
   const label = `${a.name}, ${main}${res != null ? `, resultaat ${money(res, { whole: true, negative: true })}` : ''}`;
   return html`<${ListRow} icon=${t.icon} iconColor=${t.color} title=${a.name} subtitle=${html`<span class="num">${subtitleFor(a)}</span>`}
@@ -256,7 +261,12 @@ export function AccountSheet({ close, account = null }) {
       ${canBalance && html`<${List} header="Saldo" footer=${full?.manual_balance_date ? `Laatst ingevuld ${longDate(full.manual_balance_date)}` : null}>
         <${AmountField} label="Saldo nu" cents=${touched ? balance : (full?.manual_balance_cents ?? null)} onChange=${(c) => { setBalance(c); setTouched(true); }} />
       </${List}>`}
-      ${!isNew && account.type === 'investment' && type === 'investment' && html`<${InvestmentValues} account=${account} />`}
+      ${!isNew && account.type === 'investment' && type === 'investment' && (account.has_holdings
+        ? html`<${HoldingsPart} account=${account} />`
+        : html`<${InvestmentValues} account=${account} />
+          <${List} footer="Of importeer je DEGIRO-export (Transacties, Rekeningoverzicht of Portefeuille) via Importeren.">
+            <${ListRow} icon="plus" title="Aankoop toevoegen" tint onClick=${() => openSheet(TradeSheet, { account })} />
+          </${List}>`)}
       ${!isNew && account.type === 'credit' && type === 'credit' && html`<${CreditPart} account=${account} close=${close} />`}
       ${!isNew && !imported && html`<${List}><${ListRow} title="Verwijder rekening" destructive onClick=${remove} /></${List}>`}
     </div>

@@ -94,3 +94,5 @@
 
 .im-actions { display: flex; flex-direction: column; align-items: stretch; gap: 6px; margin-top: 4px; }
 .im-more { display: flex; justify-content: center; }
+.im-note { color: var(--label-2); white-space: normal; }
+.im-choices { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }

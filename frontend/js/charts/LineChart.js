@@ -12,15 +12,16 @@ import { euros, axisMoney } from '../format.js';
 import { canHover } from '../hooks.js';
 import { drawIn, useFirstRender } from '../anim.js';
 
-export function LineChart({ points, color = 'var(--tint)', height = 200, area = true, onScrub, scrub = null, label = 'Lijndiagram', valueFormat = euros, baseline = 'min', axis = false, readout }) {
+export function LineChart({ points, color = 'var(--tint)', height = 200, area = true, onScrub, scrub = null, label = 'Lijndiagram', valueFormat = euros, baseline = 'min', axis = false, readout, compare = null, compareLabel = '' }) {
   const [ref, w] = useWidth();
   const gid = useRef(uid('lg')).current;
   const first = useFirstRender();
   const [hover, setHover] = useState(false);
   const vals = points.map((p) => p.value);
+  const cmp = compare && compare.length === points.length ? compare : null;
   if (!vals.length) return html`<div class="chart" ref=${ref} style=${{ height: height + 'px' }}></div>`;
-  let lo = Math.min(...vals);
-  let hi = Math.max(...vals);
+  let lo = Math.min(...vals, ...(cmp || []));
+  let hi = Math.max(...vals, ...(cmp || []));
   if (baseline === 'zero') lo = Math.min(0, lo);
   if (hi === lo) { hi += 100; lo -= 100; }
   const pad = (hi - lo) * 0.12;
@@ -34,6 +35,7 @@ export function LineChart({ points, color = 'var(--tint)', height = 200, area = 
   const y = (v) => padT + (1 - (v - lo) / (hi - lo)) * (height - padT - padB);
   const pts = points.map((p, i) => [x(i), y(p.value)]);
   const d = monotonePath(pts);
+  const dCmp = cmp ? monotonePath(cmp.map((v, i) => [x(i), y(v)])) : null;
   const bottom = height - padB;
   const fill = `${d}L${pts.at(-1)[0]},${bottom}L${pts[0][0]},${bottom}Z`;
   const indexAt = (px) => Math.max(0, Math.min(points.length - 1, Math.round(((px - 2) / (plotW - 4)) * (points.length - 1))));
@@ -74,6 +76,7 @@ export function LineChart({ points, color = 'var(--tint)', height = 200, area = 
       ${axis && points.map((p, i) => (i % xEvery === 0 || i === points.length - 1) && (i === points.length - 1 || points.length - 1 - i >= xEvery / 2) && html`<text
         x=${Math.max(12, Math.min(plotW - 12, pts[i][0]))} y=${height - 7} text-anchor="middle" class=${'axis-label is-x' + (scrub === i ? ' is-active' : '')}>${p.short || p.label}</text>`)}
       ${area && html`<path d=${fill} fill=${`url(#${gid})`} ref=${areaRef} />`}
+      ${dCmp && html`<path d=${dCmp} class="chart-line-thin is-compare" />`}
       <path d=${d} class="chart-line" pathLength="1" style=${{ stroke: color }} ref=${lineRef} />
       ${scrub != null && pts[scrub] && html`<g>
         <line x1=${pts[scrub][0]} x2=${pts[scrub][0]} y1=${axis ? padT : 0} y2=${bottom} class="scrub-rule" />
@@ -84,6 +87,7 @@ export function LineChart({ points, color = 'var(--tint)', height = 200, area = 
     ${showRo && html`<${Readout} x=${pts[scrub][0]} width=${plotW} top=${Math.max(0, pts[scrub][1] - 64)}>
       <div class="ro-title">${points[scrub].label}</div>
       <div class="ro-row"><b class="num">${valueFormat(points[scrub].value)}</b></div>
+      ${cmp && html`<div class="ro-row ro-sub">${compareLabel} <span class="num">${valueFormat(cmp[scrub])}</span></div>`}
     </${Readout}>`}
     <table class="vh"><caption>${label}</caption><tbody>
       ${points.map((p) => html`<tr><th scope="row">${p.label}</th><td>${valueFormat(p.value)}</td></tr>`)}

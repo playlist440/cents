@@ -39,11 +39,13 @@ export function ImportSheet({ files: initial, close }) {
       const row = queue.current.shift();
       update(row.key, { state: 'upload', progress: 0 });
       try {
-        const res = await uploadWithProgress('/import', [row.file], {
+        const path = row.accountId ? `/import?investment_account_id=${row.accountId}` : '/import';
+        const res = await uploadWithProgress(path, [row.file], {
           onProgress: (p) => update(row.key, p >= 1 ? { state: 'process', progress: 1 } : { progress: p }),
         });
         const r = res.files?.[0] || {};
-        if (r.ok === false) update(row.key, { state: 'error', error: friendly(r.error) });
+        if (r.ok === false && r.error_code === 'choose_account') update(row.key, { state: 'choose', choices: r.choices, error: r.error });
+        else if (r.ok === false) update(row.key, { state: 'error', error: friendly(r.error) });
         else update(row.key, { state: 'done', result: r });
         if (alive.current) setUnsorted(res.unsorted_merchants ?? null);
         invalidate();
@@ -52,6 +54,12 @@ export function ImportSheet({ files: initial, close }) {
       }
     }
     running.current = false;
+  };
+
+  const retryWith = (row, accountId) => {
+    update(row.key, { state: 'queued', accountId, progress: 0 });
+    queue.current.push({ ...row, accountId });
+    pump();
   };
 
   const add = (files) => {
@@ -93,7 +101,7 @@ export function ImportSheet({ files: initial, close }) {
         : html`
           ${done && okRows.length > 0 && html`<${Summary} totalNew=${totalNew} totalKnown=${totalKnown} />`}
           <ul class="inset im-files" aria-label="Bestanden">
-            ${rows.map((r) => html`<${FileRow} key=${r.key} row=${r} />`)}
+            ${rows.map((r) => html`<${FileRow} key=${r.key} row=${r} onChoose=${(id) => retryWith(r, id)} />`)}
           </ul>
           ${newAccounts.length > 0 && html`<section class="im-accounts">
             <h3 class="list-header">${newAccounts.length === 1 ? 'Nieuwe rekening' : 'Nieuwe rekeningen'}</h3>
@@ -133,7 +141,7 @@ function size(bytes) {
   return `${(bytes / 1024 / 1024).toFixed(bytes < 10 * 1024 * 1024 ? 1 : 0).replace('.', ',')} MB`;
 }
 
-function FileRow({ row }) {
+function FileRow({ row, onChoose }) {
   const { file, state, progress, result, error } = row;
   let sub;
   let icon = html`<${Icon} name="doc" size=${22} stroke=${1.7} />`;
@@ -141,15 +149,19 @@ function FileRow({ row }) {
   if (state === 'queued') sub = `${size(file.size)} · wacht`;
   else if (state === 'upload') sub = `${size(file.size)} · ${Math.round(progress * 100)}%`;
   else if (state === 'process') sub = 'Verwerken…';
+  else if (state === 'choose') { sub = error; icon = html`<${Icon} name="jaaroverzicht" size=${21} stroke=${1.9} />`; }
   else if (state === 'error') { sub = error; tone = ' is-error'; icon = html`<${Icon} name="warning" size=${21} stroke=${1.9} />`; }
   else if (state === 'done') {
     tone = ' is-done';
     icon = html`<${Icon} name="check" size=${20} stroke=${2.6} />`;
     const range = result.date_from && result.date_to ? `${shortDate(result.date_from)} – ${shortDate(result.date_to)}` : null;
+    const inv = result.investment;
+    const what = inv?.kind === 'degiro_portfolio' ? 'koersen' : inv?.kind === 'degiro_account' ? 'dividend/kosten' : inv ? 'transacties' : null;
     sub = result.new === 0
-      ? (result.duplicates > 0 ? 'Alles was al bekend' : 'Geen betalingen gevonden')
-      : [`${number(result.new)} nieuw`, result.duplicates ? `${number(result.duplicates)} al bekend` : null, range].filter(Boolean).join(' · ');
+      ? (result.duplicates > 0 ? 'Alles was al bekend' : inv ? 'Niets bruikbaars gevonden' : 'Geen betalingen gevonden')
+      : [`${number(result.new)} ${what ? what + ' ' : ''}nieuw`, result.duplicates ? `${number(result.duplicates)} al bekend` : null, inv?.kind === 'degiro_portfolio' ? null : range].filter(Boolean).join(' · ');
   }
+  const mismatch = state === 'done' ? result.investment?.mismatch || [] : [];
   const working = state === 'upload' || state === 'process';
   return html`<li class="row-li">
     <div class=${'row has-lead is-two im-file' + tone} aria-busy=${working ? 'true' : null}>
@@ -157,6 +169,8 @@ function FileRow({ row }) {
       <span class="row-main">
         <span class="row-title">${file.name}</span>
         <span class="row-sub">${sub}</span>
+        ${mismatch.length > 0 && html`<span class="row-sub im-note">Aantallen wijken af van Cents bij ${mismatch.map((m) => m.name).join(', ')}. Importeer ook je Transacties.csv.</span>`}
+        ${state === 'choose' && html`<span class="im-choices">${(row.choices || []).map((c) => html`<${Button} key=${c.id} size="small" variant="tinted" onClick=${() => onChoose(c.id)}>${c.name}</${Button}>`)}</span>`}
       </span>
       ${state === 'done' && result.account_name && html`<span class="row-value im-acc">${result.account_name}</span>`}
       ${working && html`<span class=${'im-bar' + (state === 'process' ? ' is-indeterminate' : '')} role="progressbar"

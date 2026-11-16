@@ -280,8 +280,9 @@ def reclassify(conn: sqlite3.Connection = Depends(get_conn)) -> dict:
 def delete_data(body: PasswordBody, conn: sqlite3.Connection = Depends(get_conn)) -> dict:
     if not auth.check_password(conn, body.password):
         raise ApiError(400, "wrong_password", "Dat wachtwoord klopt niet.")
-    for table in ("transaction_tags", "goal_entries", "transactions", "imports", "rules", "tags",
-                  "goals", "account_values", "recurring_ignored", "accounts"):
+    for table in ("transaction_tags", "goal_entries", "transactions", "trades", "cash_events",
+                  "prices", "imports", "rules", "tags", "goals", "account_values",
+                  "recurring_ignored", "accounts", "securities"):
         conn.execute(f"DELETE FROM {table}")
-    conn.execute("DELETE FROM settings WHERE key = 'dismissed_suggestions'")
+    conn.execute("DELETE FROM settings WHERE key IN ('dismissed_suggestions', '_prices_status')")
     return {"ok": True}

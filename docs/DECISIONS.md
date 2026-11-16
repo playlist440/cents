@@ -622,3 +622,24 @@
   projection drops below the floor (desktop: above the tiles; iPhone: under the hero).
   `left_cents`/`per_day_left_cents` stay in the API for compatibility but are not shown.
   New assumptions `payday_day`, `buffer`, `checking_floor_cents` (Slimme aannames → Vrij geld).
+- 2026-11-16 · **Real value of investment accounts (DEGIRO).** Holdings model (schema v4:
+  `securities`, `trades`, `cash_events`, `prices`) fed by the DEGIRO Transacties /
+  Rekeningoverzicht / Portefeuille CSVs through the normal import (auto-detected by header,
+  NL + EN, comma or semicolon, decimal comma or point; see docs/research/degiro-format.md) and
+  by manual trades. Average-cost basis; fees in the cost. The account statement only adds
+  dividend, dividend tax and connection/service fees: its "Transactiekosten" rows duplicate the
+  trade fees and deposits/sweeps are already on the bank side. Portfolio export = prices for
+  the export date (wins over a fetched close of the same day) plus a quiet notice when
+  quantities differ. DEGIRO cash is estimated only when bank deposits are known.
+  **Prices**: Yahoo Finance public search + chart endpoints (no key, no account, EU ETFs in EUR
+  on Euronext/Xetra, daily history for the chart). Lookup: ISIN search, then the listing on the
+  DEGIRO exchange (`<ticker>.AS` etc.), then a name search limited to listings with exactly the
+  ISIN hit's fund name; else the ISIN hit in another currency, converted with ECB reference
+  rates. Rejected: boerse-frankfurt (needs signed request headers), Euronext live (HTML/CSV
+  download pages, Euronext-only, fragile), OpenFIGI (identifiers only, no prices). ToS caveat:
+  Yahoo's endpoints are unofficial and their terms don't grant automated use; Cents makes a
+  handful of requests per day for personal use and the provider sits behind a small interface
+  (`services/prices.py`) so it can be swapped. stdlib urllib (plus certifi's CA bundle) instead
+  of httpx; retries 1 s/2 s; a background asyncio task checks every 15 min, runs after 18:30
+  Amsterdam or at startup when stale, waits 1 h after a failure; never blocks requests or
+  startup. Setting `prices_auto` (Slimme aannames → Koersen), off = nothing leaves the server.

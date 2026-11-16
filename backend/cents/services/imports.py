@@ -12,12 +12,13 @@ import sqlite3
 from typing import Iterator
 
 from .. import db, hooks
+from ..errors import ApiError
 from ..classify import engine
 from ..classify.library import Library, get_library
 from ..importers import ImportFormatError, Source, Statement
-from ..importers.detect import iter_file
+from ..importers.detect import PARSERS, detect
 from ..importers.normalize import collapse, normalize
-from . import transfers
+from . import investments, transfers
 
 log = logging.getLogger("cents.import")
 
@@ -196,7 +197,8 @@ def empty_result(filename: str, error: str | None = None) -> dict:
     return {"filename": filename, "format": None, "ok": False, "error": error,
             "account_id": None, "account_name": None, "is_new_account": False,
             "new_accounts": [], "new": 0, "duplicates": 0, "enriched": 0,
-            "date_from": None, "date_to": None, "import_id": None}
+            "date_from": None, "date_to": None, "import_id": None,
+            "error_code": None, "choices": None, "investment": None}
 
 
 def _store(conn: sqlite3.Connection, filename: str, fmt: str,
@@ -273,13 +275,14 @@ def _store(conn: sqlite3.Connection, filename: str, fmt: str,
 
 
 def import_file(conn: sqlite3.Connection, filename: str, source: Source,
-                lib: Library | None = None) -> dict:
+                lib: Library | None = None, investment_account_id: int | None = None) -> dict:
     """Parse and store one file (bytes or a binary file object) atomically: either all of it
     is stored or nothing (SAVEPOINT). Classification is done by `import_files`."""
     lib = lib or get_library()
     result = empty_result(filename)
     try:
-        fmt, pairs = iter_file(source)
+        fmt = detect(source)
+        pairs = PARSERS[fmt](source) if fmt in PARSERS else None
     except ImportFormatError as exc:
         result["error"] = str(exc)
         return result
@@ -288,7 +291,10 @@ def import_file(conn: sqlite3.Connection, filename: str, source: Source,
         conn.execute("BEGIN")
     conn.execute("SAVEPOINT import_file")
     try:
-        _store(conn, filename, fmt, pairs, lib, result)
+        if pairs is None:
+            investments.import_degiro(conn, filename, source, fmt, investment_account_id, result)
+        else:
+            _store(conn, filename, fmt, pairs, lib, result)
     except Exception as exc:
         conn.execute("ROLLBACK TO import_file")
         conn.execute("RELEASE import_file")
@@ -299,7 +305,11 @@ def import_file(conn: sqlite3.Connection, filename: str, source: Source,
             message = "Dit bestand kon ik niet importeren. Er is niets opgeslagen."
         failed = empty_result(filename, message)
         failed["format"] = fmt
+        if isinstance(exc, ApiError):
+            failed["error"] = exc.message
         return failed
+    if not result["ok"]:                     # e.g. which investment account: nothing stored
+        conn.execute("ROLLBACK TO import_file")
     conn.execute("RELEASE import_file")
     return result
 
@@ -307,11 +317,11 @@ def import_file(conn: sqlite3.Connection, filename: str, source: Source,
 # ---------------------------------------------------------------- a request with many files
 
 def import_files(conn: sqlite3.Connection, files: list[tuple[str, Source]],
-                 lib: Library | None = None) -> dict:
+                 lib: Library | None = None, investment_account_id: int | None = None) -> dict:
     """Import several files one by one, then type accounts, classify everything once and run
     the hooks. The response holds only counts (no per-row data), whatever the file size."""
     lib = lib or get_library()
-    results = [import_file(conn, name, source, lib) for name, source in files]
+    results = [import_file(conn, name, source, lib, investment_account_id) for name, source in files]
     import_ids = [r["import_id"] for r in results if r["ok"]]
     if import_ids:
         refresh_accounts(conn)

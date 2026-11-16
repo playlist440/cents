@@ -293,3 +293,12 @@ muted)`; `freqLabel(f, 'per' | 'every')` in `format.js`. The mock implements all
 - [ ] Dutch microcopy with "je"; words from DESIGN §1 (bakje, potje, vaste lasten, normaal).
 - [ ] Expenses never red; one accent colour; income green only.
 - [ ] No console errors; works against the mock *and* follows SPEC field names literally.
+
+## Holdings (SPEC 7.1)
+
+`screens/_holdings.js`: `HoldingsPart` (inside the investment account sheet when
+`has_holdings`), `FundSheet` (one fund and its trades), `TradeSheet` ("Aankoop toevoegen").
+`LineChart` takes an optional `compare` series (dashed, e.g. ingelegd). Import shows DEGIRO
+results, the "which investment account" choice and quantity notices; Slimme aannames has the
+Koersen switch + "Nu bijwerken". The mock implements the same endpoints with a fictitious
+DEGIRO account.

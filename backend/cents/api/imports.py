@@ -25,7 +25,7 @@ def upload_size(upload: UploadFile) -> int:
 
 
 @router.post("/import")
-def import_files(files: list[UploadFile] = File(...),
+def import_files(files: list[UploadFile] = File(...), investment_account_id: int | None = None,
                  conn: sqlite3.Connection = Depends(get_conn)) -> dict:
     if not files:
         raise bad_request("Kies een bestand.", "no_files")
@@ -39,7 +39,7 @@ def import_files(files: list[UploadFile] = File(...),
             too_big.append(name)
         else:
             accepted.append((name, upload.file))      # parsed incrementally from disk
-    result = import_service.import_files(conn, accepted)
+    result = import_service.import_files(conn, accepted, investment_account_id=investment_account_id)
     limit_mb = MAX_UPLOAD_BYTES // (1024 * 1024)
     for name in too_big:
         result["files"].append(import_service.empty_result(

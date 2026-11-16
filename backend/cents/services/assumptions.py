@@ -5,6 +5,8 @@ Stored in setting `assumptions`; missing keys fall back to DEFAULTS.
 - small_amount_at_fuel: library entries with a "small" split (fuel stations, MCC 5541) put
   amounts below the threshold in the small bakje (a sandwich, not fuel). Rule thresholds that
   the user set are not affected by this switch.
+- prices_auto: fetch daily closing prices of held funds (services/prices.py). Off: nothing
+  leaves the server.
 """
 
 from __future__ import annotations
@@ -21,6 +23,7 @@ DEFAULTS: dict[str, dict[str, Any]] = {
     "payday_day": {"day": None},
     "buffer": {"months": 3, "amount_cents": None},
     "checking_floor_cents": {"cents": 0},
+    "prices_auto": {"enabled": True},
 }
 MAX_CENTS = 100_000_000
 THRESHOLD_MIN, THRESHOLD_MAX = 100, 10000

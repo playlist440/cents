@@ -26,7 +26,7 @@ def generate(out: Path) -> list[Path]:
     subprocess.run([sys.executable, str(ROOT / "tools" / "make_demo_data.py"), str(out),
                     "--seed", "42", "--months", "18", "--today", TODAY],
                    check=True, capture_output=True, env=env)
-    return sorted(out.iterdir())
+    return sorted(p for p in out.iterdir() if p.is_file())
 
 
 def open_client(data_dir: Path) -> TestClient:

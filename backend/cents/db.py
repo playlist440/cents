@@ -190,8 +190,68 @@ ALTER TABLE rules ADD COLUMN below_category_id INTEGER REFERENCES categories(id)
 ALTER TABLE transactions ADD COLUMN category_reason TEXT;
 """
 
+# v4: holdings of investment accounts (DEGIRO import, manual trades) and daily prices.
+# Quantities and per-unit prices are REAL (fractional units, 4+ decimals); money is cents.
+SCHEMA_V4 = """
+CREATE TABLE securities (
+    isin TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    symbol TEXT,                                -- ticker from a portfolio export, if known
+    currency TEXT,                              -- trading currency (EUR, USD, ...)
+    exchange TEXT,                              -- DEGIRO exchange code (EAM, XET, ...)
+    price_symbol TEXT,                          -- symbol at the price provider (auto or user)
+    price_symbol_source TEXT                    -- auto|user|none
+);
+
+CREATE TABLE trades (
+    id INTEGER PRIMARY KEY,
+    account_id INTEGER NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+    import_id INTEGER REFERENCES imports(id) ON DELETE CASCADE,
+    date TEXT NOT NULL,
+    time TEXT,
+    isin TEXT NOT NULL REFERENCES securities(isin),
+    quantity REAL NOT NULL,                     -- + buy, - sell
+    price REAL NOT NULL,                        -- per unit, in `currency`
+    currency TEXT NOT NULL DEFAULT 'EUR',
+    fx_rate REAL,                               -- units of `currency` per EUR (DEGIRO style)
+    value_eur_cents INTEGER NOT NULL,           -- - for a buy, + for a sell (excl. fees)
+    fees_cents INTEGER NOT NULL DEFAULT 0,      -- >= 0
+    order_id TEXT,
+    dedupe_key TEXT UNIQUE,
+    manual INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL
+);
+CREATE INDEX ix_trades_account ON trades(account_id, date);
+
+CREATE TABLE cash_events (
+    id INTEGER PRIMARY KEY,
+    account_id INTEGER NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+    import_id INTEGER REFERENCES imports(id) ON DELETE CASCADE,
+    date TEXT NOT NULL,
+    isin TEXT,
+    kind TEXT NOT NULL,                         -- dividend|dividend_tax|fee
+    amount_cents INTEGER NOT NULL,              -- EUR, signed (+ received, - paid)
+    currency TEXT NOT NULL DEFAULT 'EUR',
+    amount_local REAL,
+    description TEXT,
+    dedupe_key TEXT UNIQUE
+);
+CREATE INDEX ix_cash_events_account ON cash_events(account_id, date);
+
+CREATE TABLE prices (
+    isin TEXT NOT NULL,
+    date TEXT NOT NULL,
+    source TEXT NOT NULL,                       -- yahoo|degiro_portfolio|trade
+    close REAL NOT NULL,                        -- in `currency`
+    currency TEXT NOT NULL,
+    close_eur REAL NOT NULL,                    -- converted at that day's rate
+    import_id INTEGER REFERENCES imports(id) ON DELETE CASCADE,
+    PRIMARY KEY (isin, date, source)
+);
+"""
+
 # Forward-only. Append new migrations; never edit an old one.
-MIGRATIONS: list[str] = [SCHEMA_V1, SCHEMA_V2, SCHEMA_V3]
+MIGRATIONS: list[str] = [SCHEMA_V1, SCHEMA_V2, SCHEMA_V3, SCHEMA_V4]
 SCHEMA_VERSION = len(MIGRATIONS)
 
 DEFAULT_SETTINGS: dict[str, Any] = {"month_start_day": 1, "household_name": ""}

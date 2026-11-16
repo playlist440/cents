@@ -936,3 +936,5 @@
   .insight-more { color: var(--label-2); }
   .ov-ins-li .insight-more { opacity: 1 !important; }
 }
+.chart-line-thin.is-compare { stroke: var(--label-3); stroke-dasharray: 4 4; }
+.ro-row.ro-sub { color: var(--label-2); font-size: var(--fs-caption1); }

@@ -165,6 +165,16 @@ export const api = {
   addAccountValue: (id, { date, value_cents }) => post(`/accounts/${id}/values`, { date, value_cents }),
   deleteAccountValue: (id) => del(`/account-values/${id}`),
 
+  /* Holdings of investment accounts and automatic prices (SPEC §7.1) */
+  holdings: (id) => get(`/accounts/${id}/holdings`),
+  /* trade: { date, isin, name?, side: 'buy'|'sell', quantity, price_cents, fees_cents } */
+  addTrade: (id, trade) => post(`/accounts/${id}/trades`, trade),
+  deleteTrade: (id) => del(`/trades/${id}`),
+  securities: (q = '') => get('/securities', { q }),
+  updateSecurity: (isin, changes) => patch(`/securities/${isin}`, changes),
+  priceStatus: () => get('/prices/status'),
+  refreshPrices: () => post('/prices/refresh'),
+
   /* Settings and data */
   settings: () => get('/settings'),
   updateSettings: (changes) => patch('/settings', changes),

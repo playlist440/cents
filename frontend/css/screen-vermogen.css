@@ -26,3 +26,13 @@
 .vm-value { display: flex; flex-direction: column; align-items: flex-end; gap: 1px; }
 .vm-result { font: 400 var(--fs-footnote)/1.2 var(--font); color: var(--label-2); }
 .vm-axis { display: flex; justify-content: space-between; margin-top: 4px; font: 400 var(--fs-caption1)/1.2 var(--font); color: var(--label-2); }
+
+/* Holdings (investment account sheet) */
+.vm-hchart { margin: 18px 0 8px; }
+.vm-hchart-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin: 0 4px 6px; font: 400 var(--fs-subhead)/1.3 var(--font); }
+.vm-hchart-label { color: var(--label-2); }
+.vm-hchart-inv { color: var(--label-2); font-size: var(--fs-footnote); }
+.vm-stale { color: var(--orange); }
+.vm-trade-side { display: flex; justify-content: center; margin: 4px 0 14px; }
+.vm-trade-side .segmented { width: 100%; max-width: 320px; }
+.vm-trade-total { text-align: center; color: var(--label-2); margin-top: 10px; }

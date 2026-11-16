@@ -289,6 +289,20 @@ changes (source `user`). Tags work the same way with `tag_always=true`.
 - **Investment accounts** are manual: the user enters a value now and then
   (`account_values`). Invested = sum of transfers out of checking to that account minus
   transfers back. Result = latest value − invested.
+- **Holdings (7.1, added later).** An investment account with trades (DEGIRO import or
+  manual "Aankoop toevoegen") is valued from its holdings: market value = Σ quantity × latest
+  EUR price (fetched daily, else the latest DEGIRO portfolio export, else the last trade price),
+  plus estimated cash (bank deposits − net bought − fees + net dividends, ≥ 0, only when bank
+  deposits are known). Invested = bank deposits as above, else net bought + fees. Result
+  (with dividend and costs) = price result + dividends − dividend tax − fees; price result
+  (without) = value − average-cost basis of what is held + realised, both excluding fees.
+  Tables `securities`, `trades`, `cash_events`, `prices` (schema v4). Trades never touch
+  `transactions`, so buys/sells never count as spending and Vrij geld ignores them.
+  Imports: DEGIRO Transacties (dedupe Order ID + ISIN + date + quantity + occurrence),
+  Rekeningoverzicht (only dividend, dividend tax, connection/service fees), Portefeuille
+  (prices for the export date; quantity differences are reported, never auto-corrected).
+  Prices: services/prices.py, provider interface (default Yahoo Finance, keyless), ECB rates
+  for FX; assumption `prices_auto.enabled` (default on; off = nothing leaves the server).
 - **Credit card** (manual): the user adds purchases by hand (they count as spending in their
   bakje on the purchase date). The card company's monthly direct debit (matched via the account's
   `match` keywords, default `["international card services", "ics"]`) is `kind=settlement`,
@@ -516,6 +530,28 @@ as_of, invested_cents?, result_cents?, outstanding_cents?, unexplained_cents?, v
 credit_cents, total_cents}]}` · `POST /accounts {name, type, iban?, match?}` ·
 `PATCH /accounts/{id}` · `DELETE /accounts/{id}` (only without imported transactions, or with
 `?force=1`) · `POST /accounts/{id}/values {date, value_cents}` · `DELETE /account-values/{id}`.
+Investment accounts with holdings add to their `/networth` account: `has_holdings,
+market_value_cents, cash_cents, result_pct, price_result_cents, dividends_cents, costs_cents,
+price_stale, holdings_count` (`balance_cents` = market value + cash, `as_of` = oldest price date).
+
+Holdings (7.1): `GET /accounts/{id}/holdings` → `{holdings:[{isin, name, symbol, price_symbol,
+currency, quantity, avg_price_cents, price_cents, price_date, price_source:
+"yahoo"|"degiro_portfolio"|"trade", value_cents, cost_cents, realised_cents, result_cents,
+price_result_cents, dividends_cents, fees_cents, trades:[{id, date, quantity, price, currency,
+value_eur_cents, fees_cents, manual}]}], market_value_cents, cash_cents, value_cents,
+invested_cents, invested_source: "bank"|"trades", net_bought_cents, result_cents, result_pct,
+price_result_cents, price_result_pct, dividends_cents, dividend_tax_cents, costs_cents,
+price_date, price_stale, events:[…], chart:[{date, value_cents, invested_cents}] /* weekly */,
+prices: PriceStatus}` · `POST /accounts/{id}/trades {date, isin, name?, side: "buy"|"sell",
+quantity, price_cents, fees_cents}` · `DELETE /trades/{id}` (manual only) ·
+`GET /securities?q` · `PATCH /securities/{isin} {price_symbol}` (override the provider symbol) ·
+`GET /prices/status` → `PriceStatus = {enabled, source, source_key, last_run, last_ok, error,
+last_price_date, running, held}` · `POST /prices/refresh` ("Nu bijwerken"; 409 when off).
+`POST /import?investment_account_id=` picks the investment account for DEGIRO files; without
+it: the only investment account, else one named "DEGIRO", else a new "DEGIRO" account; with
+several the file result has `error_code: "choose_account", choices:[{id, name}]` and nothing
+is stored. File results gain `investment: {kind, mismatch?:[{isin, name, quantity,
+file_quantity}]}`.
 
 Settings & data: `GET /settings` · `PATCH /settings {month_start_day?, household_name?}` ·
 `GET /export/transactions.csv` · `GET /export/backup` (consistent SQLite copy) ·

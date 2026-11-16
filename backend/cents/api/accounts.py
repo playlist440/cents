@@ -11,8 +11,10 @@ from .. import db
 from ..classify import engine
 from ..errors import ApiError, not_found
 from ..importers.normalize import clean_iban
-from ..schemas import AccountCreate, AccountPatch, AccountValueBody, iso_date
+from ..importers import degiro
+from ..schemas import AccountCreate, AccountPatch, AccountValueBody, SecurityPatch, TradeBody, iso_date
 from ..services import imports as import_service
+from ..services import investments, prices
 from .deps import get_conn
 
 router = APIRouter()
@@ -98,7 +100,9 @@ def patch_account(account_id: int, body: AccountPatch, conn: sqlite3.Connection 
 def delete_account(account_id: int, force: int = 0, conn: sqlite3.Connection = Depends(get_conn)) -> dict:
     load_account(conn, account_id)
     imported = db.value(conn, "SELECT COUNT(*) FROM transactions WHERE account_id = ? AND manual = 0",
-                        (account_id,))
+                        (account_id,)) or 0
+    imported += db.value(conn, "SELECT COUNT(*) FROM trades WHERE account_id = ? AND manual = 0",
+                         (account_id,)) or 0
     if imported and not force:
         raise ApiError(409, "has_transactions",
                        "Op deze rekening staan geïmporteerde betalingen. Weet je het zeker?")
@@ -135,3 +139,69 @@ def delete_value(value_id: int, conn: sqlite3.Connection = Depends(get_conn)) ->
     if not conn.execute("DELETE FROM account_values WHERE id = ?", (value_id,)).rowcount:
         raise not_found("Deze waarde bestaat niet (meer).")
     return {"ok": True}
+
+
+# ---------------------------------------------------------------- holdings (SPEC 7.1)
+
+@router.get("/accounts/{account_id}/holdings")
+def get_holdings(account_id: int, conn: sqlite3.Connection = Depends(get_conn)) -> dict:
+    acc = load_account(conn, account_id)
+    if acc["type"] != "investment":
+        raise ApiError(422, "not_investment", "Dit is geen beleggingsrekening.")
+    out = investments.holdings(conn, account_id)
+    out["chart"] = investments.chart(conn, account_id)
+    out["prices"] = prices.status(conn)
+    return out
+
+
+@router.post("/accounts/{account_id}/trades")
+def add_trade(account_id: int, body: TradeBody, conn: sqlite3.Connection = Depends(get_conn)) -> dict:
+    acc = load_account(conn, account_id)
+    if acc["type"] != "investment":
+        raise ApiError(422, "not_investment", "Dit is geen beleggingsrekening.")
+    isin = body.isin.strip().upper()
+    if not degiro.ISIN_RE.match(isin):
+        raise ApiError(422, "bad_isin", "Deze ISIN klopt niet.")
+    known = db.row(conn, "SELECT name FROM securities WHERE isin = ?", (isin,))
+    if not known and not (body.name or "").strip():
+        raise ApiError(422, "name_required", "Geef het fonds een naam.")
+    quantity = body.quantity if body.side == "buy" else -body.quantity
+    if body.side == "sell":
+        held = next((h["quantity"] for h in investments.holdings(conn, account_id)["holdings"]
+                     if h["isin"] == isin), 0)
+        if body.quantity > held + 1e-6:
+            raise ApiError(422, "too_many", "Zoveel heb je niet van dit fonds.")
+    trade_id = investments.add_trade(conn, account_id, day=iso_date(body.date), isin=isin,
+                                     name=(body.name or "").strip() or None, quantity=quantity,
+                                     price_cents=body.price_cents, fees_cents=body.fees_cents)
+    return {"id": trade_id}
+
+
+@router.delete("/trades/{trade_id}")
+def delete_trade(trade_id: int, conn: sqlite3.Connection = Depends(get_conn)) -> dict:
+    row = db.row(conn, "SELECT manual FROM trades WHERE id = ?", (trade_id,))
+    if not row:
+        raise not_found("Deze aankoop bestaat niet (meer).")
+    if not row["manual"]:
+        raise ApiError(409, "imported", "Geïmporteerde transacties verwijder je via de import.")
+    conn.execute("DELETE FROM trades WHERE id = ?", (trade_id,))
+    return {"ok": True}
+
+
+@router.get("/securities")
+def list_securities(q: str = "", conn: sqlite3.Connection = Depends(get_conn)) -> list[dict]:
+    like = f"%{q.strip().lower()}%"
+    return db.rows(conn, """SELECT isin, name, symbol, currency, exchange, price_symbol FROM securities
+                            WHERE LOWER(name) LIKE ? OR LOWER(isin) LIKE ? OR LOWER(COALESCE(symbol, '')) LIKE ?
+                            ORDER BY name LIMIT 50""", (like, like, like))
+
+
+@router.patch("/securities/{isin}")
+def patch_security(isin: str, body: SecurityPatch, conn: sqlite3.Connection = Depends(get_conn)) -> dict:
+    isin = isin.upper()
+    if not db.row(conn, "SELECT 1 FROM securities WHERE isin = ?", (isin,)):
+        raise not_found("Dit fonds ken ik niet.")
+    sym = (body.price_symbol or "").strip() or None
+    conn.execute("UPDATE securities SET price_symbol = ?, price_symbol_source = ? WHERE isin = ?",
+                 (sym, "user" if sym else None, isin))
+    return db.row(conn, "SELECT isin, name, symbol, currency, exchange, price_symbol FROM securities WHERE isin = ?", (isin,))

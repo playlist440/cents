@@ -746,6 +746,12 @@ function accountBalance(a) {
     if (last) return { balance_cents: last.balance_after_cents, as_of: last.date };
     return { balance_cents: a.manual_balance_cents, as_of: a.manual_balance_date };
   }
+  if (a.type === 'investment' && (db.trades || []).some((t) => t.account_id === a.id)) {
+    const h = holdingsOut(a.id);
+    return { balance_cents: h.value_cents, as_of: h.price_date, invested_cents: h.invested_cents, result_cents: h.result_cents, result_pct: h.result_pct,
+      price_result_cents: h.price_result_cents, market_value_cents: h.market_value_cents, cash_cents: h.cash_cents, dividends_cents: h.dividends_cents,
+      costs_cents: h.costs_cents, price_stale: h.price_stale, has_holdings: true, holdings_count: h.holdings.filter((x) => x.quantity > 0).length, values: [] };
+  }
   if (a.type === 'investment') {
     const vals = db.account_values.filter((v) => v.account_id === a.id).sort((x, y) => (x.date < y.date ? -1 : 1));
     const invested = db.transactions.filter((t) => t.transfer_account_id === a.id && t.account_id !== a.id).reduce((s, t) => s - t.amount_cents, 0);
@@ -774,6 +780,8 @@ function networth() {
       if (a.type === 'checking' || a.type === 'savings') {
         const last = db.transactions.filter((t) => t.account_id === a.id && t.date <= end && t.balance_after_cents != null).at(-1);
         v = last ? last.balance_after_cents : 0;
+      } else if (a.type === 'investment' && (db.trades || []).some((t) => t.account_id === a.id)) {
+        v = holdingsValueAt(a.id, end);
       } else if (a.type === 'investment') {
         const vals = db.account_values.filter((x) => x.account_id === a.id && x.date <= end);
         const invested = db.transactions.filter((t) => t.transfer_account_id === a.id && t.date <= end).reduce((s, t) => s - t.amount_cents, 0);
@@ -1486,6 +1494,44 @@ const ROUTES = [
 
   /* Accounts */
   ['GET', /^\/networth$/, () => ok(networth())],
+  ['GET', /^\/accounts\/(\d+)\/holdings$/, ({ params: [id] }) => {
+    const a = need(db.accounts.find((x) => x.id === id));
+    if (a.type !== 'investment') fail(422, 'not_investment', 'Dit is geen beleggingsrekening.');
+    return ok({ ...holdingsOut(id), chart: holdingsChart(id), prices: priceStatus() });
+  }],
+  ['POST', /^\/accounts\/(\d+)\/trades$/, ({ params: [id], body }) => {
+    need(db.accounts.find((x) => x.id === id && x.type === 'investment'));
+    const isin = String(body.isin || '').toUpperCase();
+    if (!/^[A-Z]{2}[A-Z0-9]{9}\d$/.test(isin)) fail(422, 'bad_isin', 'Deze ISIN klopt niet.');
+    if (!db.securities.find((s) => s.isin === isin)) {
+      if (!body.name) fail(422, 'name_required', 'Geef het fonds een naam.');
+      db.securities.push({ isin, name: body.name, symbol: null, currency: 'EUR', exchange: null, price_symbol: null });
+    }
+    const q = body.side === 'sell' ? -body.quantity : body.quantity;
+    if (q < 0) {
+      const held = db.trades.filter((t) => t.account_id === id && t.isin === isin).reduce((s, t) => s + t.quantity, 0);
+      if (-q > held + 1e-6) fail(422, 'too_many', 'Zoveel heb je niet van dit fonds.');
+    }
+    const t = { id: ++db.seq.trade, account_id: id, date: body.date, isin, quantity: q, price: body.price_cents / 100, currency: 'EUR', value_eur_cents: -Math.round(q * body.price_cents), fees_cents: body.fees_cents || 0, manual: true };
+    db.trades.push(t);
+    return ok({ id: t.id });
+  }],
+  ['DELETE', /^\/trades\/(\d+)$/, ({ params: [id] }) => {
+    const t = need(db.trades.find((x) => x.id === id));
+    if (!t.manual) fail(409, 'imported', 'Geïmporteerde transacties verwijder je via de import.');
+    db.trades = db.trades.filter((x) => x.id !== id);
+    return ok({ ok: true });
+  }],
+  ['GET', /^\/securities$/, ({ query }) => {
+    const q = String(query?.q || '').toLowerCase();
+    return ok(db.securities.filter((s) => !q || s.name.toLowerCase().includes(q) || s.isin.toLowerCase().includes(q)));
+  }],
+  ['GET', /^\/prices\/status$/, () => ok(priceStatus())],
+  ['POST', /^\/prices\/refresh$/, () => {
+    if (!assumptionsOut().prices_auto.enabled) fail(409, 'disabled', 'Koersen ophalen staat uit.');
+    db.prices_status = { last_ok: new Date().toISOString(), error: null };
+    return ok({ ...priceStatus(), result: { ok: true, updated: 0 } });
+  }],
   ['POST', /^\/accounts$/, ({ body }) => {
     if (!body.name || !['checking', 'savings', 'credit', 'investment'].includes(body.type)) fail(400, 'invalid', 'Geef een naam en soort.');
     const a = { id: ++db.seq.account, iban: body.iban || null, name: body.name, type: body.type, match: body.match || [], manual_balance_cents: null, manual_balance_date: null, hidden: 0, sort: db.seq.account, created_at: db.today };
@@ -1575,6 +1621,7 @@ function assumptionsOut() {
     payday_day: { day: null, ...(a.payday_day || {}) },
     buffer: { months: 3, amount_cents: null, ...(a.buffer || {}) },
     checking_floor_cents: { cents: 0, ...(a.checking_floor_cents || {}) },
+    prices_auto: { enabled: true, ...(a.prices_auto || {}) },
   };
 }
 
@@ -1620,3 +1667,91 @@ function assumptionsList() {
 
 // Exposed for the console: window.__centsMock.db
 export const debug = { get db() { return db; }, money };
+
+/* ======================================================================================
+   Holdings of investment accounts (SPEC §7.1), same rules as services/investments.py
+   ====================================================================================== */
+
+function priceStatus() {
+  const last = (db.prices || []).filter((p) => p.source === 'yahoo').reduce((m, p) => (p.date > m ? p.date : m), '');
+  return { enabled: assumptionsOut().prices_auto.enabled, source: 'Yahoo Finance', source_key: 'yahoo', last_run: db.prices_status?.last_ok || null,
+    last_ok: db.prices_status?.last_ok || null, error: db.prices_status?.error || null, last_price_date: last || null, running: false,
+    held: new Set((db.trades || []).map((t) => t.isin)).size };
+}
+
+function mockPriceAt(isin, day) {
+  let best = null;
+  for (const p of db.prices) if (p.isin === isin && p.date <= day && (!best || p.date >= best.date)) best = p;
+  const trade = db.trades.filter((t) => t.isin === isin && t.date <= day).at(-1);
+  if (trade && (!best || trade.date > best.date)) return { close_eur: Math.abs(trade.value_eur_cents) / 100 / Math.abs(trade.quantity), date: trade.date, source: 'trade' };
+  return best;
+}
+
+function holdingsValueAt(accountId, day) {
+  const qty = {};
+  for (const t of db.trades) if (t.account_id === accountId && t.date <= day) qty[t.isin] = (qty[t.isin] || 0) + t.quantity;
+  let v = 0;
+  for (const [isin, q] of Object.entries(qty)) if (q > 1e-9) v += Math.round(q * (mockPriceAt(isin, day)?.close_eur || 0) * 100);
+  return v;
+}
+
+function holdingsOut(accountId) {
+  const trades = db.trades.filter((t) => t.account_id === accountId).sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : a.id - b.id));
+  const events = db.cash_events.filter((e) => e.account_id === accountId);
+  const st = {};
+  for (const t of trades) {
+    const s = st[t.isin] ||= { quantity: 0, cost: 0, cost_ex: 0, realised: 0, realised_ex: 0, fees: 0, bought: 0, sold: 0 };
+    const amount = Math.abs(t.value_eur_cents);
+    s.fees += t.fees_cents;
+    if (t.quantity > 0) { s.cost += amount + t.fees_cents; s.cost_ex += amount; s.quantity += t.quantity; s.bought += amount + t.fees_cents; }
+    else {
+      const share = s.quantity > 0 ? Math.min(1, -t.quantity / s.quantity) : 0;
+      const part = Math.round(s.cost * share); const partEx = Math.round(s.cost_ex * share);
+      s.realised += amount - t.fees_cents - part; s.realised_ex += amount - partEx;
+      s.cost -= part; s.cost_ex -= partEx; s.quantity += t.quantity; s.sold += amount - t.fees_cents;
+    }
+  }
+  const divBy = {};
+  for (const e of events) if (e.isin && e.kind !== 'fee') divBy[e.isin] = (divBy[e.isin] || 0) + e.amount_cents;
+  let market = 0; let oldest = null;
+  const holdings = Object.entries(st).map(([isin, s]) => {
+    const sec = db.securities.find((x) => x.isin === isin) || { name: isin };
+    const p = mockPriceAt(isin, db.today);
+    const value = p && s.quantity > 0 ? Math.round(s.quantity * p.close_eur * 100) : 0;
+    if (s.quantity > 0) { market += value; if (p && (!oldest || p.date < oldest)) oldest = p.date; }
+    return { isin, name: sec.name, symbol: null, price_symbol: null, currency: 'EUR', quantity: Math.round(s.quantity * 1e6) / 1e6,
+      avg_price_cents: s.quantity > 0 ? Math.round(s.cost / s.quantity) : null, price_cents: p ? Math.round(p.close_eur * 100) : null,
+      price_date: p?.date || null, price_source: p?.source || null, value_cents: value, cost_cents: s.cost, realised_cents: s.realised,
+      result_cents: value - s.cost + s.realised + (divBy[isin] || 0), price_result_cents: value - s.cost_ex + s.realised_ex,
+      dividends_cents: divBy[isin] || 0, fees_cents: s.fees,
+      trades: trades.filter((t) => t.isin === isin).reverse().map(({ id, date, quantity, price, currency, value_eur_cents, fees_cents, manual }) => ({ id, date, quantity, price, currency, value_eur_cents, fees_cents, manual: !!manual })) };
+  }).sort((a, b) => (b.quantity > 0) - (a.quantity > 0) || b.value_cents - a.value_cents);
+  const dividends = events.filter((e) => e.kind === 'dividend').reduce((s, e) => s + e.amount_cents, 0);
+  const tax = -events.filter((e) => e.kind === 'dividend_tax').reduce((s, e) => s + e.amount_cents, 0);
+  const feeEv = -events.filter((e) => e.kind === 'fee').reduce((s, e) => s + e.amount_cents, 0);
+  const tradeFees = Object.values(st).reduce((s, x) => s + x.fees, 0);
+  const netBought = Object.values(st).reduce((s, x) => s + x.bought - x.sold, 0);
+  const priceResult = holdings.reduce((s, h) => s + h.price_result_cents, 0);
+  const invested = netBought + feeEv;
+  const result = priceResult + dividends - tax - tradeFees - feeEv;
+  return { account_id: accountId, holdings, market_value_cents: market, cash_cents: 0, value_cents: market, invested_cents: invested,
+    invested_source: 'trades', net_bought_cents: netBought, result_cents: result, result_pct: invested > 0 ? Math.round(result / invested * 1e4) / 1e4 : null,
+    price_result_cents: priceResult, price_result_pct: invested > 0 ? Math.round(priceResult / invested * 1e4) / 1e4 : null,
+    dividends_cents: dividends - tax, dividend_tax_cents: tax, costs_cents: tradeFees + feeEv, price_date: oldest,
+    price_stale: !!oldest && daysBetween(oldest, db.today) > 4,
+    events: events.map(({ id, date, isin, kind, amount_cents, description }) => ({ id, date, isin, kind, amount_cents, description })).reverse() };
+}
+
+function holdingsChart(accountId) {
+  const trades = db.trades.filter((t) => t.account_id === accountId);
+  if (!trades.length) return [];
+  const first = trades.reduce((m, t) => (t.date < m ? t.date : m), trades[0].date);
+  const out = [];
+  for (let d = first; ; d = addDays(d, 7)) {
+    const day = d > db.today ? db.today : d;
+    const inv = trades.filter((t) => t.date <= day).reduce((s, t) => s - t.value_eur_cents + t.fees_cents, 0);
+    out.push({ date: day, value_cents: holdingsValueAt(accountId, day), invested_cents: inv });
+    if (day === db.today) break;
+  }
+  return out;
+}

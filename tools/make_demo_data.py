@@ -7,6 +7,9 @@ with one overlapping month between consecutive files. Everything is synthetic: p
 IBANs, creditor ids and amounts are made up; brand names are real so the library recognises
 them. Deterministic for a given --seed and --today.
 
+Also writes a fictitious DEGIRO export (Transacties, Rekeningoverzicht, Portefeuille) in
+OUT_DIR/degiro/: monthly buys of two broad ETFs (public ISINs), made-up prices and quantities.
+
     python3 tools/make_demo_data.py [OUT_DIR] [--seed 42] [--months 18] [--today YYYY-MM-DD]
 """
 
@@ -630,6 +633,78 @@ def write_files(hh: Household, out: Path) -> list[tuple[str, int]]:
     return written
 
 
+# --------------------------------------------------------------------------- DEGIRO
+
+DEGIRO_FUNDS = [   # isin, name, start price, monthly drift, units per buy, every n months
+    ("IE00B3RBWM25", "VANGUARD FTSE ALL-WORLD UCITS ETF", 108.0, 0.0075, 2, 1),
+    ("IE00B4L5Y983", "ISHARES CORE MSCI WORLD UCITS ETF", 86.0, 0.008, 3, 3),
+]
+
+
+def _nl(x: float, decimals: int = 2) -> str:
+    return f'"{x:.{decimals}f}"'.replace(".", ",")
+
+
+def _price(rng_seed: int, start: float, drift: float, months: float) -> float:
+    import math
+    return round(start * (1 + drift * months) * (1 + 0.035 * math.sin(months * 1.3 + rng_seed)), 2)
+
+
+def write_degiro(rng: random.Random, start: date, today: date, out: Path) -> list[tuple[str, int]]:
+    """Fictitious DEGIRO CSV exports in the Dutch layout (decimal comma, unnamed currency
+    columns next to amounts). Order ids are random hex, nothing refers to a real account."""
+    out.mkdir(parents=True, exist_ok=True)
+    tx_lines, acc_lines, held = [], [], {}
+    first = date(start.year, start.month, 1)
+    for n, (y, m) in enumerate(months_between(first, today)):
+        for k, (isin, name, p0, drift, units, every) in enumerate(DEGIRO_FUNDS):
+            if n % every:
+                continue
+            d = workday_after(date(y, m, 5 + k))
+            if d > today:
+                continue
+            price = _price(k, p0, drift, n)
+            value = -round(units * price, 2)
+            fee = -1.0 if every == 1 else -2.0
+            order = "".join(rng.choice("0123456789abcdef") for _ in range(32))
+            order = f"{order[:8]}-{order[8:12]}-{order[12:16]}-{order[16:20]}-{order[20:]}"
+            tx_lines.append((d, f"{d:%d-%m-%Y},09:{10 + k:02d},{name},{isin},EAM,XAMS,{units},{_nl(price, 4)},EUR,"
+                                f"{_nl(value)},EUR,{_nl(value)},EUR,,{_nl(fee)},EUR,{_nl(value + fee)},EUR,{order}"))
+            held[isin] = held.get(isin, 0) + units
+        if m in (3, 6, 9, 12):
+            d = workday_after(date(y, m, 20))
+            if d <= today and held.get(DEGIRO_FUNDS[0][0]):
+                div = round(held[DEGIRO_FUNDS[0][0]] * 0.62, 2)
+                for desc, amount in (("Dividend", div), ("Dividendbelasting", -round(div * 0.15, 2))):
+                    acc_lines.append((d, f"{d:%d-%m-%Y},07:30,{d:%d-%m-%Y},{DEGIRO_FUNDS[0][1]},{DEGIRO_FUNDS[0][0]},"
+                                         f"{desc},,EUR,{_nl(amount)},EUR,,"))
+        if m == 1:
+            d = workday_after(date(y, 1, 3))
+            if d <= today:
+                acc_lines.append((d, f"{d:%d-%m-%Y},06:00,{d:%d-%m-%Y},,,DEGIRO Aansluitingskosten {y} "
+                                     f"(Euronext Amsterdam - EAM),,EUR,{_nl(-2.5)},EUR,,"))
+    files = {
+        "Transacties.csv": ("Datum,Tijd,Product,ISIN,Beurs,Uitvoeringsplaats,Aantal,Koers,,Lokale waarde,,"
+                            "Waarde,,Wisselkoers,Transactiekosten en/of,,Totaal,,Order ID", tx_lines),
+        "Account.csv": ("Datum,Tijd,Valutadatum,Product,ISIN,Omschrijving,FX,Mutatie,,Saldo,,Order Id", acc_lines),
+    }
+    written = []
+    for fname, (header, lines) in files.items():
+        body = [header] + [line for _, line in sorted(lines, key=lambda x: x[0], reverse=True)]
+        (out / fname).write_text("\n".join(body) + "\n", encoding="utf-8")
+        written.append((f"degiro/{fname}", len(lines)))
+    months_total = len(list(months_between(first, today))) - 1
+    pf = ["Product,Symbool/ISIN,Aantal,Slotkoers,Lokale waarde,,Waarde in EUR",
+          'CASH & CASH FUND & FTX CASH (EUR),,,,EUR,"12,40","12,40"']
+    for k, (isin, name, p0, drift, _, _) in enumerate(DEGIRO_FUNDS):
+        if held.get(isin):
+            close = _price(k, p0, drift, months_total + 0.5)
+            pf.append(f"{name},{isin},{held[isin]},{_nl(close)},EUR,{_nl(close * held[isin])},{_nl(close * held[isin])}")
+    (out / "Portfolio.csv").write_text("\n".join(pf) + "\n", encoding="utf-8")
+    written.append(("degiro/Portfolio.csv", len(pf) - 1))
+    return written
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description="Generate demo ASN CSV + CAMT.053 exports.")
     ap.add_argument("out", nargs="?", default="demo-data", help="output folder (default ./demo-data)")
@@ -645,6 +720,7 @@ def main(argv: list[str] | None = None) -> int:
     hh = build(rng, args.months, today)
     finalise(hh, {"checking": 245037, "savings": 820000})
     written = write_files(hh, Path(args.out))
+    written += write_degiro(random.Random(args.seed + 1), hh.start, hh.today, Path(args.out) / "degiro")
 
     print(f"Demo household {hh.holder} (fictitious)")
     print(f"  checking {hh.checking}   savings {hh.savings}")

@@ -169,9 +169,14 @@ export function generate({ today = todayISO(), empty = false } = {}) {
     goals: [],
     goal_entries: [],
     account_values: [],
+    securities: [],
+    trades: [],
+    cash_events: [],
+    prices: [],
+    prices_status: { last_ok: null, error: null },
     imports: [],
     recurring_ignored: empty ? [] : ['kwf|10'],
-    seq: { tx: 0, rule: 0, goal: 0, entry: 0, value: 0, import: 0, account: 4, category: categories.length, tag: TAGS.length },
+    seq: { tx: 0, rule: 0, goal: 0, entry: 0, value: 0, import: 0, trade: 0, account: 5, category: categories.length, tag: TAGS.length },
   };
   if (empty) return db;
 
@@ -180,6 +185,7 @@ export function generate({ today = todayISO(), empty = false } = {}) {
     { id: 2, iban: IBAN.savings, name: 'Spaarrekening', type: 'savings', match: ['spaarrekening'], manual_balance_cents: null, manual_balance_date: null, hidden: 0, sort: 2, created_at: '2025-05-02' },
     { id: 3, iban: null, name: 'Beleggen', type: 'investment', match: ['meesman'], manual_balance_cents: null, manual_balance_date: null, hidden: 0, sort: 3, created_at: '2025-06-10' },
     { id: 4, iban: null, name: 'Creditcard', type: 'credit', match: ['international card services', 'ics'], manual_balance_cents: null, manual_balance_date: null, hidden: 0, sort: 4, created_at: '2025-06-10' },
+    { id: 5, iban: null, name: 'DEGIRO', type: 'investment', match: ['degiro', 'flatex'], manual_balance_cents: null, manual_balance_date: null, hidden: 0, sort: 5, created_at: '2025-06-10' },
   ];
 
   const nowPeriod = today.slice(0, 7);
@@ -431,6 +437,9 @@ export function generate({ today = todayISO(), empty = false } = {}) {
     if (invested > 0) db.account_values.push({ id: ++db.seq.value, account_id: ACC.invest, date: `${period}-28` > lastDataDay ? lastDataDay : `${period}-28`, value_cents: Math.round(invested * (1.02 + (off + 9) * 0.009)) });
   }
 
+  // DEGIRO holdings (fictitious export): monthly buys of two broad ETFs, daily-ish prices
+  degiroHoldings(db, nowPeriod, lastDataDay);
+
   // A few learned rules
   for (const key of ['albert heijn', 'thuisbezorgd', 'international card services', 'zwemschool de spetter']) {
     const t = txs.find((x) => x.merchant_key === key);
@@ -440,4 +449,39 @@ export function generate({ today = todayISO(), empty = false } = {}) {
   db.suggestions = [{ key: 'savings:NL55ASNB0707074417', type: 'savings', iban: 'NL55ASNB0707074417', name: 'Kinderrekening' }];
   db.unsortedSuggestions = Object.fromEntries(UNSORTED.map((u) => [u[0], u[6].map((k) => cat[k])]));
   return db;
+}
+
+/* DEGIRO demo: public ISINs of two broad ETFs, made-up quantities and prices. */
+function degiroHoldings(db, nowPeriod, lastDataDay) {
+  const funds = [
+    { isin: 'IE00B3RBWM25', name: 'VANGUARD FTSE ALL-WORLD UCITS ETF', base: 108, drift: 0.0075, amp: 0.035, every: 1, qty: 2 },
+    { isin: 'IE00B4L5Y983', name: 'ISHARES CORE MSCI WORLD UCITS ETF', base: 86, drift: 0.008, amp: 0.04, every: 3, qty: 3 },
+  ];
+  const start = shiftPeriod(nowPeriod, -14);
+  const priceAt = (f, iso) => {
+    const days = (parseISO(iso) - parseISO(`${start}-01`)) / 86400000;
+    return Math.round(f.base * (1 + f.drift * days / 30.4) * (1 + f.amp * Math.sin(days / 23) + 0.012 * Math.sin(days / 3.1)) * 100) / 100;
+  };
+  for (const f of funds) {
+    db.securities.push({ isin: f.isin, name: f.name, symbol: null, currency: 'EUR', exchange: 'EAM', price_symbol: null });
+    for (let off = -14; off <= 0; off += f.every) {
+      const day = `${shiftPeriod(nowPeriod, off)}-0${f.every === 1 ? 5 : 6}`;
+      if (day > lastDataDay) continue;
+      const price = priceAt(f, day);
+      db.trades.push({ id: ++db.seq.trade, account_id: 5, date: day, isin: f.isin, quantity: f.qty, price, currency: 'EUR', value_eur_cents: -Math.round(f.qty * price * 100), fees_cents: f.every === 1 ? 100 : 200, manual: false });
+    }
+    for (let d = `${start}-01`; d <= lastDataDay; d = addDays(d, 1)) {
+      const wd = parseISO(d).getDay();
+      if (wd === 0 || wd === 6) continue;
+      db.prices.push({ isin: f.isin, date: d, close_eur: priceAt(f, d), source: 'yahoo' });
+    }
+  }
+  for (let off = -12; off <= 0; off += 3) {
+    const day = `${shiftPeriod(nowPeriod, off)}-20`;
+    if (day > lastDataDay) continue;
+    db.cash_events.push({ id: db.cash_events.length + 1, account_id: 5, date: day, isin: 'IE00B3RBWM25', kind: 'dividend', amount_cents: 600 + (off + 12) * 40, description: 'Dividend' });
+    db.cash_events.push({ id: db.cash_events.length + 1, account_id: 5, date: day, isin: 'IE00B3RBWM25', kind: 'dividend_tax', amount_cents: -Math.round((600 + (off + 12) * 40) * 0.15), description: 'Dividendbelasting' });
+  }
+  db.cash_events.push({ id: db.cash_events.length + 1, account_id: 5, date: `${nowPeriod.slice(0, 4)}-01-02`, isin: null, kind: 'fee', amount_cents: -250, description: 'DEGIRO Aansluitingskosten' });
+  db.prices_status = { last_ok: `${lastDataDay}T17:45:00Z`, error: null };
 }

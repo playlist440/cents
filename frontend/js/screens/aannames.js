@@ -2,7 +2,7 @@
 // row with a switch or an undo action. Salary series, account soorten (import or own choice),
 // suggested month start day, Vrij geld (salarisdag, buffer, ondergrens betaalrekening), the
 // small-amount split at fuel stations, ignored vaste lasten,
-// learned potje links, insight kinds, and a link to Geleerde regels.
+// learned potje links, insight kinds, automatic prices of funds, and a link to Geleerde regels.
 // iPhone: a pushed screen; Mac: a section of the Instellingen split.
 
 import { html, useState } from '../vendor/preact-htm.js';
@@ -168,6 +168,8 @@ function Content({ a, settings, pending }) {
         </span></li>`}
     </${List}>`}
 
+    <${PricesPart} on=${as.prices_auto?.enabled !== false} setAssumption=${setAssumption} />
+
     <${List} header="Vaste lasten">
       <${ListRow} icon="vaste-lasten" iconColor="indigo" title="Herkend" value=${String(a.recurring_count ?? 0)} chevron onClick=${() => navigate('/vaste-lasten')} />
       ${(a.recurring_ignored || []).map((it) => html`<${ListRow} key=${it.key} title=${it.name} subtitle="Geen vaste last"
@@ -194,4 +196,29 @@ function Content({ a, settings, pending }) {
     <${List}>
       <${ListRow} icon="sparkles" iconColor="purple" title="Geleerde regels" value=${String(a.rules_count ?? '')} chevron onClick=${() => navigate('/instellingen/regels')} />
     </${List}>`;
+}
+
+// Koersen (SPEC §7.1): automatic daily prices on/off, last update and source, "Nu bijwerken".
+function PricesPart({ on, setAssumption }) {
+  const q = useQuery('prices-status', () => api.priceStatus());
+  const [busy, setBusy] = useState(false);
+  const st = q.data;
+  const refresh = async () => {
+    setBusy(true);
+    try {
+      const r = await api.refreshPrices();
+      invalidate();
+      toast({ text: r.result?.ok ? 'Koersen bijgewerkt' : 'Bijwerken lukte niet', icon: r.result?.ok ? 'check' : 'warning' });
+    } catch (err) { fail(err); }
+    setBusy(false);
+  };
+  const last = st?.last_ok ? `Bijgewerkt ${shortDate(st.last_ok.slice(0, 10))} · ${st.source}` : st?.held ? 'Nog niet bijgewerkt' : 'Nog geen fondsen';
+  return html`<${List} header="Koersen" footer=${on
+    ? `Eén keer per dag na 18:30 haalt Cents de slotkoersen van je fondsen op bij ${st?.source || 'Yahoo Finance'} (alleen de ISIN, geen bedragen), en wisselkoersen bij de ECB.`
+    : 'Uit: er gaat niets van je server naar internet. Cents gebruikt de koersen uit je DEGIRO-export of de waarde die je zelf invult.'}>
+    <li class="field-row"><label class="field-label sa-grow" for="sa-prices">Koersen automatisch ophalen</label>
+      <${Switch} id="sa-prices" checked=${on} onChange=${(v) => setAssumption({ prices_auto: { enabled: v } })} label="Koersen automatisch ophalen" /></li>
+    ${on && html`<${ListRow} title=${last} subtitle=${st?.error ? 'Laatste poging lukte niet' : null}
+      accessory=${html`<${Button} size="small" variant="tinted" onClick=${refresh} loading=${busy} disabled=${!st?.held}>Nu bijwerken</${Button}>`} />`}
+  </${List}>`;
 }
