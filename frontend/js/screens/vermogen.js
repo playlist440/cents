@@ -477,7 +477,9 @@ function YearForm({ m, onChange }) {
   const set = (pid, k, c) => setVals((v) => ({ ...v, [pid]: { ...v[pid], [k]: c } }));
   const ready = m.parts.every((p) => vals[p.id]?.debt_end_cents != null);
   // afgelost = restant begin − restant eind (bijgeleend of onbekend begin: 0)
-  const repaid = (v) => (v?.debt_start_cents != null && v?.debt_end_cents != null ? Math.max(0, v.debt_start_cents - v.debt_end_cents) : 0);
+  // nieuwe lening in dat jaar: restant op 1 januari is 0, dan telt het bedrag bij ingang
+  const begin = (v) => (v?.debt_start_cents === 0 ? v?.principal_cents : v?.debt_start_cents);
+  const repaid = (v) => (begin(v) != null && v?.debt_end_cents != null ? Math.max(0, begin(v) - v.debt_end_cents) : 0);
   const entered = m.years.includes(year);
   const save = async () => {
     if (!ready || busy) return;
@@ -502,11 +504,12 @@ function YearForm({ m, onChange }) {
     </div>
     ${m.parts.map((p) => html`<${List} key=${p.id} header=${m.parts.length > 1 ? p.name : null}>
       <${AmountField} label=${`Restant op 01-01-${year}`} cents=${vals[p.id]?.debt_start_cents} onChange=${(c) => set(p.id, 'debt_start_cents', c)} />
+      ${vals[p.id]?.debt_start_cents === 0 && html`<${AmountField} label="Bedrag bij ingang" cents=${vals[p.id]?.principal_cents} onChange=${(c) => set(p.id, 'principal_cents', c)} />`}
       <${AmountField} label=${`Restant op 31-12-${year}`} cents=${vals[p.id]?.debt_end_cents} onChange=${(c) => set(p.id, 'debt_end_cents', c)} />
       <${AmountField} label="Betaalde rente" cents=${vals[p.id]?.interest_cents} onChange=${(c) => set(p.id, 'interest_cents', c)} />
       <${ListRow} title="Afgelost" value=${html`<span class="num">${money(repaid(vals[p.id]))}</span>`} />
     </${List}>`)}
-    <${List} footer=${`Neem de bedragen over van je jaaropgave. Afgelost rekent Cents zelf uit. De opgave over ${m.form_year + 1} komt begin ${m.form_year + 2}.`}>
+    <${List} footer=${`Neem de bedragen over van je jaaropgave. Afgelost rekent Cents zelf uit. Nieuwe lening dat jaar? Vul bij 1 januari 0 in en daarna het bedrag bij ingang. De opgave over ${m.form_year + 1} komt begin ${m.form_year + 2}.`}>
       <li class="field-row vm-add-row"><${Button} variant="tinted" size="medium" block onClick=${save} disabled=${!ready} loading=${busy}>Bewaar jaaropgave</${Button}></li>
     </${List}>
   </div>`;
