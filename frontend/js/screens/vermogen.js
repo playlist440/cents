@@ -363,6 +363,9 @@ function HomeRow({ home }) {
     onClick=${() => openSheet(MortgageSheet, {})} label=${`Woning, overwaarde ${value}`} />`;
 }
 
+/** Rejected mutation from a menu or switch: show the API message (e.g. 409 merchant_linked). */
+const apiFail = (err) => toast({ text: err.message, icon: 'warning' });
+
 export function MortgageSheet({ close }) {
   const { data: m, reload } = useQuery('mortgage', () => api.mortgage());
   const done = () => { invalidate(); reload?.(); };
@@ -408,9 +411,9 @@ function MortgageDetail({ m, onChange, close }) {
   const setLink = (e) => openMenu(e.currentTarget, [
     ...m.candidates.map((c) => ({ label: `${c.merchant_name || c.merchant_key}${c.amount_cents ? ` · ${money(c.amount_cents)}` : ''}`,
       icon: m.payment?.merchant_key === c.merchant_key ? 'check' : undefined,
-      onSelect: () => api.updateMortgage({ merchant_key: c.merchant_key }).then(onChange) })),
-    { label: 'Automatisch kiezen', onSelect: () => api.updateMortgage({ merchant_key: null }).then(onChange) },
-    { label: 'Niet koppelen', onSelect: () => api.updateMortgage({ merchant_key: '' }).then(onChange) },
+      onSelect: () => api.updateMortgage({ merchant_key: c.merchant_key }).then(onChange, apiFail) })),
+    { label: 'Automatisch kiezen', onSelect: () => api.updateMortgage({ merchant_key: null }).then(onChange, apiFail) },
+    { label: 'Niet koppelen', onSelect: () => api.updateMortgage({ merchant_key: '' }).then(onChange, apiFail) },
   ]);
   const remove = (e) => openMenu(e.currentTarget, [{
     label: 'Verwijder hypotheek en woning', icon: 'trash', destructive: true, onSelect: async () => {
@@ -435,7 +438,7 @@ function MortgageDetail({ m, onChange, close }) {
     <${List} footer=${m.repaid_share != null && m.payment ? `Van elke betaling telt ${Math.round(m.repaid_share * 100)} % als afgelost (gespaard), de rest als vaste lasten.` : null}>
       <li class="field-row"><label class="field-label sa-grow" for="vm-mg-inc">Meetellen in vermogen</label>
         <${Switch} id="vm-mg-inc" checked=${m.include_in_networth} label="Woning meetellen in vermogen"
-          onChange=${(on) => api.updateMortgage({ include_in_networth: on }).then(onChange)} /></li>
+          onChange=${(on) => api.updateMortgage({ include_in_networth: on }).then(onChange, apiFail)} /></li>
       <${ListRow} title="Betaling" value=${html`<span class="vm-mg-pay">${m.payment ? m.payment.merchant_name : 'Geen'}</span>`}
         chevron onClick=${setLink} label=${`Gekoppelde betaling: ${m.payment ? m.payment.merchant_name : 'geen'}. Wijzig`} />
     </${List}>
@@ -505,7 +508,7 @@ function HomeValue({ m, onChange }) {
   };
   const last = m.home_values.at(-1);
   const remove = (e, v) => openMenu(e.currentTarget, [{ label: 'Verwijder', icon: 'trash', destructive: true,
-    onSelect: () => api.deleteHomeValue(v.id).then(onChange) }]);
+    onSelect: () => api.deleteHomeValue(v.id).then(onChange, apiFail) }]);
   return html`
     <${List} header="Woningwaarde" footer=${last ? `Nu ${euros(last.value_cents)}, sinds ${longDate(last.date)}. De WOZ-waarde staat op je aanslag van de gemeente.` : 'De WOZ-waarde staat op je aanslag van de gemeente.'}>
       <${AmountField} label="WOZ-waarde" cents=${cents} onChange=${setCents} />
@@ -590,7 +593,7 @@ function AssetDetail({ a, k, candidates, onChange, close }) {
     ...candidates.map((c) => ({ label: `${c.merchant_name || c.merchant_key}${c.amount_cents ? ` · ${money(c.amount_cents)}` : ''}`,
       icon: a.payment?.merchant_key === c.merchant_key ? 'check' : undefined,
       onSelect: () => api.updateAsset(a.id, { merchant_key: c.merchant_key }).then(onChange, (err) => toast({ text: err.message, icon: 'warning' })) })),
-    { label: 'Niet koppelen', onSelect: () => api.updateAsset(a.id, { merchant_key: null }).then(onChange) },
+    { label: 'Niet koppelen', onSelect: () => api.updateAsset(a.id, { merchant_key: null }).then(onChange, apiFail) },
   ]);
   const remove = (e) => openMenu(e.currentTarget, [{
     label: `Verwijder ${a.name}`, icon: 'trash', destructive: true, onSelect: async () => {
@@ -612,14 +615,14 @@ function AssetDetail({ a, k, candidates, onChange, close }) {
       ${a.entries.map((e) => html`<${ListRow} key=${e.id} title=${longDate(e.date)} subtitle=${e.note || null}
         value=${html`<span class="num">${money(e.value_cents)}</span>`}
         onClick=${(ev) => openMenu(ev.currentTarget, [{ label: 'Verwijder', icon: 'trash', destructive: true,
-          onSelect: () => api.deleteAssetEntry(a.id, e.id).then(onChange) }])}
+          onSelect: () => api.deleteAssetEntry(a.id, e.id).then(onChange, apiFail) }])}
         label=${`${longDate(e.date)}, ${money(e.value_cents)}. Opties`} />`)}
     </${List}>`}
     <${List} footer=${debt && a.repaid_share != null && a.payment ? `Van elke betaling telt ${Math.round(a.repaid_share * 100)} % als afgelost (gespaard), de rest als vaste lasten.`
       : debt && a.payment ? 'Vul rente en afgelost in om de betaling te splitsen.' : null}>
       <li class="field-row"><label class="field-label sa-grow" for=${'vm-as-inc-' + a.id}>Meetellen in vermogen</label>
         <${Switch} id=${'vm-as-inc-' + a.id} checked=${a.include} label="Meetellen in vermogen"
-          onChange=${(on) => api.updateAsset(a.id, { include: on }).then(onChange)} /></li>
+          onChange=${(on) => api.updateAsset(a.id, { include: on }).then(onChange, apiFail)} /></li>
       ${debt && html`<${ListRow} title="Betaling" value=${html`<span class="vm-mg-pay">${a.payment ? a.payment.merchant_name : 'Geen'}</span>`}
         chevron onClick=${setLink} label=${`Gekoppelde betaling: ${a.payment ? a.payment.merchant_name : 'geen'}. Wijzig`} />`}
     </${List}>

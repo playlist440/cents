@@ -144,7 +144,7 @@ export function TradeSheet({ close, account }) {
   }, [query]);
   const isin = fund?.isin || (/^[A-Za-z]{2}[A-Za-z0-9]{9}\d$/.test(query.trim()) ? query.trim().toUpperCase() : null);
   const quantity = /^\s*\d+([.,]\d+)?\s*$/.test(amount) ? Number(amount.trim().replace(',', '.')) : null;
-  const ready = isin && quantity > 0 && price > 0 && (fund || name.trim());
+  const ready = date && isin && quantity > 0 && price > 0 && (fund || name.trim());
   const save = async () => {
     if (!ready || busy) return;
     setBusy(true);

@@ -83,6 +83,10 @@ class Item:
         self.ents = entries(conn, a["id"])
         self.share = ratio(self.ents) if a["kind"] == "debt" else None
         key = a["merchant_key"]
+        from . import mortgage                      # the mortgage wins a shared merchant (ledger)
+        m_split = mortgage.split_config(conn)
+        if m_split and m_split[0] == key:
+            key = None
         self.events = ([(r["date"], r["repaid"]) for r in lg.rows
                         if r.get("repaid") and r["merchant_key"] == key] if key and self.share else [])
 

@@ -170,11 +170,14 @@ def compute(conn: sqlite3.Connection) -> dict:
         now = lg.today
         while (y, m) <= (now.year, now.month):
             end = min(_month_end(y, m), now).isoformat()
+            # the current month uses the same values as the account list, including anything
+            # dated after today (a card purchase booked ahead, a future-dated balance)
+            acc_day = "9999-12-31" if (y, m) == (now.year, now.month) else end
             point = {"month": f"{y:04d}-{m:02d}", "checking_cents": 0, "savings_cents": 0,
                      "investment_cents": 0, "credit_cents": 0}
             for kind, fn in lines:
                 if kind in TYPES:
-                    point[f"{kind}_cents"] += fn(end) or 0
+                    point[f"{kind}_cents"] += fn(acc_day) or 0
             point["total_cents"] = sum(point[f"{k}_cents"] for k in TYPES)
             if home and home["included"]:
                 point["home_cents"] = est.equity(end) or 0

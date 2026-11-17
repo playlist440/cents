@@ -47,6 +47,8 @@ def patch_mortgage(body: MortgagePatch, conn: sqlite3.Connection = Depends(get_c
             known = db.value(conn, "SELECT 1 FROM transactions WHERE merchant_key = ? LIMIT 1", (key,))
             if not known:
                 raise ApiError(422, "unknown_merchant", "Deze betaling ken ik niet.")
+            if db.value(conn, "SELECT 1 FROM assets WHERE merchant_key = ?", (key,)):
+                raise ApiError(409, "merchant_linked", "Deze betaling hoort al bij een andere lening.")
         if key is None:
             conn.execute("DELETE FROM settings WHERE key = ?", (mortgage.MERCHANT_SETTING,))
         else:
@@ -76,6 +78,8 @@ def put_year(year: int, body: MortgageYearBody, conn: sqlite3.Connection = Depen
     known = {p["id"] for p in mortgage.parts(conn)}
     if any(p.part_id not in known for p in body.parts):
         raise not_found("Dit leningdeel bestaat niet (meer).")
+    if len({p.part_id for p in body.parts}) != len(body.parts):
+        raise ApiError(422, "invalid", "Elk leningdeel mag maar één keer voorkomen.")
     conn.execute("DELETE FROM mortgage_years WHERE year = ?", (year,))
     for p in body.parts:
         db.insert(conn, "mortgage_years", {"part_id": p.part_id, "year": year,

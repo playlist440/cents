@@ -917,8 +917,13 @@ function networth() {
     const end = p === cur ? db.today : addDays(`${shiftPeriod(p, 1)}-01`, -1);
     const row = { month: p, checking_cents: 0, savings_cents: 0, investment_cents: 0, credit_cents: 0, total_cents: 0 };
     for (const a of db.accounts) {
+      if (a.hidden) continue; // like the backend: hidden accounts are not in the series either
       let v = 0;
-      if (a.type === 'checking' || a.type === 'savings') {
+      if (a.type === 'credit') {
+        // the current month uses the same value as the account list (backend: acc_day 9999-12-31);
+        // earlier months: the mock keeps no card timeline, so 0
+        v = p === cur ? accountBalance(a).balance_cents || 0 : 0;
+      } else if (a.type === 'checking' || a.type === 'savings') {
         const last = db.transactions.filter((t) => t.account_id === a.id && t.date <= end && t.balance_after_cents != null).at(-1);
         v = last ? last.balance_after_cents : 0;
       } else if (a.type === 'investment' && (db.trades || []).some((t) => t.account_id === a.id)) {
@@ -1890,7 +1895,10 @@ const ROUTES = [
     if (body.include_in_networth != null) db.settings.mortgage_include_home = !!body.include_in_networth;
     if ('merchant_key' in body) {
       if (body.merchant_key === null) delete db.settings.mortgage_merchant_key;
-      else db.settings.mortgage_merchant_key = body.merchant_key;
+      else {
+        if (body.merchant_key && db.assets.some((a) => a.merchant_key === body.merchant_key)) fail(409, 'merchant_linked', 'Deze betaling hoort al bij een andere lening.');
+        db.settings.mortgage_merchant_key = body.merchant_key;
+      }
     }
     return ok(mortgageOut());
   }],
@@ -1902,6 +1910,8 @@ const ROUTES = [
   ['PATCH', /^\/mortgage\/parts\/(\d+)$/, ({ params: [id], body }) => { need(db.mortgage_parts.find((p) => p.id === id)).name = String(body.name || '').trim(); return ok(mortgageOut()); }],
   ['PUT', /^\/mortgage\/years\/(\d+)$/, ({ params: [year], body }) => {
     if (year >= Number(db.today.slice(0, 4))) fail(422, 'year_not_finished', `De jaaropgave over ${year} komt pas na afloop van dat jaar.`);
+    const ids = (body.parts || []).map((x) => x.part_id);
+    if (new Set(ids).size !== ids.length) fail(422, 'duplicate_part', 'Elk leningdeel mag maar één keer in de jaaropgave.');
     db.mortgage_years = db.mortgage_years.filter((e) => e.year !== year);
     for (const x of body.parts || []) db.mortgage_years.push({ part_id: x.part_id, year, debt_end_cents: x.debt_end_cents || 0, interest_cents: x.interest_cents || 0, repaid_cents: x.repaid_cents || 0 });
     return ok(mortgageOut());
@@ -1916,6 +1926,7 @@ const ROUTES = [
   }],
   ['POST', /^\/accounts\/(\d+)\/trades$/, ({ params: [id], body }) => {
     need(db.accounts.find((x) => x.id === id && x.type === 'investment'));
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(body.date || '')) fail(422, 'bad_date', 'Geef een datum.');
     const isin = String(body.isin || '').toUpperCase();
     if (!/^[A-Z]{2}[A-Z0-9]{9}\d$/.test(isin)) fail(422, 'bad_isin', 'Deze ISIN klopt niet.');
     if (!db.securities.find((s) => s.isin === isin)) {
