@@ -23,7 +23,7 @@ DEFAULTS: dict[str, dict[str, Any]] = {
     "payday_day": {"day": None},
     "buffer": {"months": 3, "amount_cents": None},
     "checking_floor_cents": {"cents": 0},
-    "prices_auto": {"enabled": True},
+    "prices_auto": {"enabled": False},   # opt-in: off = fully offline
 }
 MAX_CENTS = 100_000_000
 THRESHOLD_MIN, THRESHOLD_MAX = 100, 10000

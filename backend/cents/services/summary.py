@@ -150,6 +150,7 @@ def build_overview(conn: sqlite3.Connection, lg: Ledger, p: Period) -> dict:
         "salary_expected": salary_dates[0].isoformat() if salary_dates and is_current else None,
         "daily_cents": f.daily,
         "saved_cents": f.saved,
+        "repaid_cents": f.repaid,
         "saving_upcoming_cents": saving_upcoming,
         "left_cents": left,
         "per_day_left_cents": per_day,
@@ -185,10 +186,10 @@ def _spending_cats(lg: Ledger) -> list[int]:
 
 
 def _sum_flows(flows: list[Flows]) -> dict:
-    out = {"income": 0, "fixed": 0, "daily": 0, "saved": 0, "spent": {}, "counts": {},
+    out = {"income": 0, "fixed": 0, "daily": 0, "saved": 0, "repaid": 0, "spent": {}, "counts": {},
            "income_by_cat": {}}
     for f in flows:
-        for k in ("income", "fixed", "daily", "saved"):
+        for k in ("income", "fixed", "daily", "saved", "repaid"):
             out[k] += getattr(f, k)
         for name, src in (("spent", f.spent), ("counts", f.counts), ("income_by_cat", f.income_by_cat)):
             for cid, v in src.items():
@@ -256,8 +257,8 @@ def build_year_overview(conn: sqlite3.Connection, lg: Ledger, year: int) -> dict
     cats.sort(key=lambda c: (-c["spent_cents"], -c["avg_cents"], c["category_id"]))
 
     months = [{"period": p.id, "label": p.label, "income_cents": f.income, "fixed_cents": f.fixed,
-               "daily_cents": f.daily, "saved_cents": f.saved, "net_cents": f.net,
-               "result_cents": f.income - f.fixed - f.daily, "partial": p.id == current.id}
+               "daily_cents": f.daily, "saved_cents": f.saved, "repaid_cents": f.repaid,
+               "net_cents": f.net, "result_cents": f.income - f.fixed - f.daily, "partial": p.id == current.id}
               for p, f in zip(plist, flows)]
     unsorted_rows = db.row(conn, """
         SELECT COUNT(*) AS n, COALESCE(SUM(t.amount_cents), 0) AS cents FROM transactions t
@@ -273,6 +274,7 @@ def build_year_overview(conn: sqlite3.Connection, lg: Ledger, year: int) -> dict
         "salary_expected": None,
         "daily_cents": tot["daily"],
         "saved_cents": tot["saved"],
+        "repaid_cents": tot["repaid"],
         "saving_upcoming_cents": 0,
         "left_cents": None,
         "per_day_left_cents": None,
@@ -282,6 +284,7 @@ def build_year_overview(conn: sqlite3.Connection, lg: Ledger, year: int) -> dict
                       "fixed_cents": int(round(tot["fixed"] / n)),
                       "daily_cents": int(round(tot["daily"] / n)),
                       "saved_cents": int(round(tot["saved"] / n)),
+                      "repaid_cents": int(round(tot["repaid"] / n)),
                       "net_cents": int(round(tot["net"] / n)),
                       "result_cents": int(round(tot["result"] / n))},
         "previous_year": ({"income_cents": prev_tot["income"], "fixed_cents": prev_tot["fixed"],
@@ -328,7 +331,7 @@ def trends(conn: sqlite3.Connection, n: int = 12) -> dict:
         complete = {q.id for q in lg.complete_before(current, 10000)}
         out_periods = [{"period": p.id, "label": p.label, "income_cents": f.income,
                         "fixed_cents": f.fixed, "daily_cents": f.daily, "saved_cents": f.saved,
-                        "net_cents": f.net, "partial": p.id not in complete}
+                        "repaid_cents": f.repaid, "net_cents": f.net, "partial": p.id not in complete}
                        for p, f in zip(plist, flows)]
         categories = []
         for cid, cat in lg.categories.items():

@@ -2,7 +2,8 @@
 // suggestion rows for likely own accounts (Ja creates, Nee dismisses), accounts grouped per
 // soort, account sheet (name, soort, values for investments, open amount + "Uitgave
 // toevoegen" for credit cards, manual balance for accounts without imported data). `+` adds a
-// manual account.
+// manual account. Woning (SPEC §7.2): overwaarde row, mortgage sheet with parts, the yearly
+// statement form, home value, include switch and the linked payment.
 
 import { html, useState } from '../vendor/preact-htm.js';
 import { api } from '../api.js';
@@ -13,7 +14,7 @@ import { Screen, NavButton } from '../components/Screen.js';
 import { Amount } from '../components/Amount.js';
 import { Card } from '../components/Card.js';
 import { List, ListRow, Section } from '../components/List.js';
-import { Button, Segmented } from '../components/Controls.js';
+import { Button, Segmented, Switch } from '../components/Controls.js';
 import { Skeleton, EmptyState } from '../components/Feedback.js';
 import { Sheet, SheetButton } from '../components/Sheet.js';
 import { TextField, AmountField, DateField } from '../components/Fields.js';
@@ -42,9 +43,11 @@ export function Vermogen() {
   const pending = usePending();
   const desk = useLayout() === 'wide';
   const trailing = html`<${NavButton} icon="plus" label="Rekening toevoegen" onClick=${() => openSheet(AccountSheet, {})} />`;
+  const addItems = [{ label: 'Rekening toevoegen', icon: 'wallet', onSelect: () => openSheet(AccountSheet, {}) },
+    ...(data?.home ? [] : [{ label: 'Hypotheek toevoegen', icon: 'vermogen', onSelect: () => openSheet(MortgageSheet, {}) }])];
 
   if (!data) {
-    return html`<${Screen} title="Vermogen" trailing=${trailing} add=${[{ label: 'Rekening toevoegen', icon: 'wallet', onSelect: () => openSheet(AccountSheet, {}) }]}>
+    return html`<${Screen} title="Vermogen" trailing=${trailing} add=${addItems}>
       ${error ? html`<${EmptyState} emoji="📈" title="Vermogen laadt niet" subtitle=${error.message} action=${{ label: 'Probeer opnieuw', variant: 'tinted', onClick: () => reload() }} />` : html`<${VermogenSkeleton} />`}
     </${Screen}>`;
   }
@@ -60,7 +63,7 @@ export function Vermogen() {
 
   if (desk) {
     // Mac: chart large on the left (8 columns), accounts on the right (4 columns), totals per group.
-    return html`<${Screen} title="Vermogen" trailing=${trailing} add=${[{ label: 'Rekening toevoegen', icon: 'wallet', onSelect: () => openSheet(AccountSheet, {}) }]} class="vm">
+    return html`<${Screen} title="Vermogen" trailing=${trailing} add=${addItems} class="vm">
       <div class="dk-grid vm-grid">
         <div class="dk-col-8 dk-card vm-chart-card"><${Hero} data=${data} desk /></div>
         <div class="dk-col-4 dk-stack vm-side">
@@ -70,12 +73,16 @@ export function Vermogen() {
             <h2 class="vm-group-h"><span>${t.group}</span><span class="num">${t.type === 'credit' ? money(list.reduce((s, a) => s + (a.outstanding_cents || 0), 0)) : money(sum, { negative: true })}</span></h2>
             <${List}>${list.map((a) => html`<${AccountRow} key=${a.id} a=${a} />`)}</${List}>
           </section>`)}
+          ${accounts.length > 0 && html`<section class="vm-group">
+            <h2 class="vm-group-h"><span>Woning</span>${data.home?.equity_cents != null && html`<span class="num">${money(data.home.equity_cents, { negative: true })}</span>`}</h2>
+            <${List}><${HomeRow} home=${data.home} /></${List}>
+          </section>`}
         </div>
       </div>
     </${Screen}>`;
   }
 
-  return html`<${Screen} title="Vermogen" trailing=${trailing} add=${[{ label: 'Rekening toevoegen', icon: 'wallet', onSelect: () => openSheet(AccountSheet, {}) }]} class="vm">
+  return html`<${Screen} title="Vermogen" trailing=${trailing} add=${addItems} class="vm">
     <${Hero} data=${data} />
     ${suggestions.length > 0 && html`<div class="vm-suggestions">${suggestions.map((s) => html`<${Suggestion} key=${s.key} s=${s} />`)}</div>`}
     ${!accounts.length && html`<${EmptyState} emoji="🏦" title="Nog geen rekeningen" action=${{ label: 'Rekening toevoegen', onClick: () => openSheet(AccountSheet, {}) }} />`}
@@ -87,6 +94,7 @@ export function Vermogen() {
         <${List}>${list.map((a) => html`<${AccountRow} key=${a.id} a=${a} />`)}</${List}>
       </${Section}>`;
     })}
+    ${accounts.length > 0 && html`<${Section} title="Woning"><${List}><${HomeRow} home=${data.home} /></${List}></${Section}>`}
   </${Screen}>`;
 }
 
@@ -318,6 +326,178 @@ function CreditPart({ account, close }) {
     <${ListRow} title="Open" value=${html`<span class="num">${money(account.outstanding_cents || 0)}</span>`} />
     <${ListRow} icon="plus" title="Uitgave toevoegen" tint onClick=${() => { close(); setTimeout(() => openAddExpense({ account_id: account.id }), 320); }} />
   </${List}>`;
+}
+
+/* ---------- Woning (SPEC §7.2) ---------- */
+
+function HomeRow({ home }) {
+  if (!home) {
+    return html`<${ListRow} emoji="🏠" color="indigo" title="Hypotheek toevoegen" subtitle="Woning en schuld in je vermogen"
+      tint onClick=${() => openSheet(MortgageSheet, {})} />`;
+  }
+  const value = home.equity_cents != null ? money(home.equity_cents, { negative: true }) : '—';
+  const sub = home.home_cents == null ? html`<span class="vm-home-line">WOZ-waarde nog invullen</span>` : html`
+    <span class="vm-home-line num">Woning ${euros(home.home_cents)}</span>
+    ${home.debt_cents != null && html`<span class="vm-home-line num">Hypotheek − ${euros(home.debt_cents)}</span>`}`;
+  return html`<${ListRow} class="vm-home" emoji="🏠" color="indigo" title="Overwaarde"
+    subtitle=${html`${sub}${!home.included && home.home_cents != null ? html`<span class="vm-home-line">niet meegeteld</span>` : ''}`}
+    value=${html`<span class="num vm-balance">${value}</span>`} chevron
+    onClick=${() => openSheet(MortgageSheet, {})} label=${`Woning, overwaarde ${value}`} />`;
+}
+
+export function MortgageSheet({ close }) {
+  const { data: m, reload } = useQuery('mortgage', () => api.mortgage());
+  const done = () => { invalidate(); reload?.(); };
+  return html`<${Sheet} title="Woning" detents=${['large']}
+      trailing=${html`<${SheetButton} bold onClick=${close}>Klaar</${SheetButton}>`}>
+    <div class="sheet-pad">
+      ${!m ? html`<${Skeleton} h=${120} r=${12} />`
+        : !m.exists ? html`<${MortgageSetup} onDone=${done} />`
+        : html`<${MortgageDetail} m=${m} onChange=${done} close=${close} />`}
+    </div>
+  </${Sheet}>`;
+}
+
+function MortgageSetup({ onDone }) {
+  const [n, setN] = useState(1);
+  const [names, setNames] = useState(['Deel 1', 'Deel 2', 'Deel 3', 'Deel 4']);
+  const [busy, setBusy] = useState(false);
+  const create = async () => {
+    setBusy(true);
+    try {
+      await api.createMortgage(names.slice(0, n).map((x, i) => ({ name: x.trim() || `Deel ${i + 1}` })));
+      onDone();
+    } catch (err) {
+      setBusy(false);
+      toast({ text: err.message, icon: 'warning' });
+    }
+  };
+  return html`
+    <p class="vm-mg-intro">Je jaaropgave van de hypotheek noemt per leningdeel de schuld, de betaalde rente en wat je hebt afgelost.</p>
+    <${List} header="Leningdelen">
+      <li class="field-row"><span class="field-label">Aantal</span>
+        <${Segmented} value=${n} onChange=${setN} options=${[[1, '1'], [2, '2'], [3, '3'], [4, '4']]} label="Aantal leningdelen" size="small" /></li>
+      ${names.slice(0, n).map((x, i) => html`<${TextField} key=${i} label=${`Naam ${i + 1}`} value=${x} maxLength=${60}
+        placeholder=${`Deel ${i + 1}`} onInput=${(v) => setNames((all) => all.map((y, j) => (j === i ? v : y)))} />`)}
+    </${List}>
+    <${List} footer="Bijvoorbeeld ‘Deel 1 – annuïtair’ of ‘Deel 2 – aflossingsvrij’.">
+      <li class="field-row vm-add-row"><${Button} variant="filled" size="medium" block onClick=${create} loading=${busy}>Volgende</${Button}></li>
+    </${List}>`;
+}
+
+function MortgageDetail({ m, onChange, close }) {
+  const head = m.equity_cents != null ? money(m.equity_cents, { negative: true }) : money(-(m.debt_cents || 0), { negative: true });
+  const setLink = (e) => openMenu(e.currentTarget, [
+    ...m.candidates.map((c) => ({ label: `${c.merchant_name || c.merchant_key}${c.amount_cents ? ` · ${money(c.amount_cents)}` : ''}`,
+      icon: m.payment?.merchant_key === c.merchant_key ? 'check' : undefined,
+      onSelect: () => api.updateMortgage({ merchant_key: c.merchant_key }).then(onChange) })),
+    { label: 'Automatisch kiezen', onSelect: () => api.updateMortgage({ merchant_key: null }).then(onChange) },
+    { label: 'Niet koppelen', onSelect: () => api.updateMortgage({ merchant_key: '' }).then(onChange) },
+  ]);
+  const remove = (e) => openMenu(e.currentTarget, [{
+    label: 'Verwijder hypotheek en woning', icon: 'trash', destructive: true, onSelect: async () => {
+      await api.deleteMortgage();
+      invalidate();
+      close();
+      toast({ text: 'Hypotheek verwijderd', icon: 'trash' });
+    },
+  }]);
+  return html`
+    ${(m.equity_cents != null || m.debt_cents != null) && html`<div class="vm-sheet-head">
+      <div class="vm-sheet-amount rounded num">${head}</div>
+      <div class="vm-sheet-sub">${m.equity_cents != null ? 'overwaarde' : 'hypotheek'}</div>
+    </div>`}
+    <${List} header="Hypotheek" footer=${m.latest_year
+      ? `Geschat vanaf je jaaropgave ${m.latest_year}${m.repaid_this_year_cents > 0 ? `, min ${euros(m.repaid_this_year_cents)} afgelost dit jaar` : ''}.` : 'Vul je jaaropgave in voor de schuld.'}>
+      ${m.parts.map((p) => html`<${ListRow} key=${p.id} title=${p.name}
+        value=${html`<span class="num">${p.debt_cents == null ? '—' : money(-p.debt_cents, { negative: true })}</span>`} />`)}
+    </${List}>
+    <${YearForm} m=${m} onChange=${onChange} />
+    <${HomeValue} m=${m} onChange=${onChange} />
+    <${List} footer=${m.repaid_share != null && m.payment ? `Van elke betaling telt ${Math.round(m.repaid_share * 100)} % als afgelost (gespaard), de rest als vaste lasten.` : null}>
+      <li class="field-row"><label class="field-label sa-grow" for="vm-mg-inc">Meetellen in vermogen</label>
+        <${Switch} id="vm-mg-inc" checked=${m.include_in_networth} label="Woning meetellen in vermogen"
+          onChange=${(on) => api.updateMortgage({ include_in_networth: on }).then(onChange)} /></li>
+      <${ListRow} title="Betaling" value=${html`<span class="vm-mg-pay">${m.payment ? m.payment.merchant_name : 'Geen'}</span>`}
+        chevron onClick=${setLink} label=${`Gekoppelde betaling: ${m.payment ? m.payment.merchant_name : 'geen'}. Wijzig`} />
+    </${List}>
+    <${List}><${ListRow} title="Verwijder hypotheek" destructive onClick=${remove} /></${List}>`;
+}
+
+function YearForm({ m, onChange }) {
+  const [year, setYear] = useState(m.missing_year || m.form_year);
+  const filled = (y) => Object.fromEntries(m.parts.map((p) => {
+    const e = p.years.find((x) => x.year === y);
+    return [p.id, { debt_end_cents: e?.debt_end_cents ?? null, interest_cents: e?.interest_cents ?? null, repaid_cents: e?.repaid_cents ?? null }];
+  }));
+  const [vals, setVals] = useState(() => filled(year));
+  const [busy, setBusy] = useState(false);
+  const pick = (y) => { setYear(y); setVals(filled(y)); };
+  const set = (pid, k, c) => setVals((v) => ({ ...v, [pid]: { ...v[pid], [k]: c } }));
+  const ready = m.parts.every((p) => vals[p.id]?.debt_end_cents != null);
+  const entered = m.years.includes(year);
+  const save = async () => {
+    if (!ready || busy) return;
+    setBusy(true);
+    try {
+      await api.saveMortgageYear(year, m.parts.map((p) => ({ part_id: p.id, debt_end_cents: vals[p.id].debt_end_cents || 0,
+        interest_cents: vals[p.id].interest_cents || 0, repaid_cents: vals[p.id].repaid_cents || 0 })));
+      onChange();
+      toast({ text: `Jaaropgave ${year} bewaard` });
+    } catch (err) {
+      toast({ text: err.message, icon: 'warning' });
+    }
+    setBusy(false);
+  };
+  const other = (e) => openMenu(e.currentTarget, Array.from({ length: 6 }, (_, i) => m.form_year - i).map((y) => ({
+    label: `${y}${m.years.includes(y) ? ' · ingevuld' : ''}`, icon: y === year ? 'check' : undefined, onSelect: () => pick(y),
+  })));
+  return html`<div class="vm-mg-year">
+    <div class="vm-mg-year-h">
+      <h3>Jaaropgave ${year} ${entered ? 'bijwerken' : 'invullen'}</h3>
+      <button class="section-link" onClick=${other}>Ander jaar</button>
+    </div>
+    ${m.parts.map((p) => html`<${List} key=${p.id} header=${m.parts.length > 1 ? p.name : null}>
+      <${AmountField} label="Schuld op 31 december" cents=${vals[p.id]?.debt_end_cents} onChange=${(c) => set(p.id, 'debt_end_cents', c)} />
+      <${AmountField} label="Betaalde rente" cents=${vals[p.id]?.interest_cents} onChange=${(c) => set(p.id, 'interest_cents', c)} />
+      <${AmountField} label="Afgelost" cents=${vals[p.id]?.repaid_cents} onChange=${(c) => set(p.id, 'repaid_cents', c)} />
+    </${List}>`)}
+    <${List} footer=${`Aflossingsvrij? Laat afgelost op 0. De opgave over ${m.form_year + 1} komt begin ${m.form_year + 2}.`}>
+      <li class="field-row vm-add-row"><${Button} variant="tinted" size="medium" block onClick=${save} disabled=${!ready} loading=${busy}>Bewaar jaaropgave</${Button}></li>
+    </${List}>
+  </div>`;
+}
+
+function HomeValue({ m, onChange }) {
+  const [cents, setCents] = useState(null);
+  const [date, setDate] = useState(todayISO());
+  const [busy, setBusy] = useState(false);
+  const add = async () => {
+    if (!(cents > 0) || busy) return;
+    setBusy(true);
+    try {
+      await api.addHomeValue({ date: date || todayISO(), value_cents: cents });
+      setCents(null);
+      onChange();
+      toast({ text: `Woningwaarde ${money(cents)} bewaard` });
+    } catch (err) {
+      toast({ text: err.message, icon: 'warning' });
+    }
+    setBusy(false);
+  };
+  const last = m.home_values.at(-1);
+  const remove = (e, v) => openMenu(e.currentTarget, [{ label: 'Verwijder', icon: 'trash', destructive: true,
+    onSelect: () => api.deleteHomeValue(v.id).then(onChange) }]);
+  return html`
+    <${List} header="Woningwaarde" footer=${last ? `Nu ${euros(last.value_cents)}, sinds ${longDate(last.date)}. De WOZ-waarde staat op je aanslag van de gemeente.` : 'De WOZ-waarde staat op je aanslag van de gemeente.'}>
+      <${AmountField} label="WOZ-waarde" cents=${cents} onChange=${setCents} />
+      <${DateField} label="Peildatum" value=${date} onChange=${setDate} max=${todayISO()} />
+      <li class="field-row vm-add-row"><${Button} variant="tinted" size="medium" block onClick=${add} disabled=${!(cents > 0)} loading=${busy}>Bewaar waarde</${Button}></li>
+    </${List}>
+    ${m.home_values.length > 1 && html`<${List} header="Eerdere waarden">
+      ${[...m.home_values].reverse().map((v) => html`<${ListRow} key=${v.id} title=${longDate(v.date)} value=${html`<span class="num">${money(v.value_cents)}</span>`}
+        onClick=${(e) => remove(e, v)} label=${`${longDate(v.date)}, ${money(v.value_cents)}. Opties`} />`)}
+    </${List}>`}`;
 }
 
 /* ---------- Skeleton ---------- */

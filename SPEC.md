@@ -312,6 +312,38 @@ changes (source `user`). Tags work the same way with `tag_always=true`.
 - **Balances.** Checking/savings: `balance_after_cents` of the latest transaction, else the
   manual balance. Net-worth history uses month-end balances carried forward.
 
+### 7.2 Mortgage (hypotheek, added later; additive)
+
+- **Data.** One mortgage with 1..n parts (`mortgage_parts`: name, e.g. "Deel 1 – annuïtair").
+  Yearly statement per part per year (`mortgage_years`): `debt_end_cents` (debt on 31 December),
+  `interest_cents` (paid that year), `repaid_cents` (repaid that year; 0 for aflossingsvrij).
+  A statement always describes a finished year: the current year is refused
+  (`year_not_finished`); the form defaults to last year. Older years may be entered. Home values
+  (`home_values`: date, value_cents, e.g. WOZ). Settings `mortgage_include_home` (default true)
+  and `mortgage_merchant_key` (absent = automatic, `""` = no link).
+- **Linked payment.** The lender's direct debit: a merchant paid from a checking account in
+  bakje `wonen`. Automatic: the merchant whose name or descriptions contain "hypothe", else the
+  Wonen merchant with the most payments (≥ 3). The user can pick another or none.
+- **Split.** `share = Σ repaid / Σ (repaid + interest)` of the most recent entered year (all
+  parts). Each linked payment (in group `fixed`) splits into `repaid = round(amount × share)` and
+  interest = the rest. Interest stays a fixed cost in bakje Wonen; repaid counts as saved
+  (`Flows.repaid`, `repaid_cents` in overviews: "Afgelost", part of `saved_cents`). So
+  `result_cents`, Tempo and over/tekort improve; `net_cents` (cash) does not change. Nog te
+  besteden, recurring items, the expected checking balance and the buffer's "months of fixed
+  costs" keep the full payment (cash leaves). Year mode sums the months.
+- **Estimated debt** per part on a day: the latest statement on or before it, minus the part's
+  share of the repaid amounts of linked payments after that 31 December (share = the part's
+  repaid amount in the latest year / all repaid; aflossingsvrij gets 0); before the first
+  statement, that statement plus the repaid amounts until it. Never below 0. A new statement
+  resets the estimate exactly.
+- **Net worth.** Overwaarde = home value (latest on or before the day, else the first) − debt.
+  Included in `total_cents` and the series (`home_cents`) when the setting is on and a home
+  value exists.
+- **Insight** `mortgage` (only in April, current period): "Jaaropgave hypotheek <jaar>
+  invullen?" (id `mortgage:<jaar>`) when last year's statement is missing; without a mortgage but
+  with payments that look like a mortgage: "Hypotheek toevoegen aan je vermogen?" (id
+  `mortgage:setup`, once: dismissable).
+
 ## 8. Periods
 
 Setting `month_start_day` (1–28, default 1). A period is `[start, next start)`. Its id is
@@ -584,12 +616,27 @@ reason}]}` · `POST /goals` · `PATCH /goals/{id}` · `DELETE /goals/{id}` ·
 Net worth: `GET /networth` → `{total_cents, accounts:[{id, name, type, iban, balance_cents,
 as_of, invested_cents?, result_cents?, outstanding_cents?, unexplained_cents?, values?:
 [{id, date, value_cents}]}], series:[{month, checking_cents, savings_cents, investment_cents,
-credit_cents, total_cents}]}` · `POST /accounts {name, type, iban?, match?}` ·
+credit_cents, total_cents, home_cents?}], home: {home_cents, debt_cents, equity_cents, included}
+| null}` · `POST /accounts {name, type, iban?, match?}` ·
 `PATCH /accounts/{id}` · `DELETE /accounts/{id}` (only without imported transactions, or with
 `?force=1`) · `POST /accounts/{id}/values {date, value_cents}` · `DELETE /account-values/{id}`.
 Investment accounts with holdings add to their `/networth` account: `has_holdings,
 market_value_cents, cash_cents, result_pct, price_result_cents, dividends_cents, costs_cents,
 price_stale, holdings_count` (`balance_cents` = market value + cash, `as_of` = oldest price date).
+
+Mortgage (7.2): `GET /mortgage` → `{exists, parts:[{id, name, debt_cents, years:[{year,
+debt_end_cents, interest_cents, repaid_cents}]}], years, latest_year, form_year, missing_year,
+repaid_share, debt_cents, repaid_this_year_cents, home_cents, home_values:[{id, date,
+value_cents}], equity_cents, include_in_networth, payment: {merchant_key, merchant_name,
+amount_cents, auto} | null, candidates:[{merchant_key, merchant_name, amount_cents, count,
+last_date, likely}]}` · `POST /mortgage {parts:[{name}]}` (409 when one exists) ·
+`PATCH /mortgage {include_in_networth?, merchant_key?}` · `DELETE /mortgage` ·
+`PATCH /mortgage/parts/{id} {name}` · `PUT /mortgage/years/{year} {parts:[{part_id,
+debt_end_cents, interest_cents, repaid_cents}]}` (422 `year_not_finished` for this year or later)
+· `DELETE /mortgage/years/{year}` · `POST /mortgage/home-values {date, value_cents}` ·
+`DELETE /mortgage/home-values/{id}`. Every write returns the `GET /mortgage` shape.
+`/overview` (period and year, `months[]`, `per_month`) and `/trends` periods carry
+`repaid_cents`.
 
 Holdings (7.1): `GET /accounts/{id}/holdings` → `{holdings:[{isin, name, symbol, price_symbol,
 currency, quantity, avg_price_cents, price_cents, price_date, price_source:

@@ -21,8 +21,10 @@ import sqlite3
 import ssl
 import threading
 import time
+import os
 import urllib.error
 import urllib.parse
+import os
 import urllib.request
 import zipfile
 from datetime import date, datetime, timedelta, timezone
@@ -70,7 +72,12 @@ _SSL: ssl.SSLContext | None = None
 
 
 def http_get(url: str) -> bytes:
-    """GET with timeout and retries (1 s, 2 s backoff). Raises OfflineError."""
+    """GET with timeout and retries (1 s, 2 s backoff). Raises OfflineError.
+
+    This is the only place in Cents that goes out to the internet. With the environment
+    variable CENTS_OFFLINE=1 it refuses every request, whatever the setting says."""
+    if os.environ.get("CENTS_OFFLINE", "0") not in ("", "0"):
+        raise OfflineError("CENTS_OFFLINE is set")
     last: Exception | None = None
     for attempt in range(RETRIES):
         try:

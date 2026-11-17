@@ -250,8 +250,33 @@ CREATE TABLE prices (
 );
 """
 
+# v5: mortgage (hypotheek): loan parts, their yearly statements (jaaropgave) and home values.
+SCHEMA_V5 = """
+CREATE TABLE mortgage_parts (
+    id INTEGER PRIMARY KEY,
+    name TEXT NOT NULL,
+    sort INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL
+);
+
+CREATE TABLE mortgage_years (
+    part_id INTEGER NOT NULL REFERENCES mortgage_parts(id) ON DELETE CASCADE,
+    year INTEGER NOT NULL,
+    debt_end_cents INTEGER NOT NULL,            -- schuld op 31 december
+    interest_cents INTEGER NOT NULL DEFAULT 0,  -- rente betaald dat jaar
+    repaid_cents INTEGER NOT NULL DEFAULT 0,    -- afgelost dat jaar
+    PRIMARY KEY (part_id, year)
+);
+
+CREATE TABLE home_values (
+    id INTEGER PRIMARY KEY,
+    date TEXT NOT NULL,
+    value_cents INTEGER NOT NULL
+);
+"""
+
 # Forward-only. Append new migrations; never edit an old one.
-MIGRATIONS: list[str] = [SCHEMA_V1, SCHEMA_V2, SCHEMA_V3, SCHEMA_V4]
+MIGRATIONS: list[str] = [SCHEMA_V1, SCHEMA_V2, SCHEMA_V3, SCHEMA_V4, SCHEMA_V5]
 SCHEMA_VERSION = len(MIGRATIONS)
 
 DEFAULT_SETTINGS: dict[str, Any] = {"month_start_day": 1, "household_name": ""}

@@ -183,7 +183,28 @@ class FakeProvider:
         return "EUR", [("2026-01-06", 110.0), ("2026-11-13", 130.0 if symbol == "VWRL.AS" else 105.0)]
 
 
+def prices_on(client):
+    r = client.patch("/api/settings", json={"assumptions": {"prices_auto": {"enabled": True}}})
+    assert r.status_code == 200, r.text
+
+
+def test_prices_off_by_default(client):
+    assert client.get("/api/settings").json()["assumptions"]["prices_auto"]["enabled"] is False
+
+
+def test_offline_env_blocks_every_request(monkeypatch):
+    from cents.services import prices
+    monkeypatch.setenv("CENTS_OFFLINE", "1")
+    called = []
+    monkeypatch.setattr(prices.urllib.request, "urlopen", lambda *a, **k: called.append(a))
+    import pytest
+    with pytest.raises(prices.OfflineError):
+        prices.http_get("https://example.invalid/")
+    assert called == []
+
+
 def test_refresh_with_fx(client):
+    prices_on(client)
     upload(client, ("Transacties.csv", fixture("degiro_transacties_nl.csv")))
     fake = FakeProvider()
     prices.set_provider(fake)
@@ -206,6 +227,7 @@ def test_refresh_with_fx(client):
 
 
 def test_network_failure_is_harmless(client):
+    prices_on(client)
     upload(client, ("Transacties.csv", fixture("degiro_transacties_nl.csv")))
     res = prices.refresh(client.app.state.db_path)          # offline provider from conftest
     assert not res["ok"] and res["updated"] == 0
@@ -232,6 +254,7 @@ def test_setting_off_means_no_fetch(client):
 
 
 def test_due_after_1830_amsterdam(client):
+    prices_on(client)
     upload(client, ("Transacties.csv", fixture("degiro_transacties_nl.csv")))
     c = conn_of(client)
     morning = datetime(2026, 11, 16, 8, 0, tzinfo=timezone.utc)

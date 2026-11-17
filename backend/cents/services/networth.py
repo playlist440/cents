@@ -8,6 +8,9 @@
   cash (services/investments.py); history from daily prices.
 - Credit card: outstanding = manual purchases not yet explained by a settlement; the balance
   is minus that.
+- Home (SPEC 7.2): `home` = {home_cents, debt_cents, equity_cents, included}; when included
+  (setting on and a home value known) the overwaarde counts in `total_cents` and in the series
+  (`home_cents` per point = home value − estimated debt at month end).
 - Series: one point per calendar month (month end, today for the current month), each account
   carrying its last known value forward; before an account's first known value it counts 0.
 """
@@ -20,7 +23,7 @@ import sqlite3
 from datetime import date
 
 from .. import db
-from . import cache, investments, ledger as ledger_mod
+from . import cache, investments, ledger as ledger_mod, mortgage
 
 TYPES = ("checking", "savings", "investment", "credit")
 
@@ -147,6 +150,10 @@ def compute(conn: sqlite3.Connection) -> dict:
     visible = [a for a in out_accounts if not a["hidden"]]
     total = sum(a["balance_cents"] or 0 for a in visible)
     lines = [line for line, a in zip(timelines, out_accounts) if not a["hidden"]]
+    home = mortgage.networth_part(conn, lg)
+    est = home.pop("_estimator") if home else None
+    if home and home["included"]:
+        total += home["equity_cents"]
 
     series = []
     if first_days:
@@ -161,11 +168,14 @@ def compute(conn: sqlite3.Connection) -> dict:
                 if kind in TYPES:
                     point[f"{kind}_cents"] += fn(end) or 0
             point["total_cents"] = sum(point[f"{k}_cents"] for k in TYPES)
+            if home and home["included"]:
+                point["home_cents"] = est.equity(end) or 0
+                point["total_cents"] += point["home_cents"]
             series.append(point)
             y, m = (y + 1, 1) if m == 12 else (y, m + 1)
     for a in visible:
         a.pop("hidden", None)
-    return {"total_cents": total, "accounts": visible, "series": series}
+    return {"total_cents": total, "accounts": visible, "series": series, "home": home}
 
 
 def get(conn: sqlite3.Connection) -> dict:

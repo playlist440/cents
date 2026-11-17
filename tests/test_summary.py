@@ -186,7 +186,8 @@ def test_empty_database_every_endpoint(client, today):
     g = client.get("/api/goals").json()
     assert g["goals"] == [] and g["room"] is None and g["savings_balance_cents"] is None
     assert g["suggestions"] == [] and g["unassigned"] == []
-    assert client.get("/api/networth").json() == {"total_cents": 0, "accounts": [], "series": []}
+    assert client.get("/api/networth").json() == {"total_cents": 0, "accounts": [], "series": [],
+                                                  "home": None}
     cat = client.get("/api/categories").json()[0]["id"]
     s = client.get(f"/api/categories/{cat}/summary").json()
     assert s["spent_cents"] == 0 and len(s["series"]) == 12 and s["transactions"] == []

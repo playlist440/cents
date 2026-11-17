@@ -42,7 +42,8 @@ Set `PYTHONDONTWRITEBYTECODE=1` (the folder is cloud-synced).
 | `services/outlook.py` | Current-period "now" figures for `/overview`: `free` (Nog te besteden), `tempo`, `buffer`, `checking_warning`, next `payday`. |
 | `services/insights.py` | One function per rule; `candidates()` (all, ranked) and `compute()` (top five). |
 | `services/goals.py` | Goal matching (code > name/keyword > learned), `after_import` matching, `after_write` reconcile of `transactions.goal_id`, roll-over, `overview()` (GET /goals). |
-| `services/networth.py` | Balances per account, investments, credit card, month-end series. |
+| `services/networth.py` | Balances per account, investments, credit card, home (overwaarde), month-end series. |
+| `services/mortgage.py` | Mortgage (SPEC 7.2): parts, statements, split ratio and linked merchant (`split_config`, read by `ledger.build`), `Estimator` (debt per part and home value on a day), `summary()` for GET /mortgage. |
 | `services/calendar.py` | GET /calendar: per-item schedule of expected dates, one-to-one matching of payments, paid/expected/missed. |
 | `services/recap.py` | GET /recap (period or year, as a `Range` of periods) and /recap/index; highlights. |
 | `services/smart.py` | GET /assumptions ("Slimme aannames"): salary series, account type sources, ignored items, learned goal links, start-day suggestion. |
@@ -83,7 +84,7 @@ Set `PYTHONDONTWRITEBYTECODE=1` (the folder is cloud-synced).
 
 Analytics routers: `api/overview.py` (`/overview`, `/trends`, `/categories/{id}/summary`,
 `/tags/{id}/summary`), `api/recurring.py`, `api/goals.py` (`/goals*`, `/goal-entries/{id}`),
-`api/networth.py`, `api/smart.py` (`/assumptions`, `DELETE /recurring/ignore`,
+`api/networth.py`, `api/mortgage.py` (`/mortgage*`), `api/smart.py` (`/assumptions`, `DELETE /recurring/ignore`,
 `DELETE /goals/links`, `/insights/dismiss`, `/insights/mute`; registered before `goals`).
 `api/calendar.py` (`/calendar`), `api/recap.py` (`/recap`, `/recap/index`).
 `api/settings.py` adds `muted_insight_kinds` and `insight_kinds` to the settings JSON. Sign conventions and every interpretation of SPEC 9 are in DECISIONS.md

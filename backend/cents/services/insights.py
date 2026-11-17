@@ -34,7 +34,7 @@ SCORES = {
     "new_recurring": 76, "category_spike": 70, "large": 68, "yearly_bill": 66, "left_over": 64,
     "pace": 60, "goal_behind": 58, "goal_reached": 56, "buffer": 55, "unsorted": 50,
     "fixed_share": 45, "last_year": 40, "savings_rate": 35, "fx_costs": 33, "bank_fees": 30,
-    "tempo": 62,
+    "tempo": 62, "mortgage": 52,
 }
 
 
@@ -497,6 +497,24 @@ def fx_costs(lg: Ledger, p: Period, ov: dict) -> list[dict]:
                  "transactions", {"q": "koers", "from": lo}, total)]
 
 
+def mortgage_statement(conn: sqlite3.Connection, lg: Ledger, p: Period, ov: dict) -> list[dict]:
+    """In April (when the yearly statements arrive): ask for last year's statement, or, without a
+    mortgage but with payments to a mortgage lender, suggest adding it once."""
+    from . import mortgage
+    if not ov["period"]["is_current"] or lg.today.month != 4:
+        return []
+    year = lg.today.year - 1
+    if mortgage.parts(conn):
+        if year in mortgage.statements(conn):
+            return []
+        return [make("mortgage", f"mortgage:{year}", "info", "🏠",
+                     f"Jaaropgave hypotheek {year} invullen?", "networth", {})]
+    if mortgage.detected(conn, strict=True):
+        return [make("mortgage", "mortgage:setup", "info", "🏠",
+                     "Hypotheek toevoegen aan je vermogen?", "networth", {})]
+    return []
+
+
 # ---------------------------------------------------------------------------- preferences
 
 KIND_LABELS = {
@@ -520,6 +538,7 @@ KIND_LABELS = {
     "last_year": "Vergelijking met vorig jaar",
     "bank_fees": "Bankkosten",
     "fx_costs": "Wisselkoerskosten",
+    "mortgage": "Jaaropgave hypotheek",
 }
 DISMISSED_MAX = 500
 DISMISSED_KEY = "_dismissed_insights"   # private: up to 500 ids, kept out of GET /settings
@@ -569,6 +588,7 @@ def candidates(conn: sqlite3.Connection, lg: Ledger, p: Period, ov: dict) -> lis
     found += savings_rate(lg, p, ov)
     found += bank_fees(lg, p, ov)
     found += fx_costs(lg, p, ov)
+    found += mortgage_statement(conn, lg, p, ov)
     dismissed = set(db.get_setting(conn, DISMISSED_KEY, []) or [])
     muted = set(db.get_setting(conn, "muted_insight_kinds", []) or [])
     found = [i for i in found if i["id"] not in dismissed and i["kind"] not in muted]

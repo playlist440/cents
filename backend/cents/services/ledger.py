@@ -11,6 +11,10 @@ Rules (SPEC 4.1 and 7):
 - Credit card: a settlement is explained by the manual purchases outstanding before it; only
   the unexplained rest counts as daily spending in bakje `creditcard`. Payments to the card
   company without a credit-card account are fully unexplained.
+- Mortgage (services/mortgage.py): the linked payment of the lender is split. The interest part
+  stays a fixed cost in its bakje; the repaid part (`row["repaid"]`) counts as saved
+  ("Afgelost", `Flows.repaid`), so the result improves while cash projections keep the full
+  payment.
 
 All totals in `Flows` are positive magnitudes: `fixed` = money spent on fixed costs, `saved` =
 money put aside (negative when more was withdrawn than saved).
@@ -37,6 +41,7 @@ class Flows:
     fixed: int = 0
     daily: int = 0
     saved: int = 0
+    repaid: int = 0                                            # part of `saved`: mortgage repaid
     spent: dict[int, int] = field(default_factory=dict)        # fixed + daily, per bakje
     counts: dict[int, int] = field(default_factory=dict)       # transactions per bakje
     income_by_cat: dict[int, int] = field(default_factory=dict)
@@ -233,6 +238,18 @@ def build(conn: sqlite3.Connection) -> Ledger:
         r["period"] = p.id
         r["bucket"] = bucket(r, cat_ids, unexplained, unsorted_cat)
     early = _early_income(rows, pid_by_date, sd)
+    from . import mortgage                       # local import: mortgage reads ledger rows
+    split = mortgage.split_config(conn)
+    if split:
+        key, share = split
+        for r in rows:
+            b = r["bucket"]
+            if (b and b[0] == FIXED and b[2] > 0 and r["merchant_key"] == key
+                    and r["account_type"] == "checking"):
+                repaid = int(round(b[2] * share))
+                if repaid:
+                    r["repaid"] = repaid
+                    r["bucket"] = (FIXED, b[1], b[2] - repaid)
 
     flows: dict[str, Flows] = {}
     for r in rows:
@@ -262,6 +279,9 @@ def build(conn: sqlite3.Connection) -> Ledger:
                 f.daily += value
                 f.daily_by_day[(date.fromisoformat(r["date"]) - p.start).days] += value
             f.spent[cat] = f.spent.get(cat, 0) + value
+        if r.get("repaid"):
+            f.saved += r["repaid"]
+            f.repaid += r["repaid"]
     last_import = db.value(conn, "SELECT MAX(imported_at) FROM imports")
     return Ledger(sd, today, data_today, first, last, categories, cat_ids, rows, flows, credit,
                   unsorted_cat, periods.last_imported(conn, today),

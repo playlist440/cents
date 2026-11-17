@@ -209,3 +209,32 @@ class InsightMuteBody(BaseModel):
 class GoalLinkBody(BaseModel):
     goal_id: int
     description: str = Field(min_length=1, max_length=500)
+
+
+class MortgagePartName(BaseModel):
+    name: str = Field(min_length=1, max_length=60)
+
+
+class MortgageCreate(BaseModel):
+    parts: list[MortgagePartName] = Field(min_length=1, max_length=8)
+
+
+class MortgagePatch(BaseModel):
+    include_in_networth: bool | None = None
+    merchant_key: str | None = None             # null = automatic, "" = no link
+
+
+class MortgageYearPart(BaseModel):
+    part_id: int
+    debt_end_cents: Annotated[int, Field(ge=0, le=MONEY_LIMIT)]
+    interest_cents: Annotated[int, Field(ge=0, le=MONEY_LIMIT)] = 0
+    repaid_cents: Annotated[int, Field(ge=0, le=MONEY_LIMIT)] = 0
+
+
+class MortgageYearBody(BaseModel):
+    parts: list[MortgageYearPart] = Field(min_length=1, max_length=8)
+
+
+class HomeValueBody(BaseModel):
+    date: str
+    value_cents: PositiveMoney

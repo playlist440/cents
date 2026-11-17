@@ -660,3 +660,22 @@
   `left_over`); `net` stays for trends/recap. Pace "normaal" is the median (one odd month must
   not move it). Expected payments whose date passed are "achterstallig?", not "nog". The
   Overzicht hides informational insights (`OVERZICHT_HIDDEN`); the rules still exist.
+
+## Mortgage (hypotheek) (2026-11-17)
+
+- **Only finished years.** A jaaropgave arrives in spring for the year before, so the form
+  defaults to `today.year − 1` and the API refuses the current year. With only last year entered
+  everything works: ratio from that year, debt = 31 December of that year minus the repaid share
+  of this year's linked payments.
+- **Afgelost is saving, not a bakje.** The repaid share is added to `saved` as `Flows.repaid`
+  (`repaid_cents`) instead of a new builtin category, so no new bakje appears in pickers and
+  sorting. Wonen shows the interest only.
+- **Cash stays cash.** `net_cents`, Nog te besteden, recurring items, checking projections and
+  the buffer's monthly fixed costs (`monthly_fixed` adds `repaid` back) keep the full payment.
+- **One ratio for all payments** (the most recent year, as approved), also for older payments;
+  entering a new year can move older months' split slightly. Debt per part follows the part's
+  share of the repaid amounts; an aflossingsvrij part stays at its statement debt.
+- **No home value, no overwaarde.** Without a WOZ value nothing is added to net worth (a bare
+  debt would make the total drop by the whole mortgage); the row asks for the WOZ value.
+- **Automatic link** prefers a Wonen merchant whose name or descriptions contain "hypothe",
+  else the most regular Wonen payment; the setup insight only uses the first (quiet).

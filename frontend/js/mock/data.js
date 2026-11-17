@@ -176,6 +176,9 @@ export function generate({ today = todayISO(), empty = false } = {}) {
     prices_status: { last_ok: null, error: null },
     imports: [],
     recurring_ignored: empty ? [] : ['kwf|10'],
+    mortgage_parts: [],
+    mortgage_years: [],
+    home_values: [],
     seq: { tx: 0, rule: 0, goal: 0, entry: 0, value: 0, import: 0, trade: 0, account: 5, category: categories.length, tag: TAGS.length },
   };
   if (empty) return db;
@@ -448,6 +451,17 @@ export function generate({ today = todayISO(), empty = false } = {}) {
 
   db.suggestions = [{ key: 'savings:NL55ASNB0707074417', type: 'savings', iban: 'NL55ASNB0707074417', name: 'Kinderrekening' }];
   db.unsortedSuggestions = Object.fromEntries(UNSORTED.map((u) => [u[0], u[6].map((k) => cat[k])]));
+  // Fictitious mortgage (SPEC §7.2): two parts, the statement of last year (the only one a
+  // household has before spring), one WOZ value. The monthly payment to Florius is the linked direct debit.
+  const y = Number(today.slice(0, 4));
+  db.mortgage_parts = [{ id: 1, name: 'Deel 1 – annuïtair', sort: 0 }, { id: 2, name: 'Deel 2 – aflossingsvrij', sort: 1 }];
+  db.mortgage_years = [
+    { part_id: 1, year: y - 1, debt_end_cents: 23814600, interest_cents: 602000, repaid_cents: 541000 },
+    { part_id: 2, year: y - 1, debt_end_cents: 6000000, interest_cents: 234000, repaid_cents: 0 },
+  ];
+  db.home_values = [{ id: 1, date: `${y}-01-01`, value_cents: 43100000 }];
+  db.seq.home = 1;
+  db.seq.part = 2;
   return db;
 }
 

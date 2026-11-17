@@ -168,7 +168,7 @@ function Content({ a, settings, pending }) {
         </span></li>`}
     </${List}>`}
 
-    <${PricesPart} on=${as.prices_auto?.enabled !== false} setAssumption=${setAssumption} />
+    <${PricesPart} on=${as.prices_auto?.enabled === true} setAssumption=${setAssumption} />
 
     <${List} header="Vaste lasten">
       <${ListRow} icon="vaste-lasten" iconColor="indigo" title="Herkend" value=${String(a.recurring_count ?? 0)} chevron onClick=${() => navigate('/vaste-lasten')} />

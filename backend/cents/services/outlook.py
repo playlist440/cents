@@ -137,7 +137,7 @@ def monthly_fixed(lg: Ledger, items: list[dict]) -> float:
     """Average monthly fixed costs: previous up to six complete periods, else recurring items."""
     history = lg.complete_before(lg.current(), 6)
     if history:
-        return sum(lg.flows_for(p).fixed for p in history) / len(history)
+        return sum(lg.flows_for(p).fixed + lg.flows_for(p).repaid for p in history) / len(history)
     return -sum(i["per_month_cents"] for i in items if i["direction"] == "out"
                 and i["status"] != "ended" and _group(lg, i) == FIXED)
 

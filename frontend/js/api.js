@@ -58,6 +58,7 @@ async function request(method, path, opts = {}) {
 const get = (path, query) => request('GET', path, { query });
 const post = (path, body) => request('POST', path, { body: body ?? {} });
 const patch = (path, body) => request('PATCH', path, { body });
+const put = (path, body) => request('PUT', path, { body });
 const del = (path, query, body) => request('DELETE', path, { query, body });
 const upload = (path, files, field = 'files') => {
   const form = new FormData();
@@ -164,6 +165,17 @@ export const api = {
   deleteAccount: (id, { force = false } = {}) => del(`/accounts/${id}`, { force: force ? 1 : undefined }),
   addAccountValue: (id, { date, value_cents }) => post(`/accounts/${id}/values`, { date, value_cents }),
   deleteAccountValue: (id) => del(`/account-values/${id}`),
+
+  /* Mortgage (SPEC §7.2) */
+  mortgage: () => get('/mortgage'),
+  createMortgage: (parts) => post('/mortgage', { parts }),
+  updateMortgage: (changes) => patch('/mortgage', changes),
+  deleteMortgage: () => del('/mortgage'),
+  renameMortgagePart: (id, name) => patch(`/mortgage/parts/${id}`, { name }),
+  saveMortgageYear: (year, parts) => put(`/mortgage/years/${year}`, { parts }),
+  deleteMortgageYear: (year) => del(`/mortgage/years/${year}`),
+  addHomeValue: ({ date, value_cents }) => post('/mortgage/home-values', { date, value_cents }),
+  deleteHomeValue: (id) => del(`/mortgage/home-values/${id}`),
 
   /* Holdings of investment accounts and automatic prices (SPEC §7.1) */
   holdings: (id) => get(`/accounts/${id}/holdings`),

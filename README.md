@@ -17,11 +17,13 @@ en hoe je potjes ervoor staan.
   Cents toont de echte waarde van je fondsen, wat je inlegde en je resultaat.
 - Alle gegevens staan in één bestand op je eigen server.
 
-### Wat de app van internet haalt
+### Internet: standaard uit
 
-Alleen als je fondsen hebt (na een DEGIRO-import of een zelf ingevoerde aankoop) haalt de
-server één keer per dag na 18:30 (en bij het opstarten als de koersen oud zijn) de slotkoersen
-op:
+Cents werkt standaard volledig lokaal: er gaat niets van je server naar internet.
+
+Wil je dat de waarde van je fondsen vanzelf wordt bijgewerkt, zet dan **Instellingen → Slimme
+aannames → Koersen automatisch ophalen** aan. De server haalt dan één keer per dag na 18:30 de
+slotkoersen op:
 
 - bij **Yahoo Finance** (`query1.finance.yahoo.com`, de openbare zoek- en grafiek-adressen,
   zonder sleutel of account): alleen de ISIN of tickercode van je fondsen;
@@ -29,10 +31,12 @@ op:
   als een fonds in een andere munt dan de euro noteert.
 
 Er gaan geen bedragen, aantallen, rekeningen of andere gegevens over jou mee; de User-Agent is
-"Cents". Dit gebeurt op de server, niet in je browser. Uitzetten: **Instellingen → Slimme
-aannames → Koersen automatisch ophalen**. Dan gaat er niets meer naar internet en gebruikt Cents
-de koersen uit je DEGIRO-portefeuille-export of de waarde die je zelf invult. Lukt ophalen niet
-(offline), dan gebruikt Cents de laatst bekende koers en toont "koers van <datum>".
+"Cents". Staat het uit, dan gebruikt Cents de koersen uit je DEGIRO-portefeuille-export of de
+waarde die je zelf invult.
+
+Wil je zeker weten dat het nooit aan kan, ook niet per ongeluk in de app, zet dan in de compose
+onder `cents:` de regel `environment: [CENTS_OFFLINE=1]`. Dan weigert de server elke verbinding
+naar buiten, wat de instelling ook zegt.
 
 ## Installeren met Portainer
 

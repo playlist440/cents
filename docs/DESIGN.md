@@ -159,6 +159,14 @@ resultaat + € 1.340"), Creditcard ("open € 212"). Suggestion rows on top whe
 likely own account ("Is NL•• 1234 je spaarrekening?" Ja / Nee).
 Account sheet: name, soort; investments: "Waarde bijwerken" (amount + date) and the value
 history; credit card: "Uitgave toevoegen" and open amount. `+` adds a manual account.
+**Woning** (last group): one row "Overwaarde € Z" with two quiet lines "Woning € X" and
+"Hypotheek − € Y"; without a mortgage a single tinted row "Hypotheek toevoegen". The overwaarde
+is part of the total and the chart (switch "Meetellen in vermogen"). Tap → sheet "Woning":
+overwaarde, the parts with their estimated debt, "Jaaropgave <jaar> invullen" (per part three
+amount fields: schuld op 31 december, betaalde rente, afgelost; "Ander jaar" for older years),
+WOZ-waarde + peildatum, the switch and "Betaling" (the linked direct debit, changeable). First
+time: number of parts (1-4) and their names, then the same form. The Gespaard tile on the
+Overzicht adds a line "waarvan afgelost € X" when part of the saving is mortgage repayment.
 
 ### Vaste lasten
 Hero: "€ 2.140 per maand", subline "€ 25.680 per jaar", and a bar "46 % van je inkomen".
@@ -240,7 +248,7 @@ column headers in small caps-less secondary text and right-aligned tabular amoun
   potje opens in the inspector position (right) or as a pushed screen with two columns (ring and
   advice left, history right).
 - *Vermogen* — chart large on the left (8 columns, about 320 px high, hover read-out), accounts
-  on the right (4 columns) as a compact grouped list; totals per group.
+  on the right (4 columns) as a compact grouped list; totals per group; Woning last.
 - *Vaste lasten* — hero numbers and the share-of-income bar on one row; below a table: naam,
   bakje, hoe vaak, volgende, per maand, with the badges inline; item details in the inspector.
 - *Jaaroverzicht* — the chart full width (about 360 px high, hover read-out per month), then

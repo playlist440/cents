@@ -434,7 +434,7 @@ function YearTiles({ o }) {
       onClick=${() => navigate('/vaste-lasten')} />
     <${Tile} label="Dagelijks" icon="creditcard" color="blue" cents=${o.daily_cents}
       sub=${py ? `vorig jaar ${euros(Math.round(py.daily_cents * scale))}` : perMonth(pm.daily_cents || 0)} />
-    <${Tile} label="Gespaard" icon="piggy" color="teal" cents=${o.saved_cents} sub=${perMonth(pm.saved_cents || 0)}
+    <${Tile} label="Gespaard" icon="piggy" color="teal" cents=${o.saved_cents} sub=${withRepaid(perMonth(pm.saved_cents || 0), o)}
       onClick=${() => navigate('/potjes')} />
   </div>`;
 }
@@ -460,10 +460,14 @@ function Tiles({ o }) {
       onClick=${() => navigate('/transacties', { query: { period: p.id, flow: 'out' } })} />
     <${Tile} label="Gespaard" icon="piggy" color="teal" cents=${o.saved_cents}
       progress=${p.is_current && o.saving_upcoming_cents > 0 ? o.saved_cents / savedTotal : null}
-      sub=${p.is_current && o.saving_upcoming_cents > 0 ? `netto · nog ${euros(o.saving_upcoming_cents)}` : 'netto gespaard'}
+      sub=${withRepaid(p.is_current && o.saving_upcoming_cents > 0 ? `netto · nog ${euros(o.saving_upcoming_cents)}` : 'netto gespaard', o)}
       onClick=${() => navigate('/potjes')} />
   </div>`;
 }
+
+/** Mortgage repaid counts as saved (SPEC §7.2); the Gespaard tile names it on its own line. */
+const withRepaid = (sub, o) => (o.repaid_cents > 0
+  ? html`${sub}<span class="tile-sub-line">waarvan afgelost ${euros(o.repaid_cents)}</span>` : sub);
 
 /** "nog € X" counts only payments still to come; one whose date passed without showing up is
  *  "achterstallig?" (it may not be imported yet). */

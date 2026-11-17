@@ -159,7 +159,8 @@ function settlementUnexplained() {
 function flows(pid) {
   return cached('flows:' + pid, () => {
     const { from, to } = periodBounds(pid);
-    const res = { income: 0, fixed: 0, daily: 0, saved: 0, card: 0, cats: new Map(), incomeCats: new Map(), dailyByDay: new Map() };
+    const split = mortgageSplit();
+    const res = { income: 0, fixed: 0, daily: 0, saved: 0, repaid: 0, card: 0, cats: new Map(), incomeCats: new Map(), dailyByDay: new Map() };
     const unexplained = settlementUnexplained().map;
     const ccCat = catByKey('creditcard');
     const addCat = (map, id, cents) => {
@@ -178,7 +179,12 @@ function flows(pid) {
       if (c.grp === 'internal') continue;
       if (c.key === 'unsorted' && amt > 0) { res.income += amt; addCat(res.incomeCats, c.id, amt); continue; }
       if (c.grp === 'income') { res.income += amt; addCat(res.incomeCats, c.id, amt); }
-      else if (c.grp === 'fixed') { res.fixed -= amt; addCat(res.cats, c.id, -amt); }
+      else if (c.grp === 'fixed') {
+        // Mortgage (SPEC §7.2): the repaid share of the linked payment counts as saved.
+        const rep = split && amt < 0 && t.merchant_key === split.key && accById(t.account_id)?.type === 'checking' ? Math.round(-amt * split.share) : 0;
+        res.fixed += -amt - rep; addCat(res.cats, c.id, -amt - rep);
+        if (rep) { res.saved += rep; res.repaid += rep; }
+      }
       else if (c.grp === 'daily') {
         res.daily -= amt; addCat(res.cats, c.id, -amt);
         res.dailyByDay.set(t.date, (res.dailyByDay.get(t.date) || 0) - amt);
@@ -377,7 +383,7 @@ function overview(pid) {
     period: p,
     income_cents: f.income, expected_income_cents, fixed_cents: f.fixed, fixed_upcoming_cents, fixed_overdue_cents,
     salary_expected: salaryUp[0] || null,
-    daily_cents: f.daily, saved_cents: f.saved, saving_upcoming_cents,
+    daily_cents: f.daily, saved_cents: f.saved, repaid_cents: f.repaid, saving_upcoming_cents,
     left_cents: left, per_day_left_cents: perDay, net_cents: net, result_cents: f.income - f.fixed - f.daily,
     pace, categories, income, upcoming, insights: [], unsorted,
     balance: { checking_cents: checking, expected_end_cents: expectedEnd },
@@ -399,10 +405,10 @@ function yearOverview(year) {
   }
   if (!ids.length) return null;
   const sum = (list) => {
-    const out = { income: 0, fixed: 0, daily: 0, saved: 0, cats: new Map(), incomeCats: new Map() };
+    const out = { income: 0, fixed: 0, daily: 0, saved: 0, repaid: 0, cats: new Map(), incomeCats: new Map() };
     for (const id of list) {
       const f = flows(id);
-      out.income += f.income; out.fixed += f.fixed; out.daily += f.daily; out.saved += f.saved;
+      out.income += f.income; out.fixed += f.fixed; out.daily += f.daily; out.saved += f.saved; out.repaid += f.repaid;
       for (const [k, map] of [['cats', f.cats], ['incomeCats', f.incomeCats]]) {
         for (const [cid, e] of map) {
           const o = out[k].get(cid) || { cents: 0, count: 0 };
@@ -435,16 +441,16 @@ function yearOverview(year) {
       next: `${year + 1}-01` <= cur ? String(year + 1) : null,
     },
     income_cents: t.income, expected_income_cents: t.income, fixed_cents: t.fixed, fixed_upcoming_cents: 0,
-    daily_cents: t.daily, saved_cents: t.saved, saving_upcoming_cents: 0,
+    daily_cents: t.daily, saved_cents: t.saved, repaid_cents: t.repaid, saving_upcoming_cents: 0,
     fixed_overdue_cents: 0, salary_expected: null,
     left_cents: null, per_day_left_cents: null, net_cents: t.net, result_cents: t.result,
-    per_month: { income_cents: pm(t.income), fixed_cents: pm(t.fixed), daily_cents: pm(t.daily), saved_cents: pm(t.saved), net_cents: pm(t.net), result_cents: pm(t.result) },
+    per_month: { income_cents: pm(t.income), fixed_cents: pm(t.fixed), daily_cents: pm(t.daily), saved_cents: pm(t.saved), repaid_cents: pm(t.repaid), net_cents: pm(t.net), result_cents: pm(t.result) },
     previous_year: prev && { income_cents: prev.income, fixed_cents: prev.fixed, daily_cents: prev.daily, saved_cents: prev.saved, net_cents: prev.net,
       from: periodBounds(prevIds[0]).from, to: periodBounds(prevIds.at(-1)).to },
     months: ids.map((id) => {
       const f = flows(id);
       return { period: id, label: monthLabel(id), income_cents: f.income, fixed_cents: f.fixed, daily_cents: f.daily,
-        saved_cents: f.saved, net_cents: f.income - f.fixed - f.daily - f.saved, result_cents: f.income - f.fixed - f.daily, partial: id === cur };
+        saved_cents: f.saved, repaid_cents: f.repaid, net_cents: f.income - f.fixed - f.daily - f.saved, result_cents: f.income - f.fixed - f.daily, partial: id === cur };
     }),
     pace: null,
     categories: [...t.cats.entries()]
@@ -523,7 +529,7 @@ function outlook() {
   const rate = rates.length ? median(rates) : 0;
   const goals = goalsData().goals;
   const h6 = hist.slice(0, 6);
-  const monthlyFixed = h6.length ? h6.reduce((s, x) => s + flows(x).fixed, 0) / h6.length : 0;
+  const monthlyFixed = h6.length ? h6.reduce((s, x) => s + flows(x).fixed + flows(x).repaid, 0) / h6.length : 0;
   const target = a.buffer.amount_cents != null ? a.buffer.amount_cents : Math.round(monthlyFixed * a.buffer.months);
 
   let free = null;
@@ -677,6 +683,14 @@ function insights(o, prev) {
   }
   if (o.unsorted.merchants > 0 && p.is_current) {
     out.push({ id: 'unsorted', kind: 'unsorted', tone: 'info', emoji: '🗂️', title: `${o.unsorted.merchants} winkels wachten op een bakje`, link: '/sorteren', rank: 20 });
+  }
+  if (p.is_current && Number(db.today.slice(5, 7)) === 4) {
+    const year = Number(db.today.slice(0, 4)) - 1;
+    if (db.mortgage_parts.length && !db.mortgage_years.some((e) => e.year === year)) {
+      out.push({ id: `mortgage:${year}`, kind: 'mortgage', tone: 'info', emoji: '🏠', title: `Jaaropgave hypotheek ${year} invullen?`, link: '/vermogen', rank: 30 });
+    } else if (!db.mortgage_parts.length && mortgageCandidates().some((c) => c.likely)) {
+      out.push({ id: 'mortgage:setup', kind: 'mortgage', tone: 'info', emoji: '🏠', title: 'Hypotheek toevoegen aan je vermogen?', link: '/vermogen', rank: 30 });
+    }
   }
   const stale = daysBetween(db.transactions.reduce((m, t) => (t.date > m ? t.date : m), db.today), db.today);
   if (stale > 10) out.push({ id: 'stale', kind: 'stale', tone: 'warn', emoji: '⏳', title: `Laatste import ${stale} dagen geleden`, link: '/import', rank: 90 });
@@ -890,6 +904,7 @@ function accountBalance(a) {
 function networth() {
   const accounts = db.accounts.filter((a) => !a.hidden).map((a) => ({ id: a.id, name: a.name, type: a.type, iban: a.iban, ...accountBalance(a) }));
   const total_cents = accounts.reduce((s, a) => s + (a.balance_cents || 0), 0);
+  const home = homeOut();
   const series = [];
   const first = firstPeriod();
   const cur = currentPeriod();
@@ -911,9 +926,114 @@ function networth() {
       row[`${a.type}_cents`] += v;
     }
     row.total_cents = row.checking_cents + row.savings_cents + row.investment_cents + row.credit_cents;
+    if (home?.included) { row.home_cents = homeEquityAt(end); row.total_cents += row.home_cents; }
     series.push(row);
   }
-  return { total_cents, accounts, series };
+  return { total_cents: total_cents + (home?.included ? home.equity_cents : 0), accounts, series, home };
+}
+
+/* ======================================================================================
+   Mortgage (SPEC §7.2; services/mortgage.py)
+   ====================================================================================== */
+
+function mortgageLatestYear() { return db.mortgage_years.reduce((m, e) => Math.max(m, e.year), 0) || null; }
+function mortgageShare() {
+  const y = mortgageLatestYear();
+  if (!y) return null;
+  const es = db.mortgage_years.filter((e) => e.year === y);
+  const rep = es.reduce((s, e) => s + e.repaid_cents, 0);
+  const tot = rep + es.reduce((s, e) => s + e.interest_cents, 0);
+  return tot > 0 ? rep / tot : 0;
+}
+function mortgageCandidates() {
+  const m = new Map();
+  for (const t of db.transactions) {
+    const c = catById(t.category_id);
+    if (c?.key !== 'wonen' || t.amount_cents >= 0 || accById(t.account_id)?.type !== 'checking' || !t.merchant_key) continue;
+    const e = m.get(t.merchant_key) || { merchant_key: t.merchant_key, merchant_name: t.merchant_name, amount_cents: t.amount_cents, count: 0, last_date: t.date, description: t.description || '' };
+    e.count += 1;
+    if (t.date >= e.last_date) { e.last_date = t.date; e.amount_cents = t.amount_cents; }
+    m.set(t.merchant_key, e);
+  }
+  return [...m.values()].map((e) => ({ ...e, likely: `${e.merchant_key} ${e.merchant_name} ${e.description}`.toLowerCase().includes('hypothe') }))
+    .sort((a, b) => (b.likely - a.likely) || (b.count - a.count) || (a.amount_cents - b.amount_cents));
+}
+function mortgageLinked() {
+  const chosen = db.settings.mortgage_merchant_key;
+  if (chosen !== undefined && chosen !== null) return { key: chosen || null, auto: false };
+  const c = mortgageCandidates();
+  const found = c.find((x) => x.likely) || c.find((x) => x.count >= 3);
+  return { key: found?.merchant_key || null, auto: true };
+}
+function mortgageSplit() {
+  if (!db.mortgage_parts.length) return null;
+  const share = mortgageShare();
+  const { key } = mortgageLinked();
+  return key && share ? { key, share } : null;
+}
+function repaidEvents() {
+  return cached('mortgage:events', () => {
+    const sp = mortgageSplit();
+    if (!sp) return [];
+    return db.transactions.filter((t) => t.merchant_key === sp.key && t.amount_cents < 0 && accById(t.account_id)?.type === 'checking' && catById(t.category_id)?.grp === 'fixed')
+      .map((t) => [t.date, Math.round(-t.amount_cents * sp.share)]);
+  });
+}
+function partDebt(partId, day) {
+  const years = db.mortgage_years.filter((e) => e.part_id === partId).map((e) => e.year).sort((a, b) => a - b);
+  if (!years.length) return null;
+  const y = mortgageLatestYear();
+  const latest = db.mortgage_years.filter((e) => e.year === y);
+  const totRep = latest.reduce((s, e) => s + e.repaid_cents, 0);
+  const w = totRep > 0 ? (latest.find((e) => e.part_id === partId)?.repaid_cents || 0) / totRep : 0;
+  const entry = (yr) => db.mortgage_years.find((e) => e.year === yr && e.part_id === partId);
+  const between = (a, b) => repaidEvents().reduce((s, [d, v]) => s + (d > a && d <= b ? v : 0), 0);
+  const before = years.filter((yr) => `${yr}-12-31` <= day);
+  const debt = before.length
+    ? entry(before.at(-1)).debt_end_cents - w * between(`${before.at(-1)}-12-31`, day)
+    : entry(years[0]).debt_end_cents + w * between(day, `${years[0]}-12-31`);
+  return Math.max(0, Math.round(debt));
+}
+function debtAt(day) {
+  const ds = db.mortgage_parts.map((p) => partDebt(p.id, day)).filter((d) => d != null);
+  return ds.length ? ds.reduce((s, d) => s + d, 0) : null;
+}
+function homeAt(day) {
+  const hv = [...db.home_values].sort((a, b) => (a.date < b.date ? -1 : 1));
+  if (!hv.length) return null;
+  return (hv.filter((h) => h.date <= day).at(-1) || hv[0]).value_cents;
+}
+function homeEquityAt(day) { const h = homeAt(day); return h == null ? 0 : h - (debtAt(day) || 0); }
+function homeOut() {
+  if (!db.mortgage_parts.length && !db.home_values.length) return null;
+  const home = homeAt(db.today);
+  const debt = debtAt(db.today);
+  return { home_cents: home, debt_cents: debt, equity_cents: home == null ? null : home - (debt || 0),
+    included: db.settings.mortgage_include_home !== false && home != null };
+}
+function mortgageOut() {
+  const year = Number(db.today.slice(0, 4));
+  const years = [...new Set(db.mortgage_years.map((e) => e.year))].sort((a, b) => b - a);
+  const { key, auto } = mortgageLinked();
+  const cands = mortgageCandidates();
+  const linked = cands.find((c) => c.merchant_key === key);
+  const home = homeAt(db.today);
+  const debt = debtAt(db.today);
+  const share = mortgageShare();
+  return {
+    exists: db.mortgage_parts.length > 0,
+    parts: db.mortgage_parts.map((p) => ({ id: p.id, name: p.name, debt_cents: partDebt(p.id, db.today),
+      years: db.mortgage_years.filter((e) => e.part_id === p.id).sort((a, b) => b.year - a.year).map(({ part_id, ...e }) => e) })),
+    years, latest_year: mortgageLatestYear(), form_year: year - 1,
+    missing_year: db.mortgage_parts.length && !years.includes(year - 1) ? year - 1 : null,
+    repaid_share: share == null ? null : Math.round(share * 10000) / 10000, debt_cents: debt,
+    repaid_this_year_cents: repaidEvents().reduce((s, [d, v]) => s + (d >= `${year}-01-01` ? v : 0), 0),
+    home_cents: home, home_values: [...db.home_values].sort((a, b) => (a.date < b.date ? -1 : 1)),
+    equity_cents: home == null ? null : home - (debt || 0),
+    include_in_networth: db.settings.mortgage_include_home !== false,
+    payment: key ? { merchant_key: key, merchant_name: linked?.merchant_name || key, amount_cents: linked?.amount_cents ?? null, auto } : null,
+    candidates: cands.slice(0, 8).map(({ description, ...c }) => c),
+  };
 }
 
 /* ======================================================================================
@@ -1621,6 +1741,36 @@ const ROUTES = [
 
   /* Accounts */
   ['GET', /^\/networth$/, () => ok(networth())],
+  ['GET', /^\/mortgage$/, () => ok(mortgageOut())],
+  ['POST', /^\/mortgage$/, ({ body }) => {
+    if (db.mortgage_parts.length) fail(409, 'exists', 'Er is al een hypotheek.');
+    db.seq.part = db.seq.part || 0;
+    db.mortgage_parts = (body.parts || []).map((x, i) => ({ id: ++db.seq.part, name: String(x.name || '').trim() || `Deel ${i + 1}`, sort: i }));
+    return ok(mortgageOut());
+  }],
+  ['PATCH', /^\/mortgage$/, ({ body }) => {
+    if (body.include_in_networth != null) db.settings.mortgage_include_home = !!body.include_in_networth;
+    if ('merchant_key' in body) {
+      if (body.merchant_key === null) delete db.settings.mortgage_merchant_key;
+      else db.settings.mortgage_merchant_key = body.merchant_key;
+    }
+    return ok(mortgageOut());
+  }],
+  ['DELETE', /^\/mortgage$/, () => {
+    db.mortgage_parts = []; db.mortgage_years = []; db.home_values = [];
+    delete db.settings.mortgage_merchant_key; delete db.settings.mortgage_include_home;
+    return ok({ ok: true });
+  }],
+  ['PATCH', /^\/mortgage\/parts\/(\d+)$/, ({ params: [id], body }) => { need(db.mortgage_parts.find((p) => p.id === id)).name = String(body.name || '').trim(); return ok(mortgageOut()); }],
+  ['PUT', /^\/mortgage\/years\/(\d+)$/, ({ params: [year], body }) => {
+    if (year >= Number(db.today.slice(0, 4))) fail(422, 'year_not_finished', `De jaaropgave over ${year} komt pas na afloop van dat jaar.`);
+    db.mortgage_years = db.mortgage_years.filter((e) => e.year !== year);
+    for (const x of body.parts || []) db.mortgage_years.push({ part_id: x.part_id, year, debt_end_cents: x.debt_end_cents || 0, interest_cents: x.interest_cents || 0, repaid_cents: x.repaid_cents || 0 });
+    return ok(mortgageOut());
+  }],
+  ['DELETE', /^\/mortgage\/years\/(\d+)$/, ({ params: [year] }) => { db.mortgage_years = db.mortgage_years.filter((e) => e.year !== year); return ok(mortgageOut()); }],
+  ['POST', /^\/mortgage\/home-values$/, ({ body }) => { db.seq.home = (db.seq.home || 0) + 1; db.home_values.push({ id: db.seq.home, date: body.date, value_cents: body.value_cents }); return ok(mortgageOut()); }],
+  ['DELETE', /^\/mortgage\/home-values\/(\d+)$/, ({ params: [id] }) => { db.home_values = db.home_values.filter((h) => h.id !== id); return ok(mortgageOut()); }],
   ['GET', /^\/accounts\/(\d+)\/holdings$/, ({ params: [id] }) => {
     const a = need(db.accounts.find((x) => x.id === id));
     if (a.type !== 'investment') fail(422, 'not_investment', 'Dit is geen beleggingsrekening.');
@@ -1738,7 +1888,7 @@ const INSIGHT_KINDS = {
   large: 'Grote eenmalige uitgaven', savings_rate: 'Hoeveel je spaart', buffer: 'Buffer', left_over: 'Geld over',
   unsorted: 'Nog te sorteren', yearly_bill: 'Jaarlijkse rekeningen', goal_behind: 'Potjes die achterlopen',
   goal_reached: 'Gehaalde potjes', stale: 'Importherinnering', fixed_share: 'Aandeel vaste lasten', last_year: 'Vergelijking met vorig jaar',
-  tempo: 'Meer uit dan erin',
+  tempo: 'Meer uit dan erin', mortgage: 'Jaaropgave hypotheek',
 };
 
 function assumptionsOut() {
@@ -1748,7 +1898,7 @@ function assumptionsOut() {
     payday_day: { day: null, ...(a.payday_day || {}) },
     buffer: { months: 3, amount_cents: null, ...(a.buffer || {}) },
     checking_floor_cents: { cents: 0, ...(a.checking_floor_cents || {}) },
-    prices_auto: { enabled: true, ...(a.prices_auto || {}) },
+    prices_auto: { enabled: false, ...(a.prices_auto || {}) },
   };
 }
 

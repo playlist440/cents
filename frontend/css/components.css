@@ -535,6 +535,7 @@
 .tile-bar.is-empty { background: transparent; }
 .tile-bar span { display: block; height: 100%; border-radius: 2px; background: var(--c); transform-origin: left; }
 .tile-sub { font: 400 var(--fs-footnote)/1.2 var(--font); color: var(--label-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tile-sub-line { display: block; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
 @keyframes grow-x { from { transform: scaleX(0); } }
 
 /* ---------- Emoji tile ---------- */
