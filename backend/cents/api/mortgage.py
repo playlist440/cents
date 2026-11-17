@@ -85,7 +85,8 @@ def put_year(year: int, body: MortgageYearBody, conn: sqlite3.Connection = Depen
         db.insert(conn, "mortgage_years", {"part_id": p.part_id, "year": year,
                                            "debt_end_cents": p.debt_end_cents,
                                            "interest_cents": p.interest_cents,
-                                           "repaid_cents": p.repaid_cents})
+                                           "repaid_cents": p.repaid_cents,
+                                           "principal_cents": p.principal_cents})
     return _out(conn)
 
 

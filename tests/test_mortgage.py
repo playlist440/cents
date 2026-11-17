@@ -168,3 +168,19 @@ def test_only_interest_parts(client, book, today):
     assert o["repaid_cents"] == 0
     m = client.get("/api/mortgage").json()
     assert m["debt_cents"] == 30000000 and m["repaid_share"] == 0
+
+
+def test_new_loan_keeps_principal(client, book, today):
+    """A part that started during the year: restant op 1 januari 0, hoofdsom kept as given."""
+    today("2026-11-17")
+    m = client.post("/api/mortgage", json={"parts": [{"name": "Deel 1"}]}).json()
+    pid = m["parts"][0]["id"]
+    r = client.put("/api/mortgage/years/2025", json={"parts": [
+        {"part_id": pid, "debt_end_cents": 23814600, "interest_cents": 300000,
+         "repaid_cents": 185400, "principal_cents": 24000000}]})
+    assert r.status_code == 200, r.text
+    year = client.get("/api/mortgage").json()["parts"][0]["years"][0]
+    assert year["principal_cents"] == 24000000 and year["repaid_cents"] == 185400
+    client.put("/api/mortgage/years/2025", json={"parts": [
+        {"part_id": pid, "debt_end_cents": 23814600, "interest_cents": 300000, "repaid_cents": 185400}]})
+    assert client.get("/api/mortgage").json()["parts"][0]["years"][0]["principal_cents"] is None

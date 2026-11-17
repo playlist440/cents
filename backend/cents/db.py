@@ -301,8 +301,14 @@ CREATE TABLE asset_entries (
 CREATE INDEX ix_asset_entries ON asset_entries(asset_id, date);
 """
 
+# v7: a loan part that started during the year: restant op 1 januari is 0 and the amount at
+# the start (hoofdsom) is kept, so the form shows what the statement says.
+SCHEMA_V7 = """
+ALTER TABLE mortgage_years ADD COLUMN principal_cents INTEGER;   -- hoofdsom, only for a new loan
+"""
+
 # Forward-only. Append new migrations; never edit an old one.
-MIGRATIONS: list[str] = [SCHEMA_V1, SCHEMA_V2, SCHEMA_V3, SCHEMA_V4, SCHEMA_V5, SCHEMA_V6]
+MIGRATIONS: list[str] = [SCHEMA_V1, SCHEMA_V2, SCHEMA_V3, SCHEMA_V4, SCHEMA_V5, SCHEMA_V6, SCHEMA_V7]
 SCHEMA_VERSION = len(MIGRATIONS)
 
 DEFAULT_SETTINGS: dict[str, Any] = {"month_start_day": 1, "household_name": ""}

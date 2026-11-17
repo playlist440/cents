@@ -210,7 +210,8 @@ def summary(conn: sqlite3.Connection, lg) -> dict:
                    "debt_cents": est.part_debt(p["id"], today),
                    "years": [{"year": y, "debt_end_cents": per[p["id"]]["debt_end_cents"],
                               "interest_cents": per[p["id"]]["interest_cents"],
-                              "repaid_cents": per[p["id"]]["repaid_cents"]}
+                              "repaid_cents": per[p["id"]]["repaid_cents"],
+                              "principal_cents": per[p["id"]]["principal_cents"]}
                              for y, per in sorted(st.items(), reverse=True) if p["id"] in per]}
                   for p in plist],
         "years": sorted(st, reverse=True),

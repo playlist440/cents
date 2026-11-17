@@ -468,8 +468,9 @@ function YearForm({ m, onChange }) {
   const filled = (y) => Object.fromEntries(m.parts.map((p) => {
     const e = p.years.find((x) => x.year === y);
     const prev = p.years.find((x) => x.year === y - 1);
-    const start = e ? e.debt_end_cents + (e.repaid_cents || 0) : (prev ? prev.debt_end_cents : null);
-    return [p.id, { debt_start_cents: start, debt_end_cents: e?.debt_end_cents ?? null, interest_cents: e?.interest_cents ?? null }];
+    const start = e?.principal_cents != null ? 0
+      : e ? e.debt_end_cents + (e.repaid_cents || 0) : (prev ? prev.debt_end_cents : null);
+    return [p.id, { debt_start_cents: start, principal_cents: e?.principal_cents ?? null, debt_end_cents: e?.debt_end_cents ?? null, interest_cents: e?.interest_cents ?? null }];
   }));
   const [vals, setVals] = useState(() => filled(year));
   const [busy, setBusy] = useState(false);
@@ -486,7 +487,8 @@ function YearForm({ m, onChange }) {
     setBusy(true);
     try {
       await api.saveMortgageYear(year, m.parts.map((p) => ({ part_id: p.id, debt_end_cents: vals[p.id].debt_end_cents || 0,
-        interest_cents: vals[p.id].interest_cents || 0, repaid_cents: repaid(vals[p.id]) })));
+        interest_cents: vals[p.id].interest_cents || 0, repaid_cents: repaid(vals[p.id]),
+        principal_cents: vals[p.id].debt_start_cents === 0 ? (vals[p.id].principal_cents ?? null) : null })));
       onChange();
       toast({ text: `Jaaropgave ${year} bewaard` });
     } catch (err) {

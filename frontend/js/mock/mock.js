@@ -1913,7 +1913,7 @@ const ROUTES = [
     const ids = (body.parts || []).map((x) => x.part_id);
     if (new Set(ids).size !== ids.length) fail(422, 'duplicate_part', 'Elk leningdeel mag maar één keer in de jaaropgave.');
     db.mortgage_years = db.mortgage_years.filter((e) => e.year !== year);
-    for (const x of body.parts || []) db.mortgage_years.push({ part_id: x.part_id, year, debt_end_cents: x.debt_end_cents || 0, interest_cents: x.interest_cents || 0, repaid_cents: x.repaid_cents || 0 });
+    for (const x of body.parts || []) db.mortgage_years.push({ part_id: x.part_id, year, debt_end_cents: x.debt_end_cents || 0, interest_cents: x.interest_cents || 0, repaid_cents: x.repaid_cents || 0, principal_cents: x.principal_cents ?? null });
     return ok(mortgageOut());
   }],
   ['DELETE', /^\/mortgage\/years\/(\d+)$/, ({ params: [year] }) => { db.mortgage_years = db.mortgage_years.filter((e) => e.year !== year); return ok(mortgageOut()); }],
