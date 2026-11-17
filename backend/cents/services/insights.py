@@ -5,6 +5,10 @@ ranked and at most five are returned. Shape:
 `{id, kind, tone, emoji, title, value_cents?, detail?, link: {screen, params}, href}`;
 `href` is the frontend hash route for the same place.
 
+The Overzicht shows only the actionable kinds (`OVERZICHT_HIDDEN` are left out there:
+informational figures the hero, tiles or buffer bar already say). `candidates` still returns
+every kind.
+
 Rules about "now" (pace, subscriptions, bills due, goals, import age, unsorted, buffer) only run
 for the current period; rules about a period's own numbers run for any period.
 """
@@ -18,7 +22,7 @@ from datetime import date, timedelta
 
 from .. import db
 from . import goals as goals_mod
-from . import networth, recurring
+from . import recurring
 from .ledger import DAILY, FIXED, SAVING, Ledger
 from .periods import Period
 from .text import day_month, euro, month_name, one_decimal, percent, period_month
@@ -32,6 +36,11 @@ SCORES = {
     "fixed_share": 45, "last_year": 40, "savings_rate": 35, "fx_costs": 33, "bank_fees": 30,
     "tempo": 62,
 }
+
+
+# Informational kinds that the Overzicht does not show (DECISIONS 2026-11-17).
+OVERZICHT_HIDDEN = frozenset({"fixed_share", "last_year", "savings_rate", "pace", "buffer",
+                              "goal_reached", "bank_fees", "fx_costs"})
 
 
 def _href(screen: str, params: dict) -> str:
@@ -81,9 +90,11 @@ def pace(lg: Ledger, p: Period, ov: dict) -> list[dict]:
     if abs(diff) < max(2500, 0.1 * pc["typical"][i]):
         return []
     if diff < 0:
-        return [make("pace", f"pace:{p.id}", "good", "🌱", f"{euro(-diff)} minder uitgegeven dan normaal tot nu toe",
+        return [make("pace", f"pace:{p.id}", "good", "🌱",
+                     f"Dagelijkse uitgaven op koers: {euro(-diff)} onder normaal tot nu toe",
                      "transactions", {"period": p.id}, -diff)]
-    return [make("pace", f"pace:{p.id}", "info", "🧭", f"{euro(diff)} meer uitgegeven dan normaal tot nu toe",
+    return [make("pace", f"pace:{p.id}", "info", "🧭",
+                 f"Dagelijkse uitgaven {euro(diff)} boven normaal tot nu toe",
                  "transactions", {"period": p.id}, diff)]
 
 
@@ -287,21 +298,21 @@ def savings_rate(lg: Ledger, p: Period, ov: dict) -> list[dict]:
 
 
 def buffer(conn: sqlite3.Connection, lg: Ledger, p: Period, ov: dict) -> list[dict]:
+    """Same definition as the buffer bar (outlook.buffer_status): what the buffer holds in
+    months of fixed costs, against the `buffer` assumption."""
     if not ov["period"]["is_current"]:
         return []
-    history = lg.complete_before(p, 6)
-    savings = networth.balance_of_type(conn, "savings")
-    if len(history) < 2 or not savings or savings <= 0:
+    b = ov.get("buffer")
+    if len(lg.complete_before(p, 6)) < 2 or not b or b["months"] is None or b["saved_cents"] <= 0:
         return []
-    monthly = sum(lg.flows_for(h).fixed + lg.flows_for(h).daily for h in history) / len(history)
-    if monthly <= 0:
-        return []
-    months = savings / monthly
-    title = f"Je spaargeld dekt {one_decimal(months)} maanden uitgaven"
-    if months < 3:
-        return [make("buffer", f"buffer:{p.id}", "warn", "🛟", title, "networth", {}, savings,
-                     detail="3 maanden is een gangbare buffer")]
-    return [make("buffer", f"buffer:{p.id}", "good", "🛟", title, "networth", {}, savings, bonus=-25)]
+    title = f"Je buffer dekt {one_decimal(b['months'])} maanden vaste lasten"
+    if b["saved_cents"] < b["target_cents"]:
+        detail = (f"Doel: {euro(b['target_cents'])}"
+                  + (f", {one_decimal(b['target_months'])} maanden" if b["target_months"] else ""))
+        return [make("buffer", f"buffer:{p.id}", "warn", "🛟", title, "networth", {},
+                     b["saved_cents"], detail=detail)]
+    return [make("buffer", f"buffer:{p.id}", "good", "🛟", title, "networth", {}, b["saved_cents"],
+                 bonus=-25)]
 
 
 def tempo(ov: dict) -> list[dict]:
@@ -318,20 +329,29 @@ def tempo(ov: dict) -> list[dict]:
 
 
 def left_over(lg: Ledger, p: Period, ov: dict) -> list[dict]:
+    """A finished period whose result (income − fixed − daily, as the hero) is positive. A potje
+    is suggested only for money that is still on the checking account: not when the month drew
+    on savings, nor for what was already put aside."""
     complete = _complete_ids(lg)
     target = p
     if ov["period"]["is_current"]:
         if ov["period"]["day_index"] > 10:
             return []
         target = lg.shift(p, -1)
-        net = lg.flows_for(target).net
-    else:
-        net = ov["net_cents"]
-    if target.id not in complete or net < 5000:
+    if target.id not in complete:
         return []
-    return [make("left_over", f"left_over:{target.id}", "good", "🎉",
-                 f"{euro(net)} over in {period_month(target.id)}. Zet het in een potje?",
-                 "goals", {}, net)]
+    f = lg.flows_for(target)
+    over = f.income - f.fixed - f.daily
+    if over < 5000:
+        return []
+    title = f"{euro(over)} over in {period_month(target.id)}"
+    unsaved = over - f.saved
+    if f.saved >= 0 and unsaved >= 5000:
+        title += ". Zet het in een potje?" if f.saved == 0 else \
+            f", waarvan {euro(unsaved)} nog niet gespaard. Zet het in een potje?"
+    elif f.saved < 0:
+        title += f", met {euro(-f.saved)} uit je spaargeld"
+    return [make("left_over", f"left_over:{target.id}", "good", "🎉", title, "goals", {}, over)]
 
 
 def unsorted(conn: sqlite3.Connection, p: Period, ov: dict) -> list[dict]:
@@ -397,7 +417,7 @@ def last_year(lg: Ledger, p: Period, ov: dict) -> list[dict]:
     if then <= 0 or abs(diff) < 5000 or abs(diff) < 0.1 * then:
         return []
     word = "meer" if diff > 0 else "minder"
-    text = f"{euro(diff)} {word} uitgegeven dan in {period_month(before.id)} vorig jaar"
+    text = f"{euro(diff)} {word} aan dagelijkse uitgaven dan in {period_month(before.id)} vorig jaar"
     if ov["period"]["is_current"]:
         text = "Tot nu toe " + text
     return [make("last_year", f"last_year:{p.id}", "info", "🗓️", text,
@@ -480,7 +500,7 @@ def fx_costs(lg: Ledger, p: Period, ov: dict) -> list[dict]:
 # ---------------------------------------------------------------------------- preferences
 
 KIND_LABELS = {
-    "pace": "Uitgaven tot nu toe",
+    "pace": "Dagelijkse uitgaven tot nu toe",
     "category_spike": "Meer dan normaal in een bakje",
     "price_change": "Prijsstijgingen",
     "new_recurring": "Nieuwe vaste lasten",
@@ -556,10 +576,14 @@ def candidates(conn: sqlite3.Connection, lg: Ledger, p: Period, ov: dict) -> lis
     return found
 
 
-def compute(conn: sqlite3.Connection, lg: Ledger, p: Period, ov: dict) -> list[dict]:
-    """At most five insights for the overview of period `p`."""
+def compute(conn: sqlite3.Connection, lg: Ledger, p: Period, ov: dict,
+            overview: bool = False) -> list[dict]:
+    """At most five insights for period `p`; for the Overzicht (`overview`) only the
+    actionable kinds."""
     out = []
-    for item in candidates(conn, lg, p, ov)[:MAX_INSIGHTS]:
+    found = [i for i in candidates(conn, lg, p, ov)
+             if not (overview and i["kind"] in OVERZICHT_HIDDEN)]
+    for item in found[:MAX_INSIGHTS]:
         item = dict(item)
         item.pop("_score")
         out.append(item)

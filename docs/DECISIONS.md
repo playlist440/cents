@@ -643,3 +643,20 @@
   of httpx; retries 1 s/2 s; a background asyncio task checks every 15 min, runs after 18:30
   Amsterdam or at startup when stale, waits 1 h after a failure; never blocks requests or
   startup. Setting `prices_auto` (Slimme aannames → Koersen), off = nothing leaves the server.
+- 2026-11-17 · **Nog te besteden replaces Vrij geld (audit fixes).** Headline "Nog te besteden
+  tot <salarisdatum>" + "≈ € X per dag": balances − potjes − fixed costs before payday −
+  outstanding card purchases − expected next card settlement (median unexplained part of the
+  last three, only before payday) − typical daily spending until payday (median per-day rate of
+  the last six complete periods, without settlement lumps). The buffer is no longer subtracted
+  (it hid spendable money and was counted from a different definition); it gets its own bar,
+  with one definition shared by `outlook.buffer_status` and the `buffer` insight (potje
+  "buffer", else savings outside potjes capped at the target; months of fixed costs). No
+  clamping: a negative figure is the honest signal. Payday counts from the main checking
+  account's balance date, not today, so a salary that is due but not imported does not add a
+  month of fixed costs (`salary_pending`). Per-account balance dates; the oldest drives `stale`
+  and the window. A quiet savings account counts as fresh up to the day its file was last
+  imported (capped at the latest imported transaction): the CSV has no "covered until" date.
+  `result = income − fixed − daily` is the single over/tekort definition (hero, year, Tempo,
+  `left_over`); `net` stays for trends/recap. Pace "normaal" is the median (one odd month must
+  not move it). Expected payments whose date passed are "achterstallig?", not "nog". The
+  Overzicht hides informational insights (`OVERZICHT_HIDDEN`); the rules still exist.

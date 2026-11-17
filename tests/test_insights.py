@@ -68,9 +68,10 @@ def test_current_period_rules(client, book):
     assert spike["link"] == {"screen": "category", "params": {"id": book.cats["boodschappen"],
                                                               "period": "2026-03"}}
     assert spike["href"] == f"/overzicht/bakje/{book.cats['boodschappen']}?period=2026-03"
-    assert found["pace"]["title"].startswith(E) and "meer uitgegeven dan normaal" in found["pace"]["title"]
+    assert found["pace"]["title"].startswith("Dagelijkse uitgaven " + E)
+    assert found["pace"]["title"].endswith("boven normaal tot nu toe")
     assert found["unsorted"]["title"] == "1 winkel zonder bakje"
-    assert found["buffer"]["tone"] == "warn" and found["buffer"]["title"].startswith("Je spaargeld dekt 0,")
+    assert found["buffer"]["tone"] == "warn" and found["buffer"]["title"] == "Je buffer dekt 1,2 maanden vaste lasten"
     assert "stale" not in found and "left_over" not in found      # day 15: too late for last month
     # the API returns the five best, best first, without the internal score
     api = client.get("/api/overview").json()["insights"]
@@ -86,13 +87,14 @@ def test_past_period_rules(client, book):
     household(book)
     found, ov = candidates(book, "2026-02")
     net = 300000 - 101599 - 1099 - (40000 + 84900) - 50000
-    assert ov["net_cents"] == net
-    assert found["left_over"]["title"] == f"{euro(net)} over in februari. Zet het in een potje?"
+    assert ov["net_cents"] == net and ov["result_cents"] == net + 50000
+    assert found["left_over"]["title"] == (f"{euro(net + 50000)} over in februari, waarvan "
+                                           f"{euro(net)} nog niet gespaard. Zet het in een potje?")
     assert found["large"]["title"] == f"Eenmalig {E}849 bij Coolblue"
     assert found["savings_rate"]["title"] == "In februari 17 % van je inkomen gespaard"
     assert found["fixed_share"]["title"] == "Je vaste lasten zijn 34 % van je inkomen"
     assert found["fixed_share"]["tone"] == "info"
-    assert found["last_year"]["title"] == f"{E}1.049 meer uitgegeven dan in februari vorig jaar"
+    assert found["last_year"]["title"] == f"{E}1.049 meer aan dagelijkse uitgaven dan in februari vorig jaar"
     for kind in ("pace", "price_change", "unsorted", "stale", "new_recurring", "buffer"):
         assert kind not in found
 

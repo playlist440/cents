@@ -226,7 +226,8 @@ def test_api_totals_count_fixed_bakjes_only(client, book, today):
     assert data["monthly_out_cents"] == 100000 and data["monthly_in_cents"] == 300000
     o = client.get("/api/overview").json()
     assert [u["name"] for u in o["upcoming"]] == ["Verhuurder"]
-    assert o["fixed_upcoming_cents"] == 100000
+    # rent was expected on 1 March and has not shown up: overdue, not still to come
+    assert o["fixed_upcoming_cents"] == 0 and o["fixed_overdue_cents"] == 100000
 
 
 def test_daily_series_must_be_the_merchants_only_activity():

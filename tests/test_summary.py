@@ -65,7 +65,7 @@ def test_overview_current_period_left(client, book):
     assert o["fixed_cents"] == 100000 and o["daily_cents"] == 10000
     assert o["left_cents"] == expected - 100000 - 10000
     assert o["per_day_left_cents"] == int(o["left_cents"] / 17)  # 15..31 March
-    # typical = mean of January and February at each day index
+    # typical = median of January and February at each day index (two months: their mean)
     assert o["pace"]["typical"][9] == 20000                      # day 10: groceries both months
     assert o["pace"]["typical"][-1] == 18000
     assert len(o["pace"]["actual"]) == 8                         # data until 5 March + 3 days
@@ -193,3 +193,15 @@ def test_empty_database_every_endpoint(client, today):
     tag = client.post("/api/tags", json={"name": "Leeg"}).json()
     assert client.get(f"/api/tags/{tag['id']}/summary").json()["count"] == 0
     assert client.get("/api/overview?period=nope").status_code == 400
+
+
+def test_typical_pace_is_the_median(client, book):
+    """One unusual month does not move "normaal": median per day index, not the mean."""
+    chk = book.account("Betaal", "checking")
+    book.tx(chk, "2025-11-20", 300000, "salaris", "Werkgever")     # data start: Dec is complete
+    for m, cents in (("2025-12", 20000), ("2026-01", 20000), ("2026-02", 200000)):
+        book.tx(chk, f"{m}-10", -cents, "boodschappen", "Jumbo", method="card")
+    book.tx(chk, "2026-03-05", -1000, "boodschappen", "Jumbo", method="card")
+    book.commit()
+    o = client.get("/api/overview").json()
+    assert o["pace"]["typical"][9] == 20000 and o["pace"]["typical"][-1] == 20000

@@ -24,7 +24,7 @@ confirm dialogs — never `alert`/`confirm`).
 - Emoji are the icons of bakjes, potjes and tags (shown in a rounded tile tinted with the item's
   colour). Chrome icons (tab bar, buttons) are a small inline-SVG set in SF-Symbols-like line
   style, stroke 1.75, drawn by us. No icon font, no external assets.
-- Words: bakje (category), potje (savings goal), vaste lasten, vrij geld, over, normaal.
+- Words: bakje (category), potje (savings goal), vaste lasten, nog te besteden, over, normaal.
   Address the user as "je". Avoid: transactie-jargon, budget, cashflow, overschrijding.
 
 ## 2. Navigation
@@ -65,18 +65,24 @@ shows: hero "Over in 2026 tot nu" / "Tekort in 2025" with inkomen and uitgegeven
 instead of the pace chart stacked bars per month (vast, dagelijks, gespaard) with inkomen as a
 line and the month's result in the read-out; tiles with the year total and "€ X per maand"
 (Dagelijks: "vorig jaar € X" over the same months when the data covers them); "Waar het heen
-ging" compared with the same months last year. No Vrij geld, Tempo, warning, Binnenkort or
+ging" compared with the same months last year. No Nog te besteden, Tempo, buffer, warning, Binnenkort or
 insights for a year (they are about now). Top to bottom (month):
 
-1. **Hero.** Label "Vrij geld", a very large count-up amount (all checking + savings minus
-   potjes, buffer and vaste lasten until payday), subline "tot 27 nov" (plus "saldo van 9 nov"
-   when balances are older than five days). Tapping the amount opens a popover with the
-   breakdown. Under it **Tempo**: "+ € 420 per maand over" / "€ 150 per maand tekort" (mean of
-   the last three months) with a twelve-month mini bar chart, then the slim pace chart: this
-   month's cumulative spending as a solid line with a soft gradient fill, "normaal" as a dotted
-   line, today marked with a dot. A **betaalrekening** warning card appears under the hero only
-   when the projected checking balance before payday drops below the floor. Past months show
-   "Over" or "Tekort" instead.
+1. **Hero.** Label "Nog te besteden tot 27 nov", a very large count-up amount (checking +
+   savings minus potjes, vaste lasten until payday, credit card, the expected card settlement
+   and normal daily spending until payday; never the buffer) with "≈ € 85 per dag" beside it.
+   Negative stays negative, in the warning colour. Subline always "saldo 15 nov" (the oldest
+   balance date), plus "salaris nog niet verwerkt — importeer" or "saldo verouderd —
+   importeer". Tapping the amount opens a popover: each account balance with its date (stale
+   ones marked), each deduction, the total. Under it one row "Gemiddeld per maand over (3 mnd)"
+   "+ € 420 over" / "€ 150 tekort" with a twelve-month mini bar chart, then the buffer bar
+   "Buffer € X van € Y · Z maanden", then the pace chart titled "Dagelijkse uitgaven – nog
+   over" with "op koers" / "€ X boven normaal" (calm wording, no pressure): what is left of a
+   normal month's daily spending as a solid line (below zero in the warning colour, with a zero
+   line), "normaal" (median) dotted, today a dot; without history it shows plain cumulative
+   "Uitgegeven". A **betaalrekening** warning card appears under the hero only when the
+   projected checking balance before payday drops below the floor. Past months show "Over" or
+   "Tekort" = income − fixed − daily (saving is not spending).
 2. **Four tiles** (2 × 2 on iPhone, one row on wide screens): Inkomen · Vaste lasten ·
    Uitgegeven · Gespaard. Amount, and a hairline progress bar where an expected value exists
    (income received of expected, fixed paid of expected). Each tile opens the matching list.
@@ -85,7 +91,8 @@ insights for a year (they are about now). Top to bottom (month):
    the bakjes), then a ranked list: emoji tile, name, amount, a thin bar relative to the
    largest, and a small chip only when it differs clearly from normal ("€ 40 meer",
    "€ 25 minder"). No pie or donut chart. A row opens the bakje detail.
-5. **Insights.** At most three cards (horizontal snap-scroll on iPhone, grid on wide screens):
+5. **Insights.** Only actionable ones (import, duplicates, price changes, large/unusual
+   spending, potjes behind, negative average); informational figures stay off. At most three cards (horizontal snap-scroll on iPhone, grid on wide screens):
    emoji, one sentence, optional amount. Tapping goes to the relevant place.
 6. **Binnenkort.** The next fixed payments of this month: date, name, amount. Footer link
    "Alle vaste lasten".

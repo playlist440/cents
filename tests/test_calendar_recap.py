@@ -71,9 +71,12 @@ def test_calendar_current_period(client, book):
     assert items_by_day(cal)[("2026-03-16", "Opvang")]["transaction_id"] is None
     # consistent with the overview: what is still to come of the fixed costs
     o = client.get("/api/overview").json()
-    fixed_left = sum(-i["amount_cents"] for (d, n), i in items_by_day(cal).items()
-                     if i["status"] != "paid" and n in ("Polis", "Opvang"))
-    assert fixed_left == 44000 == o["fixed_upcoming_cents"]
+    left = lambda status: sum(-i["amount_cents"] for (d, n), i in items_by_day(cal).items()  # noqa: E731
+                              if i["status"] == status and n in ("Polis", "Opvang"))
+    assert left("expected") == 40000 == o["fixed_upcoming_cents"]
+    # a missed payment is "achterstallig?", not still to come
+    assert left("missed") == 4000 == o["fixed_overdue_cents"]
+    assert [u["overdue"] for u in o["upcoming"] if u["name"] == "Polis"] == [True]
 
 
 def test_calendar_past_and_future(client, book):

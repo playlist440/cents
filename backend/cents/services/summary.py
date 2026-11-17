@@ -8,6 +8,7 @@ payment. Group rules live in `ledger.py`.
 from __future__ import annotations
 
 import sqlite3
+import statistics
 from datetime import date, timedelta
 
 from .. import db
@@ -37,14 +38,14 @@ def category_value(f: Flows, category: dict) -> int:
 
 
 def typical_cumulative(lg: Ledger, history: list[Period], days: int) -> list[int]:
-    """Mean cumulative daily spending per day index over `history` (shorter periods carry
-    their last value)."""
+    """Median cumulative daily spending per day index over `history` (shorter periods carry
+    their last value); a median, so one unusual month does not move "normaal"."""
     if not history:
         return []
     series = [lg.flows_for(h).daily_cumulative() for h in history]
     out = []
     for i in range(days):
-        out.append(_mean([s[min(i, len(s) - 1)] if s else 0 for s in series]))
+        out.append(int(round(statistics.median([s[min(i, len(s) - 1)] if s else 0 for s in series]))))
     return out
 
 
@@ -82,8 +83,14 @@ def build_overview(conn: sqlite3.Connection, lg: Ledger, p: Period) -> dict:
     saving_up = [(i, d) for i, d in upcoming if i["direction"] == "out" and group(i) == SAVING]
     income_up = [(i, d) for i, d in upcoming if i["direction"] == "in"
                  and (group(i) == INCOME or lg.categories.get(i["category_id"] or -1, {}).get("key") == "unsorted")]
-    fixed_upcoming = -sum(i["amount_cents"] for i, _ in fixed_up)
-    saving_upcoming = -sum(i["amount_cents"] for i, _ in saving_up)
+    # an expected payment whose date has passed without showing up is "achterstallig?", not
+    # still to come
+    overdue = lambda d: d < lg.today  # noqa: E731
+    fixed_upcoming = -sum(i["amount_cents"] for i, d in fixed_up if not overdue(d))
+    fixed_overdue = -sum(i["amount_cents"] for i, d in fixed_up if overdue(d))
+    saving_upcoming = -sum(i["amount_cents"] for i, d in saving_up if not overdue(d))
+    main_salary = outlook.salary_item(lg, items)
+    salary_dates = sorted(d for i, d in income_up if main_salary and i["key"] == main_salary["key"])
 
     live_income_items = [i for i in items if i["direction"] == "in" and i["status"] != "ended"
                          and group(i) == INCOME]
@@ -139,18 +146,22 @@ def build_overview(conn: sqlite3.Connection, lg: Ledger, p: Period) -> dict:
         "expected_income_cents": expected_income,
         "fixed_cents": f.fixed,
         "fixed_upcoming_cents": fixed_upcoming,
+        "fixed_overdue_cents": fixed_overdue,
+        "salary_expected": salary_dates[0].isoformat() if salary_dates and is_current else None,
         "daily_cents": f.daily,
         "saved_cents": f.saved,
         "saving_upcoming_cents": saving_upcoming,
         "left_cents": left,
         "per_day_left_cents": per_day,
         "net_cents": f.net,
+        "result_cents": f.income - f.fixed - f.daily,
         "pace": pace,
         "categories": cats,
         "income": sorted(({"category_id": c, "cents": v} for c, v in f.income_by_cat.items()),
                          key=lambda x: -x["cents"]),
         "upcoming": [{"key": i["key"], "name": i["name"], "date": d.isoformat(),
-                      "amount_cents": i["amount_cents"], "category_id": i["category_id"]}
+                      "amount_cents": i["amount_cents"], "category_id": i["category_id"],
+                      "overdue": overdue(d)}
                      for i, d in sorted(fixed_up + saving_up, key=lambda x: (x[1], x[0]["name"]))],
         "insights": [],
         "unsorted": {"merchants": unsorted_merchant_count(conn), "transactions": unsorted_rows["n"],
@@ -160,8 +171,9 @@ def build_overview(conn: sqlite3.Connection, lg: Ledger, p: Period) -> dict:
     now = outlook.compute(conn, lg) if is_current else {}
     ov["free"] = now.get("free")
     ov["tempo"] = now.get("tempo")
+    ov["buffer"] = now.get("buffer")
     ov["checking_warning"] = now.get("checking_warning")
-    ov["insights"] = insights.compute(conn, lg, p, ov)
+    ov["insights"] = insights.compute(conn, lg, p, ov, overview=True)
     return ov
 
 
@@ -182,6 +194,7 @@ def _sum_flows(flows: list[Flows]) -> dict:
             for cid, v in src.items():
                 out[name][cid] = out[name].get(cid, 0) + v
     out["net"] = out["income"] - out["fixed"] - out["daily"] - out["saved"]
+    out["result"] = out["income"] - out["fixed"] - out["daily"]
     return out
 
 
@@ -244,7 +257,7 @@ def build_year_overview(conn: sqlite3.Connection, lg: Ledger, year: int) -> dict
 
     months = [{"period": p.id, "label": p.label, "income_cents": f.income, "fixed_cents": f.fixed,
                "daily_cents": f.daily, "saved_cents": f.saved, "net_cents": f.net,
-               "partial": p.id == current.id}
+               "result_cents": f.income - f.fixed - f.daily, "partial": p.id == current.id}
               for p, f in zip(plist, flows)]
     unsorted_rows = db.row(conn, """
         SELECT COUNT(*) AS n, COALESCE(SUM(t.amount_cents), 0) AS cents FROM transactions t
@@ -256,17 +269,21 @@ def build_year_overview(conn: sqlite3.Connection, lg: Ledger, year: int) -> dict
         "expected_income_cents": tot["income"],
         "fixed_cents": tot["fixed"],
         "fixed_upcoming_cents": 0,
+        "fixed_overdue_cents": 0,
+        "salary_expected": None,
         "daily_cents": tot["daily"],
         "saved_cents": tot["saved"],
         "saving_upcoming_cents": 0,
         "left_cents": None,
         "per_day_left_cents": None,
         "net_cents": tot["net"],
+        "result_cents": tot["result"],
         "per_month": {"income_cents": int(round(tot["income"] / n)),
                       "fixed_cents": int(round(tot["fixed"] / n)),
                       "daily_cents": int(round(tot["daily"] / n)),
                       "saved_cents": int(round(tot["saved"] / n)),
-                      "net_cents": int(round(tot["net"] / n))},
+                      "net_cents": int(round(tot["net"] / n)),
+                      "result_cents": int(round(tot["result"] / n))},
         "previous_year": ({"income_cents": prev_tot["income"], "fixed_cents": prev_tot["fixed"],
                            "daily_cents": prev_tot["daily"], "saved_cents": prev_tot["saved"],
                            "net_cents": prev_tot["net"], "from": prev_ids[0].start.isoformat(),
@@ -283,6 +300,7 @@ def build_year_overview(conn: sqlite3.Connection, lg: Ledger, year: int) -> dict
         "balance": {"checking_cents": checking or 0, "expected_end_cents": None},
         "free": None,
         "tempo": None,
+        "buffer": None,
         "checking_warning": None,
     }
 

@@ -159,7 +159,7 @@ function settlementUnexplained() {
 function flows(pid) {
   return cached('flows:' + pid, () => {
     const { from, to } = periodBounds(pid);
-    const res = { income: 0, fixed: 0, daily: 0, saved: 0, cats: new Map(), incomeCats: new Map(), dailyByDay: new Map() };
+    const res = { income: 0, fixed: 0, daily: 0, saved: 0, card: 0, cats: new Map(), incomeCats: new Map(), dailyByDay: new Map() };
     const unexplained = settlementUnexplained().map;
     const ccCat = catByKey('creditcard');
     const addCat = (map, id, cents) => {
@@ -171,7 +171,7 @@ function flows(pid) {
       const amt = t.amount_cents;
       if (t.kind === 'settlement') {
         const u = unexplained.get(t.id) || 0;
-        if (u > 0) { res.daily += u; addCat(res.cats, ccCat.id, u); res.dailyByDay.set(t.date, (res.dailyByDay.get(t.date) || 0) + u); }
+        if (u > 0) { res.daily += u; res.card += u; addCat(res.cats, ccCat.id, u); res.dailyByDay.set(t.date, (res.dailyByDay.get(t.date) || 0) + u); }
         continue;
       }
       const c = catById(t.category_id) || catByKey('unsorted');
@@ -318,6 +318,12 @@ function overview(pid) {
   const fixedUp = p.is_current ? rec.filter((it) => it.direction === 'out' && isGrp(it, 'fixed') && rest(it)) : [];
   const savingUp = p.is_current ? rec.filter((it) => it.direction === 'out' && isGrp(it, 'saving') && rest(it)) : [];
   const fixed_upcoming_cents = fixedUp.reduce((s, it) => s - it.amount_cents, 0);
+  // expected in this period, date passed without showing up: "achterstallig?" (not still to come)
+  const overdueUp = p.is_current ? rec.filter((it) => it.direction === 'out' && isGrp(it, 'fixed') && it.status !== 'ended' && it.next_date >= p.from && it.next_date < db.today) : [];
+  const fixed_overdue_cents = overdueUp.reduce((s, it) => s - it.amount_cents, 0);
+  const incomeItems = rec.filter((it) => it.direction === 'in' && isGrp(it, 'income') && it.status !== 'ended');
+  const mainSalary = incomeItems.length ? incomeItems.reduce((x, y) => (y.amount_cents > x.amount_cents ? y : x)) : null;
+  const salaryUp = p.is_current && mainSalary && mainSalary.next_date >= p.from && mainSalary.next_date <= p.to ? [mainSalary.next_date] : [];
   const saving_upcoming_cents = savingUp.reduce((s, it) => s - it.amount_cents, 0);
   const expected_income_cents = last3.length ? avgIncome : null;
   const enoughHistory = prev.length >= 2;
@@ -335,7 +341,7 @@ function overview(pid) {
     const typical = [];
     const series = prev.map((x) => cumulativeDaily(x));
     for (let i = 0; i < p.days_total; i++) {
-      typical.push(Math.round(series.reduce((s, arr) => s + (arr[Math.min(i, arr.length - 1)] || 0), 0) / series.length));
+      typical.push(Math.round(median(series.map((arr) => arr[Math.min(i, arr.length - 1)] || 0))));
     }
     const upto = p.is_current ? Math.max(1, daysBetween(p.from, dt) + 1) : p.days_total;
     pace = {
@@ -350,9 +356,9 @@ function overview(pid) {
     .filter((c) => c.spent_cents !== 0)
     .sort((a, b) => b.spent_cents - a.spent_cents);
   const income = [...f.incomeCats.entries()].map(([category_id, e]) => ({ category_id, cents: e.cents })).sort((a, b) => b.cents - a.cents);
-  const upcoming = [...fixedUp, ...savingUp]
+  const upcoming = [...overdueUp, ...fixedUp, ...savingUp]
     .sort((a, b) => (a.next_date < b.next_date ? -1 : 1))
-    .map((it) => ({ key: it.key, name: it.name, date: it.next_date, amount_cents: it.amount_cents, category_id: it.category_id }));
+    .map((it) => ({ key: it.key, name: it.name, date: it.next_date, amount_cents: it.amount_cents, category_id: it.category_id, overdue: it.next_date < db.today }));
 
   const q = sortQueue();
   const unsorted = {
@@ -369,12 +375,13 @@ function overview(pid) {
 
   const result = {
     period: p,
-    income_cents: f.income, expected_income_cents, fixed_cents: f.fixed, fixed_upcoming_cents,
+    income_cents: f.income, expected_income_cents, fixed_cents: f.fixed, fixed_upcoming_cents, fixed_overdue_cents,
+    salary_expected: salaryUp[0] || null,
     daily_cents: f.daily, saved_cents: f.saved, saving_upcoming_cents,
-    left_cents: left, per_day_left_cents: perDay, net_cents: net,
+    left_cents: left, per_day_left_cents: perDay, net_cents: net, result_cents: f.income - f.fixed - f.daily,
     pace, categories, income, upcoming, insights: [], unsorted,
     balance: { checking_cents: checking, expected_end_cents: expectedEnd },
-    free: null, tempo: null, checking_warning: null,
+    free: null, tempo: null, buffer: null, checking_warning: null,
   };
   if (p.is_current) Object.assign(result, outlook());
   result.insights = insights(result, prev);
@@ -404,6 +411,7 @@ function yearOverview(year) {
       }
     }
     out.net = out.income - out.fixed - out.daily - out.saved;
+    out.result = out.income - out.fixed - out.daily;
     return out;
   };
   const t = sum(ids);
@@ -428,14 +436,15 @@ function yearOverview(year) {
     },
     income_cents: t.income, expected_income_cents: t.income, fixed_cents: t.fixed, fixed_upcoming_cents: 0,
     daily_cents: t.daily, saved_cents: t.saved, saving_upcoming_cents: 0,
-    left_cents: null, per_day_left_cents: null, net_cents: t.net,
-    per_month: { income_cents: pm(t.income), fixed_cents: pm(t.fixed), daily_cents: pm(t.daily), saved_cents: pm(t.saved), net_cents: pm(t.net) },
+    fixed_overdue_cents: 0, salary_expected: null,
+    left_cents: null, per_day_left_cents: null, net_cents: t.net, result_cents: t.result,
+    per_month: { income_cents: pm(t.income), fixed_cents: pm(t.fixed), daily_cents: pm(t.daily), saved_cents: pm(t.saved), net_cents: pm(t.net), result_cents: pm(t.result) },
     previous_year: prev && { income_cents: prev.income, fixed_cents: prev.fixed, daily_cents: prev.daily, saved_cents: prev.saved, net_cents: prev.net,
       from: periodBounds(prevIds[0]).from, to: periodBounds(prevIds.at(-1)).to },
     months: ids.map((id) => {
       const f = flows(id);
       return { period: id, label: monthLabel(id), income_cents: f.income, fixed_cents: f.fixed, daily_cents: f.daily,
-        saved_cents: f.saved, net_cents: f.income - f.fixed - f.daily - f.saved, partial: id === cur };
+        saved_cents: f.saved, net_cents: f.income - f.fixed - f.daily - f.saved, result_cents: f.income - f.fixed - f.daily, partial: id === cur };
     }),
     pace: null,
     categories: [...t.cats.entries()]
@@ -446,11 +455,11 @@ function yearOverview(year) {
     upcoming: [], insights: [],
     unsorted: { merchants: q.length, transactions: q.reduce((s, x) => s + x.count, 0), cents: q.reduce((s, x) => s + x.total_cents, 0) },
     balance: { checking_cents: checking, expected_end_cents: null },
-    free: null, tempo: null, checking_warning: null,
+    free: null, tempo: null, buffer: null, checking_warning: null,
   };
 }
 
-/* ---------- Vrij geld, tempo, betaalrekening (SPEC §9, services/outlook.py) ---------- */
+/* ---------- Nog te besteden, tempo, buffer, betaalrekening (SPEC §9, services/outlook.py) ---------- */
 
 const OCC_STEP_DAYS = { weekly: 7, '2-weekly': 14, '4-weekly': 28, quarterly: 91, 'half-year': 182, yearly: 365 };
 
@@ -475,56 +484,96 @@ function dayInMonth(ym, day) {
   return `${ym}-${String(Math.min(day, dim)).padStart(2, '0')}`;
 }
 
-function payday(rec) {
+/** Next salary after `base` (the main checking account's balance date, not today: a salary that
+ *  is due but not imported yet is still the upcoming payday). */
+function payday(rec, base = db.today) {
   const set = assumptionsOut().payday_day.day;
-  const today = db.today;
   if (Number.isInteger(set)) {
-    let d = dayInMonth(today.slice(0, 7), set);
-    if (d <= today) d = dayInMonth(shiftPeriod(today.slice(0, 7), 1), set);
+    let d = dayInMonth(base.slice(0, 7), set);
+    if (d <= base) d = dayInMonth(shiftPeriod(base.slice(0, 7), 1), set);
     return [d, 'setting'];
   }
   const income = rec.filter((i) => i.direction === 'in' && i.status !== 'ended' && catById(i.category_id)?.grp === 'income');
   if (income.length) {
     const main = income.reduce((a, b) => (b.amount_cents > a.amount_cents ? b : a));
-    const next = occurrences(main, addDays(today, 1), addDays(today, 400))[0];
+    const next = occurrences(main, addDays(base, 1), addDays(base, 400))[0];
     if (next) return [next, 'salary'];
   }
   return [addDays(periodObj(currentPeriod()).to, 1), 'period'];
 }
 
+const nextMonthDay = (iso, day) => dayInMonth(shiftPeriod(iso.slice(0, 7), 1), day ?? Number(iso.slice(8)));
+
 function outlook() {
   const rec = recurringItems();
   const a = assumptionsOut();
   const grp = (it) => catById(it.category_id)?.grp;
-  const due = (from, to, groups) => rec.filter((it) => it.direction === 'out' && groups.includes(grp(it)))
+  const due = (from, to, groups, dir = 'out') => rec.filter((it) => it.direction === dir && groups.includes(grp(it)))
     .flatMap((it) => occurrences(it, from, to).map((d) => [it, d]));
   const accs = db.accounts.filter((x) => !x.hidden && (x.type === 'checking' || x.type === 'savings'))
     .map((x) => ({ ...x, ...accountBalance(x) })).filter((x) => x.balance_cents != null);
   const hist = previousComplete(currentPeriod(), 12);
   const net = (pid) => { const f = flows(pid); return f.income - f.fixed - f.daily; };
+  const stale = (d) => !!d && daysBetween(d, db.today) > 5;
+  const chk = accs.filter((x) => x.type === 'checking')
+    .sort((x, y) => db.transactions.filter((t) => t.account_id === y.id).length - db.transactions.filter((t) => t.account_id === x.id).length)[0];
+  // typical daily spending per day: median per-day rate of the last six complete periods,
+  // without credit-card settlement lumps (estimated separately)
+  const rates = hist.slice(0, 6).map((x) => (flows(x).daily - flows(x).card) / periodObj(x).days_total);
+  const rate = rates.length ? median(rates) : 0;
+  const goals = goalsData().goals;
+  const h6 = hist.slice(0, 6);
+  const monthlyFixed = h6.length ? h6.reduce((s, x) => s + flows(x).fixed, 0) / h6.length : 0;
+  const target = a.buffer.amount_cents != null ? a.buffer.amount_cents : Math.round(monthlyFixed * a.buffer.months);
 
   let free = null;
-  const [pay, source] = payday(rec);
+  const base = chk?.as_of || accs.map((x) => x.as_of).filter(Boolean).sort().at(-1) || db.today;
+  const [pay, source] = payday(rec, base < db.today ? base : db.today);
   if (accs.length) {
     const balances = accs.reduce((s, x) => s + x.balance_cents, 0);
     const savings = accs.filter((x) => x.type === 'savings').reduce((s, x) => s + x.balance_cents, 0);
-    const as_of = accs.map((x) => x.as_of).filter(Boolean).sort().at(-1) || null;
+    const as_of = accs.map((x) => x.as_of).filter(Boolean).sort()[0] || null;
     const credit = db.accounts.filter((x) => x.type === 'credit' && !x.hidden).reduce((s, x) => s + (accountBalance(x).outstanding_cents || 0), 0);
-    const goals = goalsData().goals;
     const inGoals = goals.reduce((s, g) => s + Math.max(0, g.saldo_cents), 0);
     const goals_cents = savings > 0 ? Math.min(inGoals, savings) : 0;
-    const bufferGoal = goals.filter((g) => /buffer/i.test(g.name)).reduce((s, g) => s + Math.max(0, g.saldo_cents), 0);
-    const h6 = hist.slice(0, 6);
-    const monthlyFixed = h6.length ? h6.reduce((s, x) => s + flows(x).fixed, 0) / h6.length : 0;
-    const target = a.buffer.amount_cents != null ? a.buffer.amount_cents : Math.round(monthlyFixed * a.buffer.months);
-    const buffer_cents = Math.max(0, target - bufferGoal);
     const start = as_of ? addDays(as_of, 1) : db.today;
     const fixed = due(start, pay, ['fixed']).reduce((s, [it]) => s - it.amount_cents, 0);
+    // next credit-card settlement: median unexplained part of the last three, one month on
+    const unexpl = settlementUnexplained().map;
+    const settles = db.transactions.filter((t) => t.kind === 'settlement' && (unexpl.get(t.id) || 0) > 0).sort((x, y) => (x.date < y.date ? -1 : 1));
+    let card = null;
+    if (settles.length) {
+      const cents = Math.round(median(settles.slice(-3).map((t) => unexpl.get(t.id))));
+      const lastDay = settles.at(-1).date;
+      let d = nextMonthDay(lastDay);
+      while (d < start) d = nextMonthDay(d, Number(lastDay.slice(8)));
+      if (cents > 0 && d < pay) card = { date: d, cents };
+    }
+    const days = Math.max(0, daysBetween(start, pay));
+    const daily = Math.round(rate * days);
+    const total = balances - goals_cents - fixed - credit - (card ? card.cents : 0) - daily;
+    const daysLeft = daysBetween(db.today, pay);
     free = {
-      total_cents: balances - goals_cents - buffer_cents - fixed - credit, balances_cents: balances, goals_cents, buffer_cents,
-      fixed_until_payday_cents: fixed, credit_cents: credit, payday: pay, payday_source: source, as_of,
-      stale: !!as_of && daysBetween(as_of, db.today) > 5,
+      total_cents: total, balances_cents: balances, goals_cents, fixed_until_payday_cents: fixed, credit_cents: credit,
+      card_settlement: card, daily_until_payday_cents: daily, daily_rate_cents: Math.round(rate), daily_days: days,
+      days_left: Math.max(0, daysLeft), per_day_cents: daysLeft > 0 ? Math.trunc(total / daysLeft) : null,
+      payday: pay, payday_source: source, salary_pending: pay <= db.today, as_of, stale: stale(as_of),
+      accounts: accs.map((x) => ({ name: x.name, type: x.type, balance_cents: x.balance_cents, as_of: x.as_of, stale: stale(x.as_of) })),
     };
+  }
+
+  // buffer: a potje named "buffer", else savings outside potjes (at most the target)
+  let buffer = null;
+  {
+    const savings = accs.filter((x) => x.type === 'savings').reduce((s, x) => s + x.balance_cents, 0);
+    const pots = goals.filter((g) => /buffer/i.test(g.name));
+    const freeSav = Math.max(0, savings - goals.reduce((s, g) => s + Math.max(0, g.saldo_cents), 0));
+    const saved = pots.length ? pots.reduce((s, g) => s + Math.max(0, g.saldo_cents), 0) : target ? Math.min(freeSav, target) : freeSav;
+    if (target || saved) {
+      buffer = { saved_cents: saved, target_cents: target, source: pots.length ? 'potje' : 'savings',
+        months: monthlyFixed > 0 ? Math.round((saved / monthlyFixed) * 10) / 10 : null,
+        target_months: monthlyFixed > 0 ? Math.round((target / monthlyFixed) * 10) / 10 : null };
+    }
   }
 
   let tempo = null;
@@ -541,21 +590,16 @@ function outlook() {
   }
 
   let checking_warning = null;
-  const chk = accs.filter((x) => x.type === 'checking')
-    .sort((x, y) => db.transactions.filter((t) => t.account_id === y.id).length - db.transactions.filter((t) => t.account_id === x.id).length)[0];
   if (chk && hist.length) {
     const floor = a.checking_floor_cents.cents;
     const start = chk.as_of ? addDays(chk.as_of, 1) : db.today;
     const dueBy = new Map();
-    for (const [it, d] of due(start, pay, ['fixed', 'saving'])) dueBy.set(d, (dueBy.get(d) || 0) + it.amount_cents);
-    const r3 = hist.slice(0, 3);
-    const days = r3.reduce((s, x) => s + periodObj(x).days_total, 0);
-    const perDay = days ? r3.reduce((s, x) => s + flows(x).daily, 0) / days : 0;
+    for (const [it, d] of [...due(start, pay, ['fixed', 'saving']), ...due(start, pay, ['income'], 'in')]) dueBy.set(d, (dueBy.get(d) || 0) + it.amount_cents);
     let bal = chk.balance_cents;
     let low = null;
     let lowDay = null;
     for (let d = start; d < pay; d = addDays(d, 1)) {
-      bal += (dueBy.get(d) || 0) - perDay;
+      bal += (dueBy.get(d) || 0) - rate;
       if (d >= db.today && (low == null || bal < low)) { low = bal; lowDay = d; }
     }
     if (low != null && low < floor) {
@@ -565,8 +609,11 @@ function outlook() {
       checking_warning = { date: lowDay, low_cents: lowC, floor_cents: floor, suggest_cents: sav >= suggest ? suggest : null, account_id: chk.id, payday: pay };
     }
   }
-  return { free, tempo, checking_warning };
+  return { free, tempo, buffer, checking_warning };
 }
+
+// Informational kinds the Overzicht does not show (services/insights.py OVERZICHT_HIDDEN).
+const OVERZICHT_HIDDEN = new Set(['fixed_share', 'last_year', 'savings_rate', 'pace', 'buffer', 'goal_reached', 'bank_fees', 'fx_costs']);
 
 function insights(o, prev) {
   const out = [];
@@ -576,7 +623,7 @@ function insights(o, prev) {
     const i = o.pace.actual.length - 1;
     const diff = o.pace.actual[i] - o.pace.typical[i];
     if (Math.abs(diff) >= 2500) {
-      out.push({ id: 'pace', kind: 'pace', tone: diff < 0 ? 'good' : 'info', emoji: diff < 0 ? '🌱' : '🧭', title: diff < 0 ? `${euros(-diff)} minder uitgegeven dan normaal tot nu toe` : `${euros(diff)} meer uitgegeven dan normaal tot nu toe`, value_cents: Math.abs(diff), link: `/transacties?period=${p.id}`, rank: Math.abs(diff) / 100 + 40 });
+      out.push({ id: 'pace', kind: 'pace', tone: diff < 0 ? 'good' : 'info', emoji: diff < 0 ? '🌱' : '🧭', title: diff < 0 ? `Dagelijkse uitgaven op koers: ${euros(-diff)} onder normaal tot nu toe` : `Dagelijkse uitgaven ${euros(diff)} boven normaal tot nu toe`, value_cents: Math.abs(diff), link: `/transacties?period=${p.id}`, rank: Math.abs(diff) / 100 + 40 });
     }
   }
   let spikes = 0;
@@ -611,8 +658,13 @@ function insights(o, prev) {
   if (p.is_current && o.tempo && o.tempo.avg_net_cents <= -2500) {
     out.push({ id: 'tempo:' + o.tempo.since, kind: 'tempo', tone: 'warn', emoji: '📉', title: `Jullie geven sinds ${MONTHS[Number(o.tempo.since.slice(5)) - 1]} gemiddeld ${euros(-o.tempo.avg_net_cents)} per maand meer uit dan er binnenkomt.`, value_cents: o.tempo.avg_net_cents, link: '/jaaroverzicht', rank: 62 });
   }
-  if (!p.is_current && o.net_cents > 10000) {
-    out.push({ id: 'left-' + p.id, kind: 'left_over', tone: 'good', emoji: '🎉', title: `${euros(o.net_cents)} over in ${MONTHS[Number(p.id.slice(5)) - 1]}. Zet het in een potje.`, value_cents: o.net_cents, link: '/potjes', rank: 80 });
+  if (!p.is_current && o.result_cents >= 5000) {
+    // result = income − fixed − daily; a potje only for money not yet saved, never when the month drew on savings
+    const unsaved = o.result_cents - o.saved_cents;
+    let title = `${euros(o.result_cents)} over in ${MONTHS[Number(p.id.slice(5)) - 1]}`;
+    if (o.saved_cents >= 0 && unsaved >= 5000) title += o.saved_cents === 0 ? '. Zet het in een potje?' : `, waarvan ${euros(unsaved)} nog niet gespaard. Zet het in een potje?`;
+    else if (o.saved_cents < 0) title += `, met ${euros(-o.saved_cents)} uit je spaargeld`;
+    out.push({ id: 'left-' + p.id, kind: 'left_over', tone: 'good', emoji: '🎉', title, value_cents: o.result_cents, link: '/potjes', rank: 80 });
   }
   if (o.income_cents > 0 && !p.is_current) {
     const rate = o.saved_cents / o.income_cents;
@@ -631,7 +683,7 @@ function insights(o, prev) {
   // Dismissed ids and muted kinds are left out before ranking (DECISIONS, Insight preferences).
   const dismissed = new Set(db.settings._dismissed_insights || []);
   const muted = new Set(db.settings.muted_insight_kinds || []);
-  return out.filter((x) => !dismissed.has(x.id) && !muted.has(x.kind)).sort((a, b) => b.rank - a.rank).slice(0, 5).map(({ rank, link, ...x }) => ({ ...x, link: linkObject(link), href: link }));
+  return out.filter((x) => !dismissed.has(x.id) && !muted.has(x.kind) && !OVERZICHT_HIDDEN.has(x.kind)).sort((a, b) => b.rank - a.rank).slice(0, 5).map(({ rank, link, ...x }) => ({ ...x, link: linkObject(link), href: link }));
 }
 
 // Backend shape: link = {screen, params}, href = hash route (see services/insights.py).
@@ -1681,7 +1733,7 @@ const ROUTES = [
 /* ---------- Slimme aannames (SPEC §13) ---------- */
 
 const INSIGHT_KINDS = {
-  pace: 'Uitgaven tot nu toe', category_spike: 'Meer dan normaal in een bakje', price_change: 'Prijsstijgingen',
+  pace: 'Dagelijkse uitgaven tot nu toe', category_spike: 'Meer dan normaal in een bakje', price_change: 'Prijsstijgingen',
   new_recurring: 'Nieuwe vaste lasten', ended_recurring: 'Gestopte vaste lasten', duplicate: 'Dubbele afschrijvingen',
   large: 'Grote eenmalige uitgaven', savings_rate: 'Hoeveel je spaart', buffer: 'Buffer', left_over: 'Geld over',
   unsorted: 'Nog te sorteren', yearly_bill: 'Jaarlijkse rekeningen', goal_behind: 'Potjes die achterlopen',

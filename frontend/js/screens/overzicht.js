@@ -1,4 +1,5 @@
-// Overzicht (DESIGN §3): hero "Vrij geld" (breakdown popover) with Tempo and the pace chart,
+// Overzicht (DESIGN §3): hero "Nog te besteden tot <salarisdatum>" (breakdown popover) with
+// the 3-month average, the buffer bar and the pace chart ("Dagelijkse uitgaven – nog over"),
 // a betaalrekening warning when relevant, four tiles, sort banner, "Waar het heen ging",
 // insights, Binnenkort, Potjes peek. Empty state: one drop zone.
 // A year ("?period=2026") shows the year's sums instead: hero Over / Tekort, a bar chart per
@@ -83,85 +84,126 @@ const canNext = (p, periods) => (p.kind === 'year' ? !!p.next : p.id < periods.l
 /* ---------- Hero ---------- */
 
 /** Turn cumulative spending into "what is left of a normal month": both lines start at the
- *  normal month's total and run down to zero, so the chart falls as the month goes on. */
+ *  normal month's total and run down; actual may go below zero (more than a normal month).
+ *  Without a "normaal" there is nothing to be left of: cumulative spending as it is. */
 function leftPace(pace) {
-  if (!pace || !pace.typical?.length) return pace;
+  if (!pace) return null;
+  if (!pace.typical?.length) return { ...pace, left: false };
   const budget = pace.typical.at(-1) || 0;
-  const left = (v) => Math.max(0, budget - v);
-  return { ...pace, actual: pace.actual.map(left), typical: pace.typical.map(left) };
+  const left = (v) => budget - v;
+  return { ...pace, left: true, actual: pace.actual.map(left), typical: pace.typical.map(left) };
 }
 
+/** "op koers" / "€ X boven normaal" for the daily spending so far (current month). */
+function paceStatus(pace) {
+  if (!pace?.typical?.length || !pace.actual.length) return null;
+  const i = pace.actual.length - 1;
+  const diff = pace.actual[i] - (pace.typical[i] || 0);
+  const margin = Math.max(2500, 0.1 * (pace.typical[i] || 0));
+  if (diff <= margin) return { text: 'op koers', warn: false };
+  return { text: `${euros(diff)} boven normaal`, warn: true };
+}
+
+/** One definition of a month's result: income − fixed − daily (saving is not spending). */
+const resultOf = (o) => o.result_cents ?? o.income_cents - o.fixed_cents - o.daily_cents;
 
 function heroModel(o) {
   const p = o.period;
   if (p.kind === 'year') {
-    const over = o.net_cents >= 0;
+    const r = resultOf(o);
     return {
-      label: `${over ? 'Over' : 'Tekort'} in ${yearLabel(p.id)}`,
-      cents: Math.abs(o.net_cents),
-      warn: !over,
+      label: `${r >= 0 ? 'Over' : 'Tekort'} in ${yearLabel(p.id)}`,
+      cents: Math.abs(r),
+      warn: r < 0,
       sub: `${euros(o.income_cents)} inkomen · ${euros(o.fixed_cents + o.daily_cents)} uitgegeven`,
     };
   }
   const daysLeft = p.days_total - p.day_index + 1;
   if (p.is_current && o.free) {
     const f = o.free;
-    const sub = [`tot ${shortDate(f.payday)}`];
-    if (f.stale && f.as_of) sub.push(`saldo van ${shortDate(f.as_of)}`);
-    if (f.total_cents < 0) sub.unshift(`${euros(-f.total_cents)} te weinig voor buffer en vaste lasten`);
-    else if (o.saved_cents < 0) sub.unshift(`${euros(-o.saved_cents)} spaargeld gebruikt deze maand`);
-    return { label: 'Vrij geld', cents: Math.max(0, f.total_cents), warn: f.total_cents < 0, sub: sub.join(' · '), free: f };
+    const sub = [];
+    if (f.as_of) sub.push(`saldo ${shortDate(f.as_of)}`);
+    if (f.salary_pending) sub.push('salaris nog niet verwerkt — importeer');
+    else if (f.stale) sub.push('saldo verouderd — importeer');
+    return {
+      label: `Nog te besteden tot ${shortDate(f.payday)}`,
+      cents: f.total_cents,
+      warn: f.total_cents < 0,
+      perDay: f.per_day_cents,
+      sub: sub.join(' · '),
+      free: f,
+    };
   }
   if (p.is_current) {
     return { label: 'Uitgegeven', cents: o.fixed_cents + o.daily_cents, sub: daysLeft === 1 ? 'laatste dag' : `nog ${daysLeft} dagen` };
   }
-  const over = o.net_cents >= 0;
+  const r = resultOf(o);
   return {
-    label: over ? 'Over' : 'Tekort',
-    cents: Math.abs(o.net_cents),
-    warn: !over,
+    label: r >= 0 ? 'Over' : 'Tekort',
+    cents: Math.abs(r),
+    warn: r < 0,
     sub: `${euros(o.income_cents)} inkomen · ${euros(o.fixed_cents + o.daily_cents)} uitgegeven`,
   };
 }
 
-/** Breakdown of Vrij geld: saldi − potjes − buffer − vaste lasten tot salaris (− creditcard). */
+/** Breakdown of Nog te besteden: each balance with its date, then every deduction, then the
+ *  (signed) total. */
 function FreeBreakdown({ f }) {
+  const card = f.card_settlement;
   const rows = [
-    ...(f.accounts?.length ? f.accounts.map((a) => [a.name, a.balance_cents, a.as_of ? `saldo ${shortDate(a.as_of)}` : 'handmatig saldo']) : [['Saldi', f.balances_cents, 'betaal + spaar']]),
-    ['Potjes', -f.goals_cents],
-    ['Buffer', -f.buffer_cents],
-    [`Vaste lasten tot ${shortDate(f.payday)}`, -f.fixed_until_payday_cents],
-    f.credit_cents > 0 && ['Creditcard', -f.credit_cents],
+    ...(f.accounts?.length
+      ? f.accounts.map((a) => [a.name, a.balance_cents, a.as_of ? `saldo ${shortDate(a.as_of)}${a.stale ? ' · verouderd' : ''}` : 'handmatig saldo', a.stale])
+      : [['Saldi', f.balances_cents, 'betaal + spaar']]),
+    f.goals_cents > 0 && ['Potjes', -f.goals_cents, 'staat opzij'],
+    f.buffer_reserved_cents > 0 && ['Buffer', -f.buffer_reserved_cents, 'spaargeld voor noodgevallen'],
+    ['Vaste lasten', -f.fixed_until_payday_cents, `tot ${shortDate(f.payday)}`],
+    f.credit_cents > 0 && ['Creditcard', -f.credit_cents, 'aankopen nog niet afgerekend'],
+    card && ['Creditcard-afrekening', -card.cents, `verwacht ${shortDate(card.date)}`],
+    ['Dagelijkse uitgaven', -f.daily_until_payday_cents, `${plural(f.daily_days, 'dag', 'dagen')} × ${euros(f.daily_rate_cents)} normaal`],
   ].filter(Boolean);
+  const neg = f.total_cents < 0;
   return html`<div class="free-pop">
     <dl class="free-rows">
-      ${rows.map(([label, cents, note]) => html`<div class="free-row" key=${label}>
-        <dt>${label}${note && html`<span class="free-note">${note}</span>`}</dt>
+      ${rows.map(([label, cents, note, warn]) => html`<div class="free-row" key=${label}>
+        <dt>${label}${note && html`<span class=${'free-note' + (warn ? ' c-warn' : '')}>${note}</span>`}</dt>
         <dd class="num">${money(cents, { whole: true, negative: true })}</dd>
       </div>`)}
-      <div class="free-row is-total"><dt>Vrij</dt><dd class="num">${money(Math.max(0, f.total_cents), { whole: true })}</dd></div>
-      ${f.total_cents < 0 && html`<div class="free-row"><dt>Tekort<span class="free-note">saldi dekken buffer, potjes en vaste lasten niet</span></dt><dd class="num is-warn">${money(-f.total_cents, { whole: true })}</dd></div>`}
+      <div class="free-row is-total"><dt>Nog te besteden</dt><dd class=${'num' + (neg ? ' is-warn' : '')}>${money(f.total_cents, { whole: true, negative: true })}</dd></div>
     </dl>
-    ${f.as_of && html`<p class="free-foot">Saldo van ${shortDate(f.as_of)}${f.payday_source === 'period' ? ' · salaris niet herkend' : ''}</p>`}
+    ${neg && html`<p class="free-foot">Bij een normaal tempo reikt het geld niet tot ${shortDate(f.payday)}.</p>`}
+    ${f.salary_pending && html`<p class="free-foot c-warn">Salaris van ${shortDate(f.payday)} nog niet verwerkt — importeer.</p>`}
+    ${f.payday_source === 'period' && html`<p class="free-foot">Salaris niet herkend: tot het einde van de maand.</p>`}
+    <p class="free-foot">De buffer telt niet mee; die staat eronder.</p>
     <button class="dk-link free-link" onClick=${() => navigate('/instellingen/aannames')}>Aannames aanpassen</button>
   </div>`;
 }
 
-const openFree = (e, f) => openPopover(e.currentTarget, () => html`<${FreeBreakdown} f=${f} />`, { width: 300, label: 'Opbouw vrij geld' });
+const openFree = (e, f) => openPopover(e.currentTarget, () => html`<${FreeBreakdown} f=${f} />`, { width: 310, label: 'Opbouw nog te besteden' });
 
-/** Tempo: mean monthly result of the last three months + a 12-month mini bar chart. */
+/** Mean monthly result (income − fixed − daily) of the last three months + 12-month mini bars. */
 function Tempo({ t }) {
-  if (!t) return html`<div class="tempo is-quiet">Tempo volgt na twee volle maanden</div>`;
+  if (!t) return html`<div class="tempo is-quiet">Gemiddelde per maand volgt na twee volle maanden</div>`;
   const over = t.avg_net_cents >= 0;
-  const text = over ? `+ ${euros(t.avg_net_cents)} per maand over` : `${euros(-t.avg_net_cents)} per maand tekort`;
+  const text = over ? `+ ${euros(t.avg_net_cents)} over` : `${euros(-t.avg_net_cents)} tekort`;
   return html`<div class="tempo">
     <span class="tempo-main">
-      <span class="tempo-label">Tempo</span>
+      <span class="tempo-label">Gemiddeld per maand ${over ? 'over' : 'tekort'} (${t.periods} mnd)</span>
       <span class=${'tempo-value num' + (over ? '' : ' is-warn')}>${text}</span>
-      <span class="tempo-sub">gemiddeld, laatste ${t.periods} maanden</span>
     </span>
     <${NetBars} months=${t.months} />
   </div>`;
+}
+
+/** "Buffer € X van € Y · Z maanden" with a thin progress bar. */
+function BufferBar({ b }) {
+  if (!b || !b.target_cents) return null;
+  const share = Math.max(0, Math.min(1, b.saved_cents / b.target_cents));
+  const months = b.months != null ? ` · ${String(b.months).replace('.', ',')} ${b.months === 1 ? 'maand' : 'maanden'}` : '';
+  const label = `Buffer ${euros(b.saved_cents)} van ${euros(b.target_cents)}${months}`;
+  return html`<button class="buffer" onClick=${() => navigate(b.source === 'potje' ? '/potjes' : '/instellingen/aannames')} aria-label=${label}>
+    <span class="buffer-text num">${label}</span>
+    <span class="buffer-track" aria-hidden="true"><span class=${'buffer-fill' + (share < 1 ? ' is-short' : '')} style=${{ width: `${Math.max(2, share * 100)}%` }}></span></span>
+  </button>`;
 }
 
 function NetBars({ months }) {
@@ -175,7 +217,7 @@ function NetBars({ months }) {
   const span = hasNeg && hasPos ? h / 2 - 1 : h - 2;
   const slot = w / Math.max(n, 1);
   const bw = Math.max(3, Math.min(8, slot - 3));
-  const label = 'Resultaat per maand: ' + months.map((m) => `${MONTHS[Number(m.period.slice(5)) - 1]} ${money(m.net_cents, { whole: true, negative: true })}`).join(', ');
+  const label = 'Over of tekort per maand: ' + months.map((m) => `${MONTHS[Number(m.period.slice(5)) - 1]} ${money(m.net_cents, { whole: true, negative: true })}`).join(', ');
   return html`<svg class="netbars" width=${w} height=${h} viewBox=${`0 0 ${w} ${h}`} role="img" aria-label=${label}>
     <line x1="0" x2=${w} y1=${zero} y2=${zero} class="netbars-zero" />
     ${months.map((m, i) => {
@@ -209,9 +251,12 @@ function Hero({ o, canPrev, canNext, setPeriod, desk = false }) {
   const g = useRef(null);
   const p = o.period;
   const pace = leftPace(o.pace);
-  const paceLabel = pace
-    ? `Over van een normale maand ${monthLabel(p.id)}: ${euros(pace.actual.at(-1) || 0)} ${p.is_current ? 'nu' : 'aan het eind'}, normaal ${euros(pace.typical[pace.actual.length - 1] || 0)}`
-    : '';
+  const status = p.is_current ? paceStatus(o.pace) : null;
+  const paceTitle = pace?.left ? 'Dagelijkse uitgaven – nog over' : 'Dagelijkse uitgaven';
+  const actualLabel = pace?.left ? 'Nog over' : 'Uitgegeven';
+  const paceLabel = !pace ? '' : pace.left
+    ? `Dagelijkse uitgaven, nog over van een normale maand ${monthLabel(p.id)}: ${money(pace.actual.at(-1) || 0, { whole: true, negative: true })} ${p.is_current ? 'nu' : 'aan het eind'}, normaal ${euros(pace.typical[pace.actual.length - 1] || 0)}`
+    : `Dagelijkse uitgaven ${monthLabel(p.id)}: ${euros(pace.actual.at(-1) || 0)} uitgegeven`;
 
   // Horizontal swipe on the hero changes the month.
   const down = (e) => { if (e.pointerType !== 'mouse') g.current = { x: e.clientX, y: e.clientY, dx: 0, lock: null }; };
@@ -243,25 +288,32 @@ function Hero({ o, canPrev, canNext, setPeriod, desk = false }) {
     <div class="hero-inner" ref=${ref}>
       <div class="hero-label">${m.label}</div>
       ${m.free
-        ? html`<button class=${'hero-amount rounded is-button' + (m.warn ? ' is-warn' : '')} aria-haspopup="dialog"
-            aria-label=${`Vrij geld ${money(m.cents, { whole: true })}. ${m.sub}. Toon opbouw`} onClick=${(e) => openFree(e, m.free)}>
+        ? html`<div class="hero-row">
+          <button class=${'hero-amount rounded is-button' + (m.warn ? ' is-warn' : '')} aria-haspopup="dialog"
+            aria-label=${`${m.label}: ${money(m.cents, { whole: true, negative: true })}. ${m.sub}. Toon opbouw`} onClick=${(e) => openFree(e, m.free)}>
             <${Amount} key=${p.id} cents=${m.cents} whole animate negative />
             <span class="hero-info" aria-hidden="true"><${Icon} name="info" size=${18} stroke=${2} /></span>
-          </button>`
+          </button>
+          ${m.perDay != null && html`<span class=${'hero-perday num' + (m.perDay < 0 ? ' is-warn' : '')}>≈ ${money(m.perDay, { whole: true, negative: true })} per dag</span>`}
+        </div>`
         : html`<div class=${'hero-amount rounded' + (m.warn ? ' is-warn' : '')}>
             <${Amount} key=${p.id} cents=${m.cents} whole animate negative />
           </div>`}
       <div class="hero-sub num">${m.sub}</div>
-      ${p.is_current && m.free && html`<${Tempo} t=${o.tempo} />`}
+      ${p.is_current && m.free && html`<${Tempo} t=${o.tempo} /><${BufferBar} b=${o.buffer} />`}
       ${p.kind === 'year' && o.months?.length > 0 && html`<${YearBars} o=${o} desk=${desk} />`}
       ${pace && html`<div class="hero-pace">
+        <div class="pace-head">
+          <span class="pace-title">${paceTitle}</span>
+          ${status && html`<span class=${'pace-status' + (status.warn ? ' is-warn' : '')}>${status.text}</span>`}
+        </div>
         ${desk
-          ? html`<${PaceChart} actual=${pace.actual} typical=${pace.typical} label=${paceLabel} showToday=${p.is_current} actualLabel="Nog over"
+          ? html`<${PaceChart} actual=${pace.actual} typical=${pace.left ? pace.typical : []} label=${paceLabel} showToday=${p.is_current} actualLabel=${actualLabel}
               height=${220} axis interactive dayLabel=${(i, long) => paceDay(p, i, long)} />`
-          : html`<${PaceChart} actual=${pace.actual} typical=${pace.typical} label=${paceLabel} showToday=${p.is_current} actualLabel="Nog over" />`}
+          : html`<${PaceChart} actual=${pace.actual} typical=${pace.left ? pace.typical : []} label=${paceLabel} showToday=${p.is_current} actualLabel=${actualLabel} />`}
         <div class="pace-legend" aria-hidden="true">
           <span><i class="lg-solid"></i>${monthSmart(p.id)}</span>
-          <span><i class="lg-dot"></i>normaal</span>
+          ${pace.left && html`<span><i class="lg-dot"></i>normaal</span>`}
         </div>
       </div>`}
     </div>
@@ -286,7 +338,7 @@ function YearBars({ o, desk }) {
     values: YEAR_SERIES.map((s) => Math.max(0, m[s.key] || 0)), partial: m.partial,
   }));
   const extra = (i) => {
-    const n = months[i]?.net_cents ?? 0;
+    const n = months[i] ? resultOf(months[i]) : 0;
     return html`<div class="ro-row"><span>${n >= 0 ? 'Over' : 'Tekort'}</span><b class=${'num' + (n < 0 ? ' is-warn' : '')}>${euros(Math.abs(n))}</b></div>`;
   };
   return html`<div class="hero-pace hero-year">
@@ -396,20 +448,30 @@ function Tiles({ o }) {
   return html`<div class="tiles">
     <${Tile} label="Inkomen" icon="euro" color="green" cents=${o.income_cents}
       progress=${p.is_current && exp ? o.income_cents / exp : null}
-      sub=${p.is_current && exp ? `van ${euros(Math.max(exp, o.income_cents))}` : ''}
+      sub=${p.is_current && !o.income_cents && o.salary_expected ? `salaris verwacht ${shortDate(o.salary_expected)}`
+        : p.is_current && exp ? `van ${euros(Math.max(exp, o.income_cents))}` : ''}
       onClick=${() => navigate('/transacties', { query: { period: p.id, flow: 'in' } })} />
     <${Tile} label="Vaste lasten" icon="vaste-lasten" color="indigo" cents=${o.fixed_cents}
       progress=${p.is_current && fixedTotal ? o.fixed_cents / fixedTotal : null}
-      sub=${p.is_current ? (o.fixed_upcoming_cents > 0 ? `nog ${euros(o.fixed_upcoming_cents)}` : 'alles betaald') : ''}
+      sub=${p.is_current ? fixedSub(o) : ''}
       onClick=${() => navigate('/vaste-lasten')} />
     <${Tile} label="Dagelijks" icon="creditcard" color="blue" cents=${o.daily_cents}
       sub=${o.pace ? `normaal ${euros(p.is_current ? o.pace.typical[o.pace.actual.length - 1] || 0 : o.pace.typical.at(-1) || 0)}` : ''}
       onClick=${() => navigate('/transacties', { query: { period: p.id, flow: 'out' } })} />
     <${Tile} label="Gespaard" icon="piggy" color="teal" cents=${o.saved_cents}
       progress=${p.is_current && o.saving_upcoming_cents > 0 ? o.saved_cents / savedTotal : null}
-      sub=${p.is_current && o.saving_upcoming_cents > 0 ? `nog ${euros(o.saving_upcoming_cents)}` : ''}
+      sub=${p.is_current && o.saving_upcoming_cents > 0 ? `netto · nog ${euros(o.saving_upcoming_cents)}` : 'netto gespaard'}
       onClick=${() => navigate('/potjes')} />
   </div>`;
+}
+
+/** "nog € X" counts only payments still to come; one whose date passed without showing up is
+ *  "achterstallig?" (it may not be imported yet). */
+function fixedSub(o) {
+  const parts = [];
+  if (o.fixed_upcoming_cents > 0) parts.push(`nog ${euros(o.fixed_upcoming_cents)}`);
+  if (o.fixed_overdue_cents > 0) parts.push(`${euros(o.fixed_overdue_cents)} achterstallig?`);
+  return parts.length ? parts.join(' · ') : 'alles betaald';
 }
 
 function SortBanner({ n }) {
@@ -540,7 +602,7 @@ function Upcoming({ o, desk = false }) {
         const cat = categoryById(u.category_id);
         return html`<li class="ov-up-row" key=${u.key}>
           <${DateBadge} iso=${u.date} />
-          <span class="ov-up-main"><span class="ov-up-name">${u.name}</span><span class="ov-up-sub">${cat ? cat.name : relativeDays(u.date, today)}</span></span>
+          <span class="ov-up-main"><span class="ov-up-name">${u.name}</span><span class=${'ov-up-sub' + (u.overdue ? ' c-warn' : '')}>${u.overdue ? 'achterstallig?' : cat ? cat.name : relativeDays(u.date, today)}</span></span>
           <span class="num ov-up-amt">${money(u.amount_cents)}</span>
         </li>`;
       })}</ul>
@@ -551,7 +613,7 @@ function Upcoming({ o, desk = false }) {
       ${items.map((u) => {
         const cat = categoryById(u.category_id);
         return html`<${ListRow} key=${u.key} leading=${html`<${DateBadge} iso=${u.date} />`} title=${u.name}
-          subtitle=${cat ? cat.name : relativeDays(u.date, today)}
+          subtitle=${u.overdue ? html`<span class="c-warn">achterstallig?</span>` : cat ? cat.name : relativeDays(u.date, today)}
           value=${html`<span class="num">${money(u.amount_cents)}</span>`} />`;
       })}
       <${ListRow} title="Alle vaste lasten" tint chevron onClick=${() => navigate('/vaste-lasten')} />

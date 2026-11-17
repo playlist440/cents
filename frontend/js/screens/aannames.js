@@ -1,6 +1,6 @@
 // Slimme aannames (SPEC §13, #/instellingen/aannames): everything the app assumed, each on one
 // row with a switch or an undo action. Salary series, account soorten (import or own choice),
-// suggested month start day, Vrij geld (salarisdag, buffer, ondergrens betaalrekening), the
+// suggested month start day, Nog te besteden (salarisdag, buffer, ondergrens betaalrekening), the
 // small-amount split at fuel stations, ignored vaste lasten,
 // learned potje links, insight kinds, automatic prices of funds, and a link to Geleerde regels.
 // iPhone: a pushed screen; Mac: a section of the Instellingen split.
@@ -142,7 +142,7 @@ function Content({ a, settings, pending }) {
         accessory=${html`<${Button} size="small" variant="tinted" onClick=${useDay} aria-label=${`Laat de maand op de ${suggested}e beginnen`}>Gebruik</${Button}>`} />
     </${List}>`}
 
-    <${List} header="Vrij geld">
+    <${List} header="Nog te besteden en buffer">
       <${ListRow} icon="calendar" iconColor="green" title="Salarisdag" subtitle=${paydaySub}
         value=${html`<span class="sa-pop">${paydayLabel}<${Icon} name="chevron-up-down" size=${12} stroke=${2.4} /></span>`}
         onClick=${pickPayday} label=${`Salarisdag: ${paydayLabel}. Wijzig`} />

@@ -1,14 +1,25 @@
-"""The holistic "now" figures of the Overzicht (SPEC 9 "Vrij geld, tempo, betaalrekening").
+"""The holistic "now" figures of the Overzicht (SPEC 9 "Nog te besteden, tempo, buffer,
+betaalrekening").
 
-- `free`: checking + savings balances − money in active potjes − buffer − fixed costs still
-  due before the next salary − outstanding credit-card purchases. Moving money between own
-  accounts never changes it (both balances are counted; transfers to savings are no cost).
+- `free` ("Nog te besteden tot <salarisdatum>"): checking + savings balances − savings already forming the buffer (never the unfilled target) − money in active
+  potjes − fixed costs still due before the next salary − outstanding credit-card purchases −
+  the expected next credit-card settlement (when it falls before payday) − typical daily
+  spending for the days until payday. Not clamped: negative means the money does not reach
+  payday at a normal pace. The buffer is NOT subtracted (it is shown separately). Moving money
+  between own accounts never changes it.
+- Balance dates: per account `as_of` = the later of its latest balance and the end of the
+  latest import that covered it. The oldest of these (checking/savings) drives `stale` and the
+  start of the window for fixed costs and daily spending; payday is the next salary after the
+  main checking account's date, so a salary that is expected but not imported yet
+  (`salary_pending`) is still the upcoming payday.
 - `tempo`: mean monthly result (income − fixed − daily) over the last three complete periods,
   plus up to twelve complete periods for a mini chart. Saving is not spending and money back
   from savings is not income (the ledger already does that). `None` with < 2 complete periods.
+- `buffer`: what the buffer holds (a potje named "buffer", else savings not in potjes, at most
+  the target) against the target from the `buffer` assumption.
 - `checking_warning`: day-by-day projection of the main checking account until the next
-  salary (upcoming fixed costs and savings transfers on their dates, typical daily spending per
-  day). Only returned when the lowest point drops below the floor.
+  salary (upcoming fixed costs and savings transfers, other recurring income, typical daily
+  spending per day). Only returned when the lowest point drops below the floor.
 
 Assumptions (services/assumptions.py): `payday_day`, `buffer`, `checking_floor_cents`.
 """
@@ -18,17 +29,20 @@ from __future__ import annotations
 import calendar
 import math
 import sqlite3
+import statistics
 from datetime import date, timedelta
 
 from .. import db
 from . import assumptions as assumptions_mod
 from . import goals as goals_mod
-from . import networth, recurring
-from .ledger import FIXED, INCOME, SAVING, Ledger
+from . import networth, periods, recurring
+from .ledger import DAILY, FIXED, INCOME, SAVING, Ledger
 
 STALE_DAYS = 5
 TEMPO_MONTHS = 3
 CHART_MONTHS = 12
+TYPICAL_MONTHS = 6
+SETTLEMENTS = 3
 
 
 def _group(lg: Ledger, item: dict) -> str | None:
@@ -39,56 +53,163 @@ def _day_in_month(y: int, m: int, day: int) -> date:
     return date(y, m, min(day, calendar.monthrange(y, m)[1]))
 
 
-def payday(conn: sqlite3.Connection, lg: Ledger, items: list[dict]) -> tuple[date, str]:
-    """Next salary date after today and how it was found: `setting`, `salary` or `period`."""
-    today = lg.today
-    setting = assumptions_mod.get(conn)["payday_day"]["day"]
-    if isinstance(setting, int):
-        d = _day_in_month(today.year, today.month, setting)
-        if d <= today:
-            y, m = (today.year + 1, 1) if today.month == 12 else (today.year, today.month + 1)
-            d = _day_in_month(y, m, setting)
-        return d, "setting"
+def _next_month(d: date, day: int | None = None) -> date:
+    y, m = (d.year + 1, 1) if d.month == 12 else (d.year, d.month + 1)
+    return _day_in_month(y, m, day or d.day)
+
+
+def balance_accounts(conn: sqlite3.Connection) -> list[dict]:
+    """Visible checking/savings accounts with a balance; `as_of` = the later of the balance
+    date and the latest import of a file for that account (that import's day, at most the
+    latest imported transaction of any account): a quiet savings account whose file was
+    imported together with a fresh checking file is not stale."""
+    out = []
+    last = periods.last_imported(conn)
+    for a in networth.get(conn)["accounts"]:
+        if a["type"] not in ("checking", "savings") or a["balance_cents"] is None:
+            continue
+        imported = db.value(conn, """
+            SELECT MAX(substr(i.imported_at, 1, 10)) FROM imports i WHERE i.account_id = ? OR EXISTS (
+                SELECT 1 FROM transactions t WHERE t.import_id = i.id AND t.account_id = ?)""",
+                            (a["id"], a["id"]))
+        covered = min(imported, last.isoformat()) if imported and last else None
+        as_of = max(filter(None, [a["as_of"], covered]), default=None)
+        out.append({**a, "as_of": as_of})
+    return out
+
+
+def main_checking(conn: sqlite3.Connection, accounts: list[dict] | None = None) -> dict | None:
+    accounts = [a for a in (accounts if accounts is not None else balance_accounts(conn))
+                if a["type"] == "checking"]
+    if not accounts:
+        return None
+    counts = {r["account_id"]: r["n"] for r in db.rows(
+        conn, "SELECT account_id, COUNT(*) AS n FROM transactions GROUP BY account_id")}
+    return max(accounts, key=lambda a: (counts.get(a["id"], 0), a["balance_cents"]))
+
+
+def salary_item(lg: Ledger, items: list[dict]) -> dict | None:
     income = [i for i in items if i["direction"] == "in" and i["status"] != "ended"
               and _group(lg, i) == INCOME]
-    if income:
-        main = max(income, key=lambda i: i["amount_cents"])
-        nxt = recurring.occurrences(main, today + timedelta(days=1), today + timedelta(days=400))
+    return max(income, key=lambda i: i["amount_cents"]) if income else None
+
+
+def _payday_base(conn: sqlite3.Connection, lg: Ledger) -> date:
+    """The balance date payday counts from: the main checking account's (the salary lands
+    there), else the latest balance date, else today."""
+    accounts = balance_accounts(conn)
+    chk = main_checking(conn, accounts)
+    day = (chk or {}).get("as_of") or max((a["as_of"] for a in accounts if a["as_of"]), default=None)
+    return min(lg.today, date.fromisoformat(day)) if day else lg.today
+
+
+def next_payday(conn: sqlite3.Connection, lg: Ledger, items: list[dict],
+                base: date) -> tuple[date, str]:
+    """First salary date after `base` and how it was found: `setting`, `salary` or `period`."""
+    setting = assumptions_mod.get(conn)["payday_day"]["day"]
+    if isinstance(setting, int):
+        d = _day_in_month(base.year, base.month, setting)
+        return (d if d > base else _next_month(d, setting)), "setting"
+    main = salary_item(lg, items)
+    if main:
+        nxt = recurring.occurrences(main, base + timedelta(days=1), base + timedelta(days=400))
         if nxt:
             return nxt[0], "salary"
     return lg.current().end, "period"
 
 
+def payday(conn: sqlite3.Connection, lg: Ledger, items: list[dict]) -> tuple[date, str]:
+    """Next salary after the balance date (not after today: a salary that is due but not
+    imported yet is still the upcoming one)."""
+    return next_payday(conn, lg, items, _payday_base(conn, lg))
+
+
 def _spend_items(lg: Ledger, items: list[dict], start: date, end: date,
-                 groups: tuple[str, ...]) -> list[tuple[dict, date]]:
+                 groups: tuple[str, ...], direction: str = "out") -> list[tuple[dict, date]]:
     out = []
     for i in items:
-        if i["direction"] == "out" and _group(lg, i) in groups:
+        if i["direction"] == direction and _group(lg, i) in groups:
             out += [(i, d) for d in recurring.occurrences(i, start, end)]
     return out
+
+
+def monthly_fixed(lg: Ledger, items: list[dict]) -> float:
+    """Average monthly fixed costs: previous up to six complete periods, else recurring items."""
+    history = lg.complete_before(lg.current(), 6)
+    if history:
+        return sum(lg.flows_for(p).fixed for p in history) / len(history)
+    return -sum(i["per_month_cents"] for i in items if i["direction"] == "out"
+                and i["status"] != "ended" and _group(lg, i) == FIXED)
 
 
 def buffer_target(conn: sqlite3.Connection, lg: Ledger, items: list[dict]) -> int:
     setting = assumptions_mod.get(conn)["buffer"]
     if setting.get("amount_cents") is not None:
         return max(0, int(setting["amount_cents"]))
-    history = lg.complete_before(lg.current(), 6)
-    if history:
-        monthly = sum(lg.flows_for(p).fixed for p in history) / len(history)
+    return max(0, int(round(monthly_fixed(lg, items) * float(setting.get("months") or 0))))
+
+
+def buffer_status(conn: sqlite3.Connection, lg: Ledger, items: list[dict]) -> dict | None:
+    """The buffer: a potje named "buffer" when there is one, else the savings balance that is
+    not in potjes (at most the target). `months` = how many months of fixed costs it covers."""
+    savings = sum(a["balance_cents"] for a in balance_accounts(conn) if a["type"] == "savings")
+    active = goals_mod.overview(conn)["goals"]
+    target = buffer_target(conn, lg, items)
+    pots = [g for g in active if "buffer" in g["name"].lower()]
+    if pots:
+        saved, source = sum(max(0, g["saldo_cents"]) for g in pots), "potje"
     else:
-        monthly = -sum(i["per_month_cents"] for i in items if i["direction"] == "out"
-                       and i["status"] != "ended" and _group(lg, i) == FIXED)
-    return max(0, int(round(monthly * float(setting.get("months") or 0))))
+        free_savings = max(0, savings - sum(max(0, g["saldo_cents"]) for g in active))
+        saved, source = (min(free_savings, target) if target else free_savings), "savings"
+    if not target and not saved:
+        return None
+    monthly = monthly_fixed(lg, items)
+    return {"saved_cents": int(saved), "target_cents": target, "source": source,
+            "months": round(saved / monthly, 1) if monthly > 0 else None,
+            "target_months": round(target / monthly, 1) if monthly > 0 else None}
+
+
+def _card_lump(r: dict) -> int:
+    """The part of a ledger row that is a credit-card settlement counted as daily spending."""
+    b = r["bucket"]
+    return b[2] if b and b[0] == DAILY and r["category_key"] == "creditcard" else 0
+
+
+def daily_rate(lg: Ledger) -> float:
+    """Typical daily spending per day (cents): the median of the per-day rate of the last six
+    complete periods, without credit-card settlement lumps (estimated separately)."""
+    rates = []
+    for p in lg.complete_before(lg.current(), TYPICAL_MONTHS):
+        f = lg.flows_for(p)
+        rates.append((f.daily - sum(_card_lump(r) for r in f.rows)) / p.days_total)
+    return float(statistics.median(rates)) if rates else 0.0
+
+
+def expected_settlement(lg: Ledger, after: date, before: date) -> dict | None:
+    """The next credit-card settlement, estimated as the median unexplained part of the last
+    three, on the same day one month after the latest; only when it falls in (after, before)."""
+    rows = sorted((r for r in lg.rows if _card_lump(r) and r["amount_cents"] < 0),
+                  key=lambda r: r["date"])
+    if not rows:
+        return None
+    cents = int(round(statistics.median([_card_lump(r) for r in rows[-SETTLEMENTS:]])))
+    last = date.fromisoformat(rows[-1]["date"])
+    day = _next_month(last)
+    while day <= after:
+        day = _next_month(day, last.day)
+    if cents <= 0 or day >= before:
+        return None
+    return {"date": day.isoformat(), "cents": cents}
 
 
 def free(conn: sqlite3.Connection, lg: Ledger, items: list[dict]) -> dict | None:
-    accounts = [a for a in networth.get(conn)["accounts"]
-                if a["type"] in ("checking", "savings") and a["balance_cents"] is not None]
+    accounts = balance_accounts(conn)
     if not accounts:
         return None
     balances = sum(a["balance_cents"] for a in accounts)
     savings = sum(a["balance_cents"] for a in accounts if a["type"] == "savings")
-    as_of = max((a["as_of"] for a in accounts if a["as_of"]), default=None)
+    dates = [a["as_of"] for a in accounts if a["as_of"]]
+    as_of = min(dates, default=None)
     credit = sum(a.get("outstanding_cents") or 0 for a in networth.get(conn)["accounts"]
                  if a["type"] == "credit")
 
@@ -96,26 +217,45 @@ def free(conn: sqlite3.Connection, lg: Ledger, items: list[dict]) -> dict | None
     in_goals = sum(max(0, g["saldo_cents"]) for g in active)
     # potjes live on the savings account(s); never subtract more than is there
     goals_cents = min(in_goals, max(0, savings)) if savings > 0 else 0
-    # a potje called "buffer" already holds (part of) the buffer
-    buffer_goal = sum(max(0, g["saldo_cents"]) for g in active if "buffer" in g["name"].lower())
-    buffer_cents = max(0, buffer_target(conn, lg, items) - buffer_goal)
 
     pay, source = payday(conn, lg, items)
     start = (date.fromisoformat(as_of) + timedelta(days=1)) if as_of else lg.today
     fixed = -sum(i["amount_cents"] for i, _ in _spend_items(lg, items, start, pay, (FIXED,)))
-    total = balances - goals_cents - buffer_cents - fixed - credit
-    stale = bool(as_of) and (lg.today - date.fromisoformat(as_of)).days > STALE_DAYS
+    card = expected_settlement(lg, start - timedelta(days=1), pay)
+    rate = daily_rate(lg)
+    days = max(0, (pay - start).days)
+    daily = int(round(rate * days))
+    # Savings that already form the buffer are not money to spend. Only what is there is set
+    # aside (never the unfilled part of the target), so this can never push the figure negative.
+    buf = buffer_status(conn, lg, items)
+    reserved = 0
+    if buf and buf["source"] == "savings":
+        reserved = min(buf["saved_cents"], buf["target_cents"] or 0, max(0, savings - goals_cents))
+    total = balances - goals_cents - reserved - fixed - credit - (card["cents"] if card else 0) - daily
+    days_left = (pay - lg.today).days
+    stale_of = lambda d: bool(d) and (lg.today - date.fromisoformat(d)).days > STALE_DAYS  # noqa: E731
     return {"total_cents": total, "balances_cents": balances, "goals_cents": goals_cents,
-            "buffer_cents": buffer_cents, "fixed_until_payday_cents": fixed,
-            "credit_cents": credit, "payday": pay.isoformat(), "payday_source": source,
-            "as_of": as_of, "stale": stale,
+            "buffer_reserved_cents": reserved,
+            "fixed_until_payday_cents": fixed, "credit_cents": credit,
+            "card_settlement": card, "daily_until_payday_cents": daily,
+            "daily_rate_cents": int(round(rate)), "daily_days": days,
+            "days_left": max(0, days_left),
+            "per_day_cents": int(total / days_left) if days_left > 0 else None,
+            "payday": pay.isoformat(), "payday_source": source,
+            "salary_pending": pay <= lg.today,
+            "as_of": as_of, "stale": stale_of(as_of),
             "accounts": [{"name": a["name"], "type": a["type"], "balance_cents": a["balance_cents"],
-                          "as_of": a["as_of"]} for a in accounts]}
+                          "as_of": a["as_of"], "stale": stale_of(a["as_of"])} for a in accounts]}
 
 
-def _net(lg: Ledger, p) -> int:
+def result(lg: Ledger, p) -> int:
+    """A period's result, the one definition of "over / tekort": income − fixed − daily.
+    Saving is not spending, money back from savings is not income."""
     f = lg.flows_for(p)
     return f.income - f.fixed - f.daily
+
+
+_net = result
 
 
 def tempo(lg: Ledger) -> dict | None:
@@ -137,23 +277,6 @@ def tempo(lg: Ledger) -> dict | None:
             "months": [{"period": p.id, "net_cents": _net(lg, p)} for p in reversed(complete)]}
 
 
-def daily_pace(lg: Ledger) -> float:
-    """Typical daily spending per day over the recent complete periods (cents)."""
-    recent = lg.complete_before(lg.current(), TEMPO_MONTHS)
-    days = sum(p.days_total for p in recent)
-    return sum(lg.flows_for(p).daily for p in recent) / days if days else 0.0
-
-
-def main_checking(conn: sqlite3.Connection) -> dict | None:
-    accounts = [a for a in networth.get(conn)["accounts"]
-                if a["type"] == "checking" and a["balance_cents"] is not None]
-    if not accounts:
-        return None
-    counts = {r["account_id"]: r["n"] for r in db.rows(
-        conn, "SELECT account_id, COUNT(*) AS n FROM transactions GROUP BY account_id")}
-    return max(accounts, key=lambda a: (counts.get(a["id"], 0), a["balance_cents"]))
-
-
 def checking_warning(conn: sqlite3.Connection, lg: Ledger, items: list[dict],
                      pay: date) -> dict | None:
     acc = main_checking(conn)
@@ -164,9 +287,11 @@ def checking_warning(conn: sqlite3.Connection, lg: Ledger, items: list[dict],
     if pay <= start:
         return None
     due: dict[date, int] = {}
-    for i, d in _spend_items(lg, items, start, pay, (FIXED, SAVING)):
+    moves = (_spend_items(lg, items, start, pay, (FIXED, SAVING))
+             + _spend_items(lg, items, start, pay, (INCOME,), direction="in"))
+    for i, d in moves:
         due[d] = due.get(d, 0) + i["amount_cents"]
-    per_day = daily_pace(lg)
+    per_day = daily_rate(lg)
     balance, low, low_day = float(acc["balance_cents"]), None, None
     day = start
     while day < pay:
@@ -186,9 +311,9 @@ def checking_warning(conn: sqlite3.Connection, lg: Ledger, items: list[dict],
 
 
 def compute(conn: sqlite3.Connection, lg: Ledger) -> dict:
-    """The three figures for the current period."""
+    """The figures about now for the current period."""
     items = recurring.items(conn)
     f = free(conn, lg, items)
     pay = date.fromisoformat(f["payday"]) if f else payday(conn, lg, items)[0]
-    return {"free": f, "tempo": tempo(lg), "checking_warning": checking_warning(conn, lg, items, pay)}
-
+    return {"free": f, "tempo": tempo(lg), "buffer": buffer_status(conn, lg, items),
+            "checking_warning": checking_warning(conn, lg, items, pay)}
