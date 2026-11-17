@@ -55,3 +55,33 @@ def test_checking_without_data_has_no_balance(client, book):
     nw = client.get("/api/networth").json()
     assert nw["accounts"][0]["balance_cents"] is None and nw["total_cents"] == 0
     assert nw["series"] == []
+
+
+def test_manual_savings_balance_is_a_fixed_point_moved_by_transfers(client, book):
+    """A savings account fed only from checking: the manual balance anchors the line, transfers
+    move it before and after, and correcting it shifts the whole history instead of showing a
+    deposit this month."""
+    chk = book.account("Betaal", "checking", "NL01TEST0000000001")
+    sav = book.account("Spaar", "savings", "NL02TEST0000000002", manual_balance=300000,
+                       manual_date="2026-02-10")
+    book.tx(chk, "2026-01-05", -50000, "sparen", "Spaar", kind="transfer", to=sav, balance=50000)
+    book.tx(chk, "2026-02-05", -50000, "sparen", "Spaar", kind="transfer", to=sav, balance=0)
+    book.tx(chk, "2026-03-05", -20000, "sparen", "Spaar", kind="transfer", to=sav, balance=-20000)
+    book.tx(chk, "2026-03-06", 5000, "sparen", "Spaar", kind="transfer", to=sav, balance=-15000)
+    book.commit()
+
+    def savings():
+        nw = client.get("/api/networth").json()
+        acc = {a["name"]: a for a in nw["accounts"]}
+        return acc["Spaar"], {s["month"]: s["savings_cents"] for s in nw["series"]}
+
+    acc, series = savings()
+    assert acc["balance_cents"] == 300000 + 20000 - 5000 and acc["as_of"] == "2026-03-06"
+    assert series == {"2026-01": 250000, "2026-02": 300000, "2026-03": 315000}
+
+    # correct the starting balance: +100.000 everywhere, nothing extra in March
+    client.patch(f"/api/accounts/{sav}", json={"manual_balance_cents": 415000,
+                                                "manual_balance_date": "2026-03-15"})
+    acc, series = savings()
+    assert acc["balance_cents"] == 415000
+    assert series == {"2026-01": 350000, "2026-02": 400000, "2026-03": 415000}

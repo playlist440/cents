@@ -1,6 +1,7 @@
 """Net worth (SPEC 7 "Balances", 10 GET /networth).
 
-- Checking / savings: `balance_after_cents` of the latest transaction, else the manual balance.
+- Checking / savings: `balance_after_cents` of the latest transaction, else the manual balance
+  as a fixed point moved by transfers booked on other accounts (`_anchored_points`).
 - Investment: invested = transfers out of checking to the account minus transfers back.
   Value = the latest manual value plus the net transfers made after that value's date (money
   moved in later is known; nothing is interpolated). Without any value: value = invested.
@@ -85,6 +86,27 @@ def _investment(conn: sqlite3.Connection, account: dict) -> dict:
     return {"invested": invested, "values": values, "value_at": value_at}
 
 
+def _anchored_points(conn: sqlite3.Connection, account_id: int, anchor_cents: int,
+                     anchor_day: str) -> list[tuple[str, int]]:
+    """An account without its own imports but with a manual balance (often a savings account
+    fed only from the checking account). The manual balance is a fixed point; every transfer
+    booked on another account to or from this one moves the line, before and after that point.
+    Correcting the balance therefore shifts the whole history (a wrong starting balance), it is
+    not a deposit in the current month."""
+    flows = db.rows(conn, """SELECT date, SUM(-amount_cents) AS cents FROM transactions
+                             WHERE transfer_account_id = ? AND account_id != ?
+                             GROUP BY date ORDER BY date""", (account_id, account_id))
+    before = sum(f["cents"] for f in flows if f["date"] <= anchor_day)
+    value = anchor_cents - before          # balance before the first known transfer
+    points: list[tuple[str, int]] = []
+    for f in flows:
+        value += f["cents"]
+        points.append((f["date"], value))
+    points.append((anchor_day, anchor_cents))
+    points.sort(key=lambda p: p[0])        # stable: on the anchor day the anchor wins
+    return points
+
+
 def compute(conn: sqlite3.Connection) -> dict:
     lg = ledger_mod.get(conn)
     today = lg.today.isoformat()
@@ -99,9 +121,9 @@ def compute(conn: sqlite3.Connection) -> dict:
             if points:
                 item["balance_cents"], item["as_of"] = points[-1][1], points[-1][0]
             elif a["manual_balance_cents"] is not None:
-                item["balance_cents"] = a["manual_balance_cents"]
-                item["as_of"] = a["manual_balance_date"]
-                points = [(a["manual_balance_date"] or today, a["manual_balance_cents"])]
+                points = _anchored_points(conn, a["id"], a["manual_balance_cents"],
+                                          a["manual_balance_date"] or today)
+                item["balance_cents"], item["as_of"] = points[-1][1], points[-1][0]
             timeline = _Timeline(points)
             timelines.append((a["type"], timeline.value_at))
             if points:
