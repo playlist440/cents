@@ -35,6 +35,20 @@ export const TYPES = [
   { type: 'credit', label: 'Creditcard', group: 'Creditcard', icon: 'creditcard', color: 'orange' },
 ];
 const typeInfo = (t) => TYPES.find((x) => x.type === t) || TYPES[0];
+// navigator.clipboard bestaat alleen op https of localhost. Via http op je eigen netwerk werkt
+// alleen de oude kopieermethode, dus die eerst; de nieuwe is de terugval.
+function copyText(text) {
+  const done = () => toast('Rekeningnummer gekopieerd');
+  const ta = document.createElement('textarea');
+  ta.value = text; ta.setAttribute('readonly', ''); ta.style.cssText = 'position:fixed;top:0;opacity:0';
+  document.body.appendChild(ta); ta.select();
+  let ok = false;
+  try { ok = document.execCommand('copy'); } catch { /* terugval hieronder */ }
+  ta.remove();
+  if (ok) return done();
+  navigator.clipboard?.writeText(text).then(done, () => toast('Kopiëren lukte niet. Selecteer het nummer met de hand.'));
+}
+
 export const maskIban = (iban) => (iban ? `${iban.slice(0, 2)}•• ${iban.slice(-4)}` : '');
 
 const RANGES = [['6m', '6M'], ['1j', '1J'], ['all', 'Alles']];
@@ -277,6 +291,10 @@ export function AccountSheet({ close, account = null }) {
         <div class="vm-sheet-amount rounded num">${account.type === 'credit' ? money(account.outstanding_cents || 0) : account.balance_cents == null ? '—' : money(account.balance_cents, { negative: true })}</div>
         <div class="vm-sheet-sub">${account.type === 'credit' ? 'open' : account.as_of ? `op ${longDate(account.as_of)}` : account.iban ? maskIban(account.iban) : ''}</div>
       </div>`}
+      ${!isNew && account.iban && html`<${List} footer="Tik om te kopiëren.">
+        <${ListRow} title="Rekeningnummer" value=${html`<span class="num" style=${{ userSelect: 'text' }}>${account.iban.replace(/(.{4})/g, '$1 ').trim()}</span>`}
+          onClick=${() => copyText(account.iban)} />
+      </${List}>`}
       <${List}>
         <${TextField} label="Naam" value=${name} onInput=${setName} placeholder="Spaarrekening" maxLength=${60} enterkeyhint="done" />
       </${List}>
