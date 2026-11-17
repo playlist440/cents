@@ -500,11 +500,57 @@ function YearForm({ m, onChange }) {
       <${AmountField} label="Schuld op 31 december" cents=${vals[p.id]?.debt_end_cents} onChange=${(c) => set(p.id, 'debt_end_cents', c)} />
       <${AmountField} label="Betaalde rente" cents=${vals[p.id]?.interest_cents} onChange=${(c) => set(p.id, 'interest_cents', c)} />
       <${AmountField} label="Afgelost" cents=${vals[p.id]?.repaid_cents} onChange=${(c) => set(p.id, 'repaid_cents', c)} />
-    </${List}>`)}
+    </${List}>
+    <${Estimator} year=${year} onFill=${(v) => setVals((all) => ({ ...all, [p.id]: { ...all[p.id], ...v } }))} />`)}
     <${List} footer=${`Aflossingsvrij? Laat afgelost op 0. De opgave over ${m.form_year + 1} komt begin ${m.form_year + 2}.`}>
       <li class="field-row vm-add-row"><${Button} variant="tinted" size="medium" block onClick=${save} disabled=${!ready} loading=${busy}>Bewaar jaaropgave</${Button}></li>
     </${List}>
   </div>`;
+}
+
+// Rekenhulp: geen jaaropgave bij de hand, wel het overzicht van de geldverstrekker met de
+// hoogte per 1 januari, de rente en het maandbedrag. Rekent de twaalf maanden van het jaar
+// terug vanaf die schuld en vult rente en afgelost in (een schatting: een renteherziening
+// midden in het jaar telt niet mee).
+export function estimateYear(form, balanceCents, ratePct, monthlyCents) {
+  const i = ratePct / 100 / 12;
+  let b = balanceCents, interest = 0;
+  const principal = monthlyCents - balanceCents * i;          // lineair: vast deel aflossing
+  for (let k = 0; k < 12; k++) {
+    let prev;
+    if (form === 'aflossingsvrij') prev = b;
+    else if (form === 'lineair') prev = b + Math.max(0, principal);
+    else prev = i > 0 ? (b + monthlyCents) / (1 + i) : b + monthlyCents;   // annuïteit
+    interest += prev * i;
+    b = prev;
+  }
+  return { debt_end_cents: Math.round(balanceCents), interest_cents: Math.round(interest),
+    repaid_cents: Math.max(0, Math.round(b - balanceCents)) };
+}
+
+function Estimator({ year, onFill }) {
+  const [open, setOpen] = useState(false);
+  const [form, setForm] = useState('annuiteit');
+  const [bal, setBal] = useState(null);
+  const [rate, setRate] = useState('');
+  const [monthly, setMonthly] = useState(null);
+  const pct = parseFloat(String(rate).replace(',', '.'));
+  const ok = bal > 0 && pct >= 0 && pct < 20 && (form === 'aflossingsvrij' || monthly > 0);
+  if (!open) return html`<${List}><${ListRow} icon="sparkles" tint title="Uitrekenen met maandbedrag en rente" onClick=${() => setOpen(true)} /></${List}>`;
+  const fill = () => {
+    if (!ok) return;
+    onFill(estimateYear(form, bal, pct, monthly || 0));
+    setOpen(false);
+    toast(`Rente en afgelost over ${year} geschat`);
+  };
+  return html`<${List} header="Uitrekenen" footer=${`Van het overzicht van je geldverstrekker. Cents rekent ${year} terug vanaf de hoogte per 1 januari ${year + 1}; controleer de uitkomst met je jaaropgave als je die hebt.`}>
+    <li class="field-row"><${Segmented} value=${form} onChange=${setForm} options=${[
+      ['annuiteit', 'Annuïteit'], ['lineair', 'Lineair'], ['aflossingsvrij', 'Aflossingsvrij']]} /></li>
+    <${AmountField} label=${`Hoogte per 1-1-${year + 1}`} cents=${bal} onChange=${setBal} />
+    <${TextField} label="Rente %" value=${rate} onInput=${setRate} placeholder="3,8" inputmode="decimal" />
+    ${form !== 'aflossingsvrij' && html`<${AmountField} label=${`Maandbedrag per 1-1-${year + 1}`} cents=${monthly} onChange=${setMonthly} />`}
+    <li class="field-row vm-add-row"><${Button} variant="tinted" size="medium" block onClick=${fill} disabled=${!ok}>Vul in</${Button}></li>
+  </${List}>`;
 }
 
 function HomeValue({ m, onChange }) {
