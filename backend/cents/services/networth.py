@@ -11,6 +11,10 @@
 - Home (SPEC 7.2): `home` = {home_cents, debt_cents, equity_cents, included}; when included
   (setting on and a home value known) the overwaarde counts in `total_cents` and in the series
   (`home_cents` per point = home value − estimated debt at month end).
+- Other items (SPEC 7.3): `assets` lists pension, debt and other items with `signed_cents`
+  (debt negative) and `include`; included ones count in `total_cents` and in the series
+  (`assets_cents` per point, only when at least one item is included). `pension_excluded_cents`
+  = the pension not counted (shown as "Pensioen (later beschikbaar)"), else None.
 - Series: one point per calendar month (month end, today for the current month), each account
   carrying its last known value forward; before an account's first known value it counts 0.
 """
@@ -23,7 +27,7 @@ import sqlite3
 from datetime import date
 
 from .. import db
-from . import cache, investments, ledger as ledger_mod, mortgage
+from . import assets as assets_mod, cache, investments, ledger as ledger_mod, mortgage
 
 TYPES = ("checking", "savings", "investment", "credit")
 
@@ -154,6 +158,10 @@ def compute(conn: sqlite3.Connection) -> dict:
     est = home.pop("_estimator") if home else None
     if home and home["included"]:
         total += home["equity_cents"]
+    asset_items, counted = assets_mod.networth_part(conn, lg)
+    total += sum(a["signed_cents"] for a in asset_items if a["include"])
+    excluded = [a["value_cents"] for a in asset_items
+                if a["kind"] == "pension" and not a["include"] and a["value_cents"] is not None]
 
     series = []
     if first_days:
@@ -171,11 +179,15 @@ def compute(conn: sqlite3.Connection) -> dict:
             if home and home["included"]:
                 point["home_cents"] = est.equity(end) or 0
                 point["total_cents"] += point["home_cents"]
+            if counted:
+                point["assets_cents"] = sum(it.signed(end) for it in counted)
+                point["total_cents"] += point["assets_cents"]
             series.append(point)
             y, m = (y + 1, 1) if m == 12 else (y, m + 1)
     for a in visible:
         a.pop("hidden", None)
-    return {"total_cents": total, "accounts": visible, "series": series, "home": home}
+    return {"total_cents": total, "accounts": visible, "series": series, "home": home,
+            "assets": asset_items, "pension_excluded_cents": sum(excluded) if excluded else None}
 
 
 def get(conn: sqlite3.Connection) -> dict:

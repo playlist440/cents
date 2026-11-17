@@ -177,6 +177,14 @@ export const api = {
   addHomeValue: ({ date, value_cents }) => post('/mortgage/home-values', { date, value_cents }),
   deleteHomeValue: (id) => del(`/mortgage/home-values/${id}`),
 
+  /* Pension, debt, other possessions (SPEC §7.3) */
+  assets: () => get('/assets'),
+  createAsset: (body) => post('/assets', body),
+  updateAsset: (id, changes) => patch(`/assets/${id}`, changes),
+  deleteAsset: (id) => del(`/assets/${id}`),
+  addAssetEntry: (id, body) => post(`/assets/${id}/entries`, body),
+  deleteAssetEntry: (id, entryId) => del(`/assets/${id}/entries/${entryId}`),
+
   /* Holdings of investment accounts and automatic prices (SPEC §7.1) */
   holdings: (id) => get(`/accounts/${id}/holdings`),
   /* trade: { date, isin, name?, side: 'buy'|'sell', quantity, price_cents, fees_cents } */

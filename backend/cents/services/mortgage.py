@@ -115,8 +115,9 @@ def split_config(conn: sqlite3.Connection) -> tuple[str, float] | None:
 
 # ---------------------------------------------------------------------------- estimates
 
-def _repaid_events(lg) -> list[tuple[str, int]]:
-    return [(r["date"], r["repaid"]) for r in lg.rows if r.get("repaid")]
+def _repaid_events(lg, key: str | None) -> list[tuple[str, int]]:
+    """Repaid amounts of the mortgage's own linked payment (debts are split too)."""
+    return [(r["date"], r["repaid"]) for r in lg.rows if r.get("repaid") and r["merchant_key"] == key]
 
 
 def _weights(conn: sqlite3.Connection, plist: list[dict], st: dict) -> dict[int, float]:
@@ -135,7 +136,7 @@ class Estimator:
         self.parts = parts(conn)
         self.st = statements(conn)
         self.weights = _weights(conn, self.parts, self.st)
-        self.events = _repaid_events(lg)
+        self.events = _repaid_events(lg, linked_merchant(conn)[0])
         self.homes = db.rows(conn, "SELECT id, date, value_cents FROM home_values ORDER BY date, id")
 
     def _repaid_between(self, after: str, upto: str) -> int:

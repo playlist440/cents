@@ -34,7 +34,7 @@ SCORES = {
     "new_recurring": 76, "category_spike": 70, "large": 68, "yearly_bill": 66, "left_over": 64,
     "pace": 60, "goal_behind": 58, "goal_reached": 56, "buffer": 55, "unsorted": 50,
     "fixed_share": 45, "last_year": 40, "savings_rate": 35, "fx_costs": 33, "bank_fees": 30,
-    "tempo": 62, "mortgage": 52,
+    "tempo": 62, "mortgage": 52, "pension": 51,
 }
 
 
@@ -515,6 +515,18 @@ def mortgage_statement(conn: sqlite3.Connection, lg: Ledger, p: Period, ov: dict
     return []
 
 
+def pension_statement(conn: sqlite3.Connection, lg: Ledger, p: Period, ov: dict) -> list[dict]:
+    """In April: ask to update the pension once a year, only when a pension item exists and its
+    last entry is more than 11 months old (SPEC 7.3)."""
+    from . import assets
+    if not ov["period"]["is_current"] or lg.today.month != 4:
+        return []
+    if not assets.stale_pension(conn, lg.today):
+        return []
+    return [make("pension", f"pension:{lg.today.year}", "info", "🧓",
+                 "Pensioenoverzicht bijwerken?", "networth", {})]
+
+
 # ---------------------------------------------------------------------------- preferences
 
 KIND_LABELS = {
@@ -539,6 +551,7 @@ KIND_LABELS = {
     "bank_fees": "Bankkosten",
     "fx_costs": "Wisselkoerskosten",
     "mortgage": "Jaaropgave hypotheek",
+    "pension": "Pensioenoverzicht",
 }
 DISMISSED_MAX = 500
 DISMISSED_KEY = "_dismissed_insights"   # private: up to 500 ids, kept out of GET /settings
@@ -589,6 +602,7 @@ def candidates(conn: sqlite3.Connection, lg: Ledger, p: Period, ov: dict) -> lis
     found += bank_fees(lg, p, ov)
     found += fx_costs(lg, p, ov)
     found += mortgage_statement(conn, lg, p, ov)
+    found += pension_statement(conn, lg, p, ov)
     dismissed = set(db.get_setting(conn, DISMISSED_KEY, []) or [])
     muted = set(db.get_setting(conn, "muted_insight_kinds", []) or [])
     found = [i for i in found if i["id"] not in dismissed and i["kind"] not in muted]

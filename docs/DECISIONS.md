@@ -679,3 +679,19 @@
   debt would make the total drop by the whole mortgage); the row asks for the WOZ value.
 - **Automatic link** prefers a Wonen merchant whose name or descriptions contain "hypothe",
   else the most regular Wonen payment; the setup insight only uses the first (quiet).
+
+## Pension, debt, other possessions (2026-11-17)
+
+- **One table for three kinds** (`assets` + `asset_entries`) instead of three feature tables:
+  the entry shape (date + amount, optional note) is the same; debt adds rente/afgelost.
+- **Pension is not spendable**, so it is left out of the total by default and named on its
+  own line under the hero; the per-item switch can count it.
+- **Debt split reuses the mortgage path.** `ledger.build` collects one `merchant → share` map
+  (debts first, the mortgage overwrites a shared merchant); `Flows.repaid` sums both. The
+  mortgage estimator only counts repaid amounts of its own merchant, so linking DUO does not
+  move the mortgage debt. A merchant can only be linked to one debt (409).
+- **Dated entries, not finished years.** Debt statements (DUO) come at any time, so a debt entry
+  is a date; the ratio is taken from the latest entry with rente/afgelost. The debt is estimated
+  backwards before the first entry (like the mortgage); pension and other count 0 before their
+  first entry (like accounts), so adding crypto today does not rewrite past months.
+- **Calm by default.** Nothing appears without an item; mock data has none (the `+` flow works).

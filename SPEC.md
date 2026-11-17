@@ -344,6 +344,33 @@ changes (source `user`). Tags work the same way with `tag_always=true`.
   with payments that look like a mortgage: "Hypotheek toevoegen aan je vermogen?" (id
   `mortgage:setup`, once: dismissable).
 
+### 7.3 Pension, debt, other possessions (added later; additive)
+
+- **Data.** `assets` (kind `pension|debt|other`, name, `debt_kind` studieschuld|lening|overig
+  for debt, `include` 0/1, `merchant_key` for debt) and `asset_entries` (date ≤ today,
+  `value_cents`: pension = opgebouwd, debt = restschuld, other = waarde; debt only:
+  optional `interest_cents`, `repaid_cents` over the year up to that date; optional `note`).
+  Nothing is shown until the user adds an item via `+` on Vermogen.
+- **Net worth.** `include` defaults: pension off, debt and other on (switch "Meetellen in
+  vermogen" per item). Included items count in `total_cents` and the series (`assets_cents`,
+  only when at least one item is included); debt counts negative. Pension/other on a day = the
+  latest entry on or before it, 0 before the first. GET /networth adds `assets` and
+  `pension_excluded_cents` (the not-counted pension with a known value, else null), shown as
+  "Pensioen (later beschikbaar) € X" under the total.
+- **Debt split.** With a linked payment and a ratio (the latest entry with rente and/or
+  afgelost: `share = repaid / (repaid + interest)`), every linked payment in group `fixed` from
+  a checking account is split exactly like the mortgage (§7.2): repaid = saving
+  (`Flows.repaid` sums mortgage and debts), interest stays a fixed cost. One merchant belongs to
+  one loan (409 `merchant_linked`); the mortgage keeps its own. A new studieschuld without a
+  chosen payment links a DUO merchant when one is found.
+- **Estimated debt** = latest entry on or before the day minus the repaid amounts of linked
+  payments after its date; before the first entry, the first entry plus the repaid amounts until
+  then. Never below 0.
+- **Cash.** Nog te besteden, outlook and recurring items ignore all of these items.
+- **Insight** `pension` (April, current period): "Pensioenoverzicht bijwerken?" (id
+  `pension:<jaar>`, dismissable) when a pension item exists whose last entry is more than 11
+  months old (or that has none).
+
 ## 8. Periods
 
 Setting `month_start_day` (1–28, default 1). A period is `[start, next start)`. Its id is
@@ -635,6 +662,15 @@ last_date, likely}]}` · `POST /mortgage {parts:[{name}]}` (409 when one exists)
 debt_end_cents, interest_cents, repaid_cents}]}` (422 `year_not_finished` for this year or later)
 · `DELETE /mortgage/years/{year}` · `POST /mortgage/home-values {date, value_cents}` ·
 `DELETE /mortgage/home-values/{id}`. Every write returns the `GET /mortgage` shape.
+
+Pension, debt, other (7.3): `GET /assets` → `{items:[{id, kind, name, debt_kind, include,
+value_cents, signed_cents, as_of, estimated, repaid_since_cents, repaid_share, payment:
+{merchant_key, merchant_name}|null, entries:[{id, date, value_cents, interest_cents,
+repaid_cents, note}]}], candidates:[{merchant_key, merchant_name, amount_cents, count, likely}]}` ·
+`POST /assets {kind, name, debt_kind?, include?, merchant_key?}` (adds `id`) ·
+`PATCH /assets/{id} {name?, debt_kind?, include?, merchant_key?}` · `DELETE /assets/{id}` ·
+`POST /assets/{id}/entries {date, value_cents, interest_cents?, repaid_cents?, note?}` ·
+`DELETE /assets/{id}/entries/{entry_id}`. Every write returns the `GET /assets` shape.
 `/overview` (period and year, `months[]`, `per_month`) and `/trends` periods carry
 `repaid_cents`.
 

@@ -167,6 +167,13 @@ amount fields: schuld op 31 december, betaalde rente, afgelost; "Ander jaar" for
 WOZ-waarde + peildatum, the switch and "Betaling" (the linked direct debit, changeable). First
 time: number of parts (1-4) and their names, then the same form. The Gespaard tile on the
 Overzicht adds a line "waarvan afgelost € X" when part of the saving is mortgage repayment.
+**Pensioen, Schulden, Overig bezit** (SPEC §7.3): no rows or placeholders until the user picks
+"Pensioen / Schuld / Overig bezit toevoegen" in the `+` menu; then a group per kind after
+Woning. Rows: name, "bijgewerkt <datum>" or "niet meegeteld", amount (debt negative). Pension is
+not in the total by default; a quiet line "Pensioen (later beschikbaar) € X" sits under the
+hero. Sheet: amount + date ("Bijwerken"; debt also rente and afgelost, optional), note, earlier
+amounts, "Meetellen in vermogen", for debt "Betaling" (linked payment), Verwijder. Hints: pension
+"mijnpensioenoverzicht.nl of je UPO", debt "Mijn DUO".
 
 ### Vaste lasten
 Hero: "€ 2.140 per maand", subline "€ 25.680 per jaar", and a bar "46 % van je inkomen".

@@ -18,4 +18,6 @@ def get_networth(conn: sqlite3.Connection = Depends(get_conn)) -> dict:
     return {"total_cents": data["total_cents"],
             "accounts": [dict(a) for a in data["accounts"]],
             "series": [dict(s) for s in data["series"]],
-            "home": dict(data["home"]) if data.get("home") else None}
+            "home": dict(data["home"]) if data.get("home") else None,
+            "assets": [dict(a) for a in data["assets"]],
+            "pension_excluded_cents": data["pension_excluded_cents"]}

@@ -3,7 +3,9 @@
 // soort, account sheet (name, soort, values for investments, open amount + "Uitgave
 // toevoegen" for credit cards, manual balance for accounts without imported data). `+` adds a
 // manual account. Woning (SPEC §7.2): overwaarde row, mortgage sheet with parts, the yearly
-// statement form, home value, include switch and the linked payment.
+// statement form, home value, include switch and the linked payment. Pensioen, Schulden and
+// Overig bezit (SPEC §7.3): only shown once added via `+`; one sheet per item with dated
+// entries, the "Meetellen in vermogen" switch and (debt) the linked payment.
 
 import { html, useState } from '../vendor/preact-htm.js';
 import { api } from '../api.js';
@@ -44,7 +46,8 @@ export function Vermogen() {
   const desk = useLayout() === 'wide';
   const trailing = html`<${NavButton} icon="plus" label="Rekening toevoegen" onClick=${() => openSheet(AccountSheet, {})} />`;
   const addItems = [{ label: 'Rekening toevoegen', icon: 'wallet', onSelect: () => openSheet(AccountSheet, {}) },
-    ...(data?.home ? [] : [{ label: 'Hypotheek toevoegen', icon: 'vermogen', onSelect: () => openSheet(MortgageSheet, {}) }])];
+    ...(data?.home ? [] : [{ label: 'Hypotheek toevoegen', icon: 'vermogen', onSelect: () => openSheet(MortgageSheet, {}) }]),
+    ...ASSET_KINDS.map((k) => ({ label: k.add, icon: k.icon, onSelect: () => openSheet(AssetSheet, { kind: k.kind }) }))];
 
   if (!data) {
     return html`<${Screen} title="Vermogen" trailing=${trailing} add=${addItems}>
@@ -59,6 +62,13 @@ export function Vermogen() {
     if (!list.length) return null;
     const sum = list.reduce((s, a) => s + (a.balance_cents || 0), 0);
     return { t, list, sum };
+  }).filter(Boolean);
+
+  const assetGroups = ASSET_KINDS.map((k) => {
+    const list = (data.assets || []).filter((a) => a.kind === k.kind && !pending.has('asset:' + a.id));
+    if (!list.length) return null;
+    const known = list.filter((a) => a.value_cents != null);
+    return { k, list, sum: known.length ? known.reduce((s, a) => s + a.signed_cents, 0) : null };
   }).filter(Boolean);
 
   if (desk) {
@@ -77,6 +87,10 @@ export function Vermogen() {
             <h2 class="vm-group-h"><span>Woning</span>${data.home?.equity_cents != null && html`<span class="num">${money(data.home.equity_cents, { negative: true })}</span>`}</h2>
             <${List}><${HomeRow} home=${data.home} /></${List}>
           </section>`}
+          ${assetGroups.map(({ k, list, sum }) => html`<section class="vm-group" key=${k.kind}>
+            <h2 class="vm-group-h"><span>${k.group}</span>${sum != null && html`<span class="num">${money(sum, { negative: true })}</span>`}</h2>
+            <${List}>${list.map((a) => html`<${AssetRow} key=${a.id} a=${a} />`)}</${List}>
+          </section>`)}
         </div>
       </div>
     </${Screen}>`;
@@ -95,6 +109,9 @@ export function Vermogen() {
       </${Section}>`;
     })}
     ${accounts.length > 0 && html`<${Section} title="Woning"><${List}><${HomeRow} home=${data.home} /></${List}></${Section}>`}
+    ${assetGroups.map(({ k, list, sum }) => html`<${Section} key=${k.kind} title=${k.group} trailing=${list.length > 1 && sum != null && html`<span class="section-value num">${money(sum, { negative: true })}</span>`}>
+      <${List}>${list.map((a) => html`<${AssetRow} key=${a.id} a=${a} />`)}</${List}>
+    </${Section}>`)}
   </${Screen}>`;
 }
 
@@ -120,6 +137,7 @@ function Hero({ data, desk = false }) {
     <div class="vm-hero-sub num">${sel
       ? (scrub > 0 ? deltaText(sel.total_cents - pts[scrub - 1].total_cents, 'die maand') : ' ')
       : diff != null ? deltaText(diff, span) : ' '}</div>
+    ${data.pension_excluded_cents != null && html`<div class="vm-hero-note num">Pensioen (later beschikbaar) ${euros(data.pension_excluded_cents)}</div>`}
     ${desk && points.length > 1 && html`<div class="vm-range is-top"><${Segmented} value=${range} onChange=${(r) => { setRange(r); setScrub(null); }} options=${RANGES} label="Periode" size="small" /></div>`}
     ${desk && points.length > 1 && html`<div class="vm-chart">
       <${LineChart} points=${points} scrub=${scrub} onScrub=${setScrub} height=${320} axis
@@ -498,6 +516,146 @@ function HomeValue({ m, onChange }) {
       ${[...m.home_values].reverse().map((v) => html`<${ListRow} key=${v.id} title=${longDate(v.date)} value=${html`<span class="num">${money(v.value_cents)}</span>`}
         onClick=${(e) => remove(e, v)} label=${`${longDate(v.date)}, ${money(v.value_cents)}. Opties`} />`)}
     </${List}>`}`;
+}
+
+/* ---------- Pensioen, schulden, overig bezit (SPEC §7.3) ---------- */
+
+const ASSET_KINDS = [
+  { kind: 'pension', group: 'Pensioen', add: 'Pensioen toevoegen', icon: 'clock', emoji: '🧓', color: 'purple',
+    placeholder: 'Pensioenfonds werkgever', valueLabel: 'Opgebouwd', hint: 'Het opgebouwde bedrag staat op mijnpensioenoverzicht.nl of je UPO.' },
+  { kind: 'debt', group: 'Schulden', add: 'Schuld toevoegen', icon: 'creditcard', emoji: '🧾', color: 'orange',
+    placeholder: 'Studieschuld DUO', valueLabel: 'Restschuld', hint: 'De restschuld staat in je jaaroverzicht van de lening (bij DUO: Mijn DUO).' },
+  { kind: 'other', group: 'Overig bezit', add: 'Overig bezit toevoegen', icon: 'euro', emoji: '💎', color: 'teal',
+    placeholder: 'Crypto, kinderrekening, contant', valueLabel: 'Waarde', hint: null },
+];
+const kindInfo = (k) => ASSET_KINDS.find((x) => x.kind === k);
+const DEBT_KINDS = [['studieschuld', 'Studieschuld'], ['lening', 'Lening'], ['overig', 'Overig']];
+
+function AssetRow({ a }) {
+  const k = kindInfo(a.kind);
+  const value = a.value_cents == null ? '—' : money(a.signed_cents, { negative: true });
+  const sub = !a.as_of ? 'nog geen bedrag' : !a.include ? 'niet meegeteld' : `bijgewerkt ${shortDate(a.as_of)}`;
+  return html`<${ListRow} emoji=${k.emoji} color=${k.color} title=${a.name} subtitle=${html`<span class="num">${sub}</span>`}
+    value=${html`<span class="num vm-balance">${value}</span>`} chevron
+    onClick=${() => openSheet(AssetSheet, { kind: a.kind, id: a.id })} label=${`${a.name}, ${value}`} />`;
+}
+
+export function AssetSheet({ close, kind, id = null }) {
+  const [itemId, setItemId] = useState(id);
+  const { data, reload } = useQuery('assets', () => api.assets());
+  const k = kindInfo(kind);
+  const item = data?.items.find((x) => x.id === itemId);
+  const done = () => { invalidate(); reload?.(); };
+  return html`<${Sheet} title=${item ? item.name : k.add.replace(' toevoegen', '')} detents=${['large']}
+      leading=${!itemId ? html`<${SheetButton} onClick=${close}>Annuleer</${SheetButton}>` : null}
+      trailing=${itemId ? html`<${SheetButton} bold onClick=${close}>Klaar</${SheetButton}>` : null}>
+    <div class="sheet-pad">
+      ${!itemId ? html`<${AssetSetup} k=${k} onCreated=${(newId) => { setItemId(newId); done(); }} />`
+        : !item ? html`<${Skeleton} h=${120} r=${12} />`
+        : html`<${AssetDetail} a=${item} k=${k} candidates=${data.candidates} onChange=${done} close=${close} />`}
+    </div>
+  </${Sheet}>`;
+}
+
+function AssetSetup({ k, onCreated }) {
+  const [name, setName] = useState('');
+  const [debtKind, setDebtKind] = useState('studieschuld');
+  const [busy, setBusy] = useState(false);
+  const create = async () => {
+    if (!name.trim() || busy) return;
+    setBusy(true);
+    try {
+      const res = await api.createAsset({ kind: k.kind, name: name.trim(), ...(k.kind === 'debt' ? { debt_kind: debtKind } : {}) });
+      onCreated(res.id);
+    } catch (err) {
+      setBusy(false);
+      toast({ text: err.message, icon: 'warning' });
+    }
+  };
+  return html`
+    <${List} footer=${k.kind === 'pension' ? 'Pensioen telt standaard niet mee in je vermogen: je kunt er pas later bij.' : null}>
+      <${TextField} label="Naam" value=${name} onInput=${setName} placeholder=${k.placeholder} maxLength=${60} enterkeyhint="done" onEnter=${create} />
+      ${k.kind === 'debt' && html`<li class="field-row"><span class="field-label">Soort</span>
+        <${Segmented} value=${debtKind} onChange=${setDebtKind} options=${DEBT_KINDS} label="Soort schuld" size="small" /></li>`}
+    </${List}>
+    <${List}>
+      <li class="field-row vm-add-row"><${Button} variant="filled" size="medium" block onClick=${create} disabled=${!name.trim()} loading=${busy}>Volgende</${Button}></li>
+    </${List}>`;
+}
+
+function AssetDetail({ a, k, candidates, onChange, close }) {
+  const debt = a.kind === 'debt';
+  const setLink = (e) => openMenu(e.currentTarget, [
+    ...candidates.map((c) => ({ label: `${c.merchant_name || c.merchant_key}${c.amount_cents ? ` · ${money(c.amount_cents)}` : ''}`,
+      icon: a.payment?.merchant_key === c.merchant_key ? 'check' : undefined,
+      onSelect: () => api.updateAsset(a.id, { merchant_key: c.merchant_key }).then(onChange, (err) => toast({ text: err.message, icon: 'warning' })) })),
+    { label: 'Niet koppelen', onSelect: () => api.updateAsset(a.id, { merchant_key: null }).then(onChange) },
+  ]);
+  const remove = (e) => openMenu(e.currentTarget, [{
+    label: `Verwijder ${a.name}`, icon: 'trash', destructive: true, onSelect: async () => {
+      await api.deleteAsset(a.id);
+      invalidate();
+      close();
+      toast({ text: `${a.name} verwijderd`, icon: 'trash' });
+    },
+  }]);
+  const sub = !a.as_of ? '' : a.estimated
+    ? `geschat: ${euros(a.repaid_since_cents)} afgelost sinds ${shortDate(a.as_of)}` : `op ${longDate(a.as_of)}`;
+  return html`
+    ${a.value_cents != null && html`<div class="vm-sheet-head">
+      <div class="vm-sheet-amount rounded num">${money(a.signed_cents, { negative: true })}</div>
+      <div class="vm-sheet-sub">${sub}</div>
+    </div>`}
+    <${EntryForm} a=${a} k=${k} onChange=${onChange} />
+    ${a.entries.length > 0 && html`<${List} header="Eerdere bedragen">
+      ${a.entries.map((e) => html`<${ListRow} key=${e.id} title=${longDate(e.date)} subtitle=${e.note || null}
+        value=${html`<span class="num">${money(e.value_cents)}</span>`}
+        onClick=${(ev) => openMenu(ev.currentTarget, [{ label: 'Verwijder', icon: 'trash', destructive: true,
+          onSelect: () => api.deleteAssetEntry(a.id, e.id).then(onChange) }])}
+        label=${`${longDate(e.date)}, ${money(e.value_cents)}. Opties`} />`)}
+    </${List}>`}
+    <${List} footer=${debt && a.repaid_share != null && a.payment ? `Van elke betaling telt ${Math.round(a.repaid_share * 100)} % als afgelost (gespaard), de rest als vaste lasten.`
+      : debt && a.payment ? 'Vul rente en afgelost in om de betaling te splitsen.' : null}>
+      <li class="field-row"><label class="field-label sa-grow" for=${'vm-as-inc-' + a.id}>Meetellen in vermogen</label>
+        <${Switch} id=${'vm-as-inc-' + a.id} checked=${a.include} label="Meetellen in vermogen"
+          onChange=${(on) => api.updateAsset(a.id, { include: on }).then(onChange)} /></li>
+      ${debt && html`<${ListRow} title="Betaling" value=${html`<span class="vm-mg-pay">${a.payment ? a.payment.merchant_name : 'Geen'}</span>`}
+        chevron onClick=${setLink} label=${`Gekoppelde betaling: ${a.payment ? a.payment.merchant_name : 'geen'}. Wijzig`} />`}
+    </${List}>
+    <${List}><${ListRow} title="Verwijder" destructive onClick=${remove} /></${List}>`;
+}
+
+function EntryForm({ a, k, onChange }) {
+  const debt = a.kind === 'debt';
+  const [cents, setCents] = useState(null);
+  const [date, setDate] = useState(todayISO());
+  const [interest, setInterest] = useState(null);
+  const [repaid, setRepaid] = useState(null);
+  const [note, setNote] = useState('');
+  const [busy, setBusy] = useState(false);
+  const ok = cents != null && cents >= 0;
+  const add = async () => {
+    if (!ok || busy) return;
+    setBusy(true);
+    try {
+      await api.addAssetEntry(a.id, { date: date || todayISO(), value_cents: cents, note: note.trim() || null,
+        ...(debt ? { interest_cents: interest, repaid_cents: repaid } : {}) });
+      setCents(null); setInterest(null); setRepaid(null); setNote('');
+      onChange();
+      toast({ text: `${k.valueLabel} ${money(cents)} bewaard` });
+    } catch (err) {
+      toast({ text: err.message, icon: 'warning' });
+    }
+    setBusy(false);
+  };
+  return html`<${List} header=${a.entries.length ? 'Bijwerken' : 'Bedrag invullen'} footer=${debt ? 'Rente en afgelost over het afgelopen jaar zijn optioneel. ' + (k.hint || '') : k.hint}>
+    <${AmountField} label=${k.valueLabel} cents=${cents} onChange=${setCents} />
+    <${DateField} label="Datum" value=${date} onChange=${setDate} max=${todayISO()} />
+    ${debt && html`<${AmountField} label="Betaalde rente" cents=${interest} onChange=${setInterest} />
+      <${AmountField} label="Afgelost" cents=${repaid} onChange=${setRepaid} />`}
+    <${TextField} label="Notitie" value=${note} onInput=${setNote} placeholder="Optioneel" maxLength=${200} />
+    <li class="field-row vm-add-row"><${Button} variant="tinted" size="medium" block onClick=${add} disabled=${!ok} loading=${busy}>Bewaar</${Button}></li>
+  </${List}>`;
 }
 
 /* ---------- Skeleton ---------- */

@@ -238,3 +238,26 @@ class MortgageYearBody(BaseModel):
 class HomeValueBody(BaseModel):
     date: str
     value_cents: PositiveMoney
+
+
+class AssetCreate(BaseModel):
+    kind: Literal["pension", "debt", "other"]
+    name: str = Field(min_length=1, max_length=60)
+    debt_kind: Literal["studieschuld", "lening", "overig"] | None = None
+    include: bool | None = None                 # default: pension off, debt and other on
+    merchant_key: str | None = None             # debt only; absent on a studieschuld = DUO if found
+
+
+class AssetPatch(BaseModel):
+    name: str | None = Field(default=None, min_length=1, max_length=60)
+    debt_kind: Literal["studieschuld", "lening", "overig"] | None = None
+    include: bool | None = None
+    merchant_key: str | None = None             # debt only; null or "" = no link
+
+
+class AssetEntryBody(BaseModel):
+    date: str
+    value_cents: Annotated[int, Field(ge=0, le=MONEY_LIMIT)]
+    interest_cents: Annotated[int, Field(ge=0, le=MONEY_LIMIT)] | None = None
+    repaid_cents: Annotated[int, Field(ge=0, le=MONEY_LIMIT)] | None = None
+    note: str | None = Field(default=None, max_length=200)

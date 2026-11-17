@@ -179,6 +179,8 @@ export function generate({ today = todayISO(), empty = false } = {}) {
     mortgage_parts: [],
     mortgage_years: [],
     home_values: [],
+    assets: [], // pension, debt, other possessions (SPEC §7.3): none by default, added via +
+    asset_entries: [],
     seq: { tx: 0, rule: 0, goal: 0, entry: 0, value: 0, import: 0, trade: 0, account: 5, category: categories.length, tag: TAGS.length },
   };
   if (empty) return db;

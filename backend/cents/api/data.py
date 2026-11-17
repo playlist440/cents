@@ -283,7 +283,7 @@ def delete_data(body: PasswordBody, conn: sqlite3.Connection = Depends(get_conn)
     for table in ("transaction_tags", "goal_entries", "transactions", "trades", "cash_events",
                   "prices", "imports", "rules", "tags", "goals", "account_values",
                   "recurring_ignored", "accounts", "securities", "mortgage_years",
-                  "mortgage_parts", "home_values"):
+                  "mortgage_parts", "home_values", "asset_entries", "assets"):
         conn.execute(f"DELETE FROM {table}")
     conn.execute("DELETE FROM settings WHERE key IN ('dismissed_suggestions', '_prices_status', "
                  "'mortgage_merchant_key', 'mortgage_include_home')")

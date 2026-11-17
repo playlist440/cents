@@ -159,7 +159,7 @@ function settlementUnexplained() {
 function flows(pid) {
   return cached('flows:' + pid, () => {
     const { from, to } = periodBounds(pid);
-    const split = mortgageSplit();
+    const splits = allSplits();
     const res = { income: 0, fixed: 0, daily: 0, saved: 0, repaid: 0, card: 0, cats: new Map(), incomeCats: new Map(), dailyByDay: new Map() };
     const unexplained = settlementUnexplained().map;
     const ccCat = catByKey('creditcard');
@@ -180,8 +180,9 @@ function flows(pid) {
       if (c.key === 'unsorted' && amt > 0) { res.income += amt; addCat(res.incomeCats, c.id, amt); continue; }
       if (c.grp === 'income') { res.income += amt; addCat(res.incomeCats, c.id, amt); }
       else if (c.grp === 'fixed') {
-        // Mortgage (SPEC §7.2): the repaid share of the linked payment counts as saved.
-        const rep = split && amt < 0 && t.merchant_key === split.key && accById(t.account_id)?.type === 'checking' ? Math.round(-amt * split.share) : 0;
+        // Mortgage and linked debts (SPEC §7.2, §7.3): the repaid share of the linked payment counts as saved.
+        const share = amt < 0 && accById(t.account_id)?.type === 'checking' ? splits.get(t.merchant_key) : 0;
+        const rep = share ? Math.round(-amt * share) : 0;
         res.fixed += -amt - rep; addCat(res.cats, c.id, -amt - rep);
         if (rep) { res.saved += rep; res.repaid += rep; }
       }
@@ -692,6 +693,9 @@ function insights(o, prev) {
       out.push({ id: 'mortgage:setup', kind: 'mortgage', tone: 'info', emoji: '🏠', title: 'Hypotheek toevoegen aan je vermogen?', link: '/vermogen', rank: 30 });
     }
   }
+  if (p.is_current && Number(db.today.slice(5, 7)) === 4 && pensionStale()) {
+    out.push({ id: `pension:${db.today.slice(0, 4)}`, kind: 'pension', tone: 'info', emoji: '🧓', title: 'Pensioenoverzicht bijwerken?', link: '/vermogen', rank: 29 });
+  }
   const stale = daysBetween(db.transactions.reduce((m, t) => (t.date > m ? t.date : m), db.today), db.today);
   if (stale > 10) out.push({ id: 'stale', kind: 'stale', tone: 'warn', emoji: '⏳', title: `Laatste import ${stale} dagen geleden`, link: '/import', rank: 90 });
   // Dismissed ids and muted kinds are left out before ranking (DECISIONS, Insight preferences).
@@ -905,6 +909,7 @@ function networth() {
   const accounts = db.accounts.filter((a) => !a.hidden).map((a) => ({ id: a.id, name: a.name, type: a.type, iban: a.iban, ...accountBalance(a) }));
   const total_cents = accounts.reduce((s, a) => s + (a.balance_cents || 0), 0);
   const home = homeOut();
+  const counted = db.assets.filter((a) => a.include);
   const series = [];
   const first = firstPeriod();
   const cur = currentPeriod();
@@ -927,9 +932,13 @@ function networth() {
     }
     row.total_cents = row.checking_cents + row.savings_cents + row.investment_cents + row.credit_cents;
     if (home?.included) { row.home_cents = homeEquityAt(end); row.total_cents += row.home_cents; }
+    if (counted.length) { row.assets_cents = counted.reduce((s, a) => s + assetSigned(a, end), 0); row.total_cents += row.assets_cents; }
     series.push(row);
   }
-  return { total_cents: total_cents + (home?.included ? home.equity_cents : 0), accounts, series, home };
+  const assets = assetsNetworth();
+  const excluded = assets.filter((a) => a.kind === 'pension' && !a.include && a.value_cents != null);
+  return { total_cents: total_cents + (home?.included ? home.equity_cents : 0) + assets.filter((a) => a.include).reduce((s, a) => s + a.signed_cents, 0),
+    accounts, series, home, assets, pension_excluded_cents: excluded.length ? excluded.reduce((s, a) => s + (a.value_cents || 0), 0) : null };
 }
 
 /* ======================================================================================
@@ -971,6 +980,83 @@ function mortgageSplit() {
   const { key } = mortgageLinked();
   return key && share ? { key, share } : null;
 }
+/* Pension, debt, other possessions (SPEC §7.3; services/assets.py) */
+const ASSET_INCLUDE = { pension: false, debt: true, other: true };
+function assetEntries(id) { return db.asset_entries.filter((e) => e.asset_id === id).sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : a.id - b.id)); }
+function assetRatio(es) {
+  for (const e of [...es].reverse()) { const r = e.repaid_cents || 0; const i = e.interest_cents || 0; if (r + i > 0) return r / (r + i); }
+  return null;
+}
+function allSplits() {
+  return cached('splits', () => {
+    const m = new Map();
+    for (const a of db.assets) if (a.kind === 'debt' && a.merchant_key) { const sh = assetRatio(assetEntries(a.id)); if (sh && !m.has(a.merchant_key)) m.set(a.merchant_key, sh); }
+    const sp = mortgageSplit();
+    if (sp) m.set(sp.key, sp.share);
+    return m;
+  });
+}
+function assetCandidates() {
+  return cached('asset:cands', () => {
+    const m = new Map();
+    for (const t of db.transactions) {
+      if (catById(t.category_id)?.grp !== 'fixed' || t.amount_cents >= 0 || accById(t.account_id)?.type !== 'checking' || !t.merchant_key) continue;
+      const e = m.get(t.merchant_key) || { merchant_key: t.merchant_key, merchant_name: t.merchant_name, amount_cents: t.amount_cents, count: 0, last: t.date };
+      e.count += 1;
+      if (t.date >= e.last) { e.last = t.date; e.amount_cents = t.amount_cents; }
+      m.set(t.merchant_key, e);
+    }
+    return [...m.values()].map(({ last, ...e }) => ({ ...e, likely: /\bduo\b/.test(`${e.merchant_key} ${e.merchant_name}`.toLowerCase()) }))
+      .sort((a, b) => (b.likely - a.likely) || (b.count - a.count));
+  });
+}
+function assetEvents(a, share) {
+  if (!a.merchant_key || !share) return [];
+  return db.transactions.filter((t) => t.merchant_key === a.merchant_key && t.amount_cents < 0 && accById(t.account_id)?.type === 'checking' && catById(t.category_id)?.grp === 'fixed')
+    .map((t) => [t.date, Math.round(-t.amount_cents * allSplits().get(a.merchant_key))]);
+}
+function assetValue(a, day) {
+  const es = assetEntries(a.id);
+  if (!es.length) return null;
+  const known = es.filter((e) => e.date <= day);
+  if (a.kind !== 'debt') return known.length ? known.at(-1).value_cents : null;
+  const ev = assetEvents(a, assetRatio(es));
+  const between = (x, y) => ev.reduce((s, [d, v]) => s + (d > x && d <= y ? v : 0), 0);
+  return Math.max(0, known.length ? known.at(-1).value_cents - between(known.at(-1).date, day) : es[0].value_cents + between(day, es[0].date));
+}
+const assetSigned = (a, day) => (a.kind === 'debt' ? -1 : 1) * (assetValue(a, day) || 0);
+function assetsNetworth() {
+  return db.assets.map((a) => {
+    const es = assetEntries(a.id);
+    return { id: a.id, kind: a.kind, name: a.name, debt_kind: a.debt_kind, include: a.include, value_cents: assetValue(a, db.today), signed_cents: assetSigned(a, db.today), as_of: es.at(-1)?.date || null };
+  });
+}
+function assetsOut() {
+  const cands = assetCandidates();
+  return {
+    items: db.assets.map((a) => {
+      const es = assetEntries(a.id);
+      const share = a.kind === 'debt' ? assetRatio(es) : null;
+      const last = es.at(-1);
+      const since = last ? assetEvents(a, share).reduce((s, [d, v]) => s + (d > last.date && d <= db.today ? v : 0), 0) : 0;
+      return { ...assetsNetworth().find((x) => x.id === a.id), estimated: since > 0, repaid_since_cents: since,
+        repaid_share: share == null ? null : Math.round(share * 10000) / 10000,
+        payment: a.merchant_key ? { merchant_key: a.merchant_key, merchant_name: cands.find((c) => c.merchant_key === a.merchant_key)?.merchant_name || a.merchant_key } : null,
+        entries: [...es].reverse().map(({ asset_id, ...e }) => e) };
+    }),
+    candidates: cands.slice(0, 12),
+  };
+}
+function checkAssetMerchant(key, id) {
+  if (!db.transactions.some((t) => t.merchant_key === key)) fail(422, 'unknown_merchant', 'Deze betaling ken ik niet.');
+  if (db.assets.some((a) => a.merchant_key === key && a.id !== id) || (db.mortgage_parts.length && mortgageLinked().key === key)) fail(409, 'merchant_linked', 'Deze betaling hoort al bij een andere lening.');
+}
+function pensionStale() {
+  const d = new Date(db.today + 'T12:00:00'); d.setMonth(d.getMonth() - 11);
+  const cutoff = d.toISOString().slice(0, 10);
+  return db.assets.some((a) => a.kind === 'pension' && !(assetEntries(a.id).at(-1)?.date >= cutoff));
+}
+
 function repaidEvents() {
   return cached('mortgage:events', () => {
     const sp = mortgageSplit();
@@ -1741,6 +1827,58 @@ const ROUTES = [
 
   /* Accounts */
   ['GET', /^\/networth$/, () => ok(networth())],
+  ['GET', /^\/assets$/, () => ok(assetsOut())],
+  ['POST', /^\/assets$/, ({ body }) => {
+    if (!['pension', 'debt', 'other'].includes(body.kind)) fail(422, 'invalid', 'Onbekende soort.');
+    const name = String(body.name || '').trim();
+    if (!name) fail(422, 'invalid', 'Geef een naam.');
+    let key = null;
+    if (body.kind === 'debt') {
+      if ('merchant_key' in body) { key = body.merchant_key || null; if (key) checkAssetMerchant(key, 0); }
+      else if (body.debt_kind === 'studieschuld') {
+        const duo = assetCandidates().find((c) => c.likely);
+        if (duo) { try { checkAssetMerchant(duo.merchant_key, 0); key = duo.merchant_key; } catch { key = null; } }
+      }
+    }
+    db.seq.asset = (db.seq.asset || 0) + 1;
+    db.assets.push({ id: db.seq.asset, kind: body.kind, name, debt_kind: body.kind === 'debt' ? (body.debt_kind || 'overig') : null,
+      include: body.include ?? ASSET_INCLUDE[body.kind], merchant_key: key });
+    touch();
+    return ok({ ...assetsOut(), id: db.seq.asset });
+  }],
+  ['PATCH', /^\/assets\/(\d+)$/, ({ params: [id], body }) => {
+    const a = need(db.assets.find((x) => x.id === id), 'Dit onderdeel bestaat niet (meer).');
+    if (body.name) a.name = String(body.name).trim();
+    if (body.include != null) a.include = !!body.include;
+    if (a.kind === 'debt') {
+      if (body.debt_kind) a.debt_kind = body.debt_kind;
+      if ('merchant_key' in body) { if (body.merchant_key) checkAssetMerchant(body.merchant_key, id); a.merchant_key = body.merchant_key || null; }
+    }
+    touch();
+    return ok(assetsOut());
+  }],
+  ['DELETE', /^\/assets\/(\d+)$/, ({ params: [id] }) => {
+    need(db.assets.find((x) => x.id === id), 'Dit onderdeel bestaat niet (meer).');
+    db.assets = db.assets.filter((x) => x.id !== id); db.asset_entries = db.asset_entries.filter((e) => e.asset_id !== id);
+    touch();
+    return ok(assetsOut());
+  }],
+  ['POST', /^\/assets\/(\d+)\/entries$/, ({ params: [id], body }) => {
+    const a = need(db.assets.find((x) => x.id === id), 'Dit onderdeel bestaat niet (meer).');
+    if (body.date > db.today) fail(422, 'future_date', 'Deze datum ligt in de toekomst.');
+    db.seq.assetEntry = (db.seq.assetEntry || 0) + 1;
+    const debt = a.kind === 'debt';
+    db.asset_entries.push({ id: db.seq.assetEntry, asset_id: id, date: body.date || db.today, value_cents: body.value_cents || 0,
+      interest_cents: debt ? body.interest_cents ?? null : null, repaid_cents: debt ? body.repaid_cents ?? null : null, note: (body.note || '').trim() || null });
+    touch();
+    return ok(assetsOut());
+  }],
+  ['DELETE', /^\/assets\/(\d+)\/entries\/(\d+)$/, ({ params: [id, eid] }) => {
+    need(db.asset_entries.find((e) => e.id === eid && e.asset_id === id), 'Deze waarde bestaat niet (meer).');
+    db.asset_entries = db.asset_entries.filter((e) => e.id !== eid);
+    touch();
+    return ok(assetsOut());
+  }],
   ['GET', /^\/mortgage$/, () => ok(mortgageOut())],
   ['POST', /^\/mortgage$/, ({ body }) => {
     if (db.mortgage_parts.length) fail(409, 'exists', 'Er is al een hypotheek.');
@@ -1888,7 +2026,7 @@ const INSIGHT_KINDS = {
   large: 'Grote eenmalige uitgaven', savings_rate: 'Hoeveel je spaart', buffer: 'Buffer', left_over: 'Geld over',
   unsorted: 'Nog te sorteren', yearly_bill: 'Jaarlijkse rekeningen', goal_behind: 'Potjes die achterlopen',
   goal_reached: 'Gehaalde potjes', stale: 'Importherinnering', fixed_share: 'Aandeel vaste lasten', last_year: 'Vergelijking met vorig jaar',
-  tempo: 'Meer uit dan erin', mortgage: 'Jaaropgave hypotheek',
+  tempo: 'Meer uit dan erin', mortgage: 'Jaaropgave hypotheek', pension: 'Pensioenoverzicht',
 };
 
 function assumptionsOut() {

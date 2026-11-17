@@ -14,7 +14,7 @@ Rules (SPEC 4.1 and 7):
 - Mortgage (services/mortgage.py): the linked payment of the lender is split. The interest part
   stays a fixed cost in its bakje; the repaid part (`row["repaid"]`) counts as saved
   ("Afgelost", `Flows.repaid`), so the result improves while cash projections keep the full
-  payment.
+  payment. Linked debts (services/assets.py) are split the same way; `repaid` sums both.
 
 All totals in `Flows` are positive magnitudes: `fixed` = money spent on fixed costs, `saved` =
 money put aside (negative when more was withdrawn than saved).
@@ -41,7 +41,7 @@ class Flows:
     fixed: int = 0
     daily: int = 0
     saved: int = 0
-    repaid: int = 0                                            # part of `saved`: mortgage repaid
+    repaid: int = 0                                            # part of `saved`: mortgage + debt repaid
     spent: dict[int, int] = field(default_factory=dict)        # fixed + daily, per bakje
     counts: dict[int, int] = field(default_factory=dict)       # transactions per bakje
     income_by_cat: dict[int, int] = field(default_factory=dict)
@@ -238,14 +238,16 @@ def build(conn: sqlite3.Connection) -> Ledger:
         r["period"] = p.id
         r["bucket"] = bucket(r, cat_ids, unexplained, unsorted_cat)
     early = _early_income(rows, pid_by_date, sd)
-    from . import mortgage                       # local import: mortgage reads ledger rows
-    split = mortgage.split_config(conn)
-    if split:
-        key, share = split
+    from . import assets, mortgage               # local import: both read ledger rows
+    splits = assets.split_configs(conn)           # linked debts (SPEC 7.3)
+    m_split = mortgage.split_config(conn)
+    if m_split:
+        splits[m_split[0]] = m_split[1]           # the mortgage wins a shared merchant
+    if splits:
         for r in rows:
             b = r["bucket"]
-            if (b and b[0] == FIXED and b[2] > 0 and r["merchant_key"] == key
-                    and r["account_type"] == "checking"):
+            share = splits.get(r["merchant_key"])
+            if (share and b and b[0] == FIXED and b[2] > 0 and r["account_type"] == "checking"):
                 repaid = int(round(b[2] * share))
                 if repaid:
                     r["repaid"] = repaid

@@ -275,8 +275,34 @@ CREATE TABLE home_values (
 );
 """
 
+# v6: other assets and liabilities (SPEC 7.3): pension, debt (studieschuld, lening) and other
+# possessions, each with dated value entries.
+SCHEMA_V6 = """
+CREATE TABLE assets (
+    id INTEGER PRIMARY KEY,
+    kind TEXT NOT NULL,                         -- pension|debt|other
+    name TEXT NOT NULL,
+    debt_kind TEXT,                             -- debt: studieschuld|lening|overig
+    include INTEGER NOT NULL,                   -- counted in net worth
+    merchant_key TEXT,                          -- debt: linked payment (split like the mortgage)
+    sort INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL
+);
+
+CREATE TABLE asset_entries (
+    id INTEGER PRIMARY KEY,
+    asset_id INTEGER NOT NULL REFERENCES assets(id) ON DELETE CASCADE,
+    date TEXT NOT NULL,
+    value_cents INTEGER NOT NULL,               -- pension: opgebouwd; debt: restschuld; other: waarde
+    interest_cents INTEGER,                     -- debt: rente over het jaar tot `date` (optional)
+    repaid_cents INTEGER,                       -- debt: afgelost in dat jaar (optional)
+    note TEXT
+);
+CREATE INDEX ix_asset_entries ON asset_entries(asset_id, date);
+"""
+
 # Forward-only. Append new migrations; never edit an old one.
-MIGRATIONS: list[str] = [SCHEMA_V1, SCHEMA_V2, SCHEMA_V3, SCHEMA_V4, SCHEMA_V5]
+MIGRATIONS: list[str] = [SCHEMA_V1, SCHEMA_V2, SCHEMA_V3, SCHEMA_V4, SCHEMA_V5, SCHEMA_V6]
 SCHEMA_VERSION = len(MIGRATIONS)
 
 DEFAULT_SETTINGS: dict[str, Any] = {"month_start_day": 1, "household_name": ""}
