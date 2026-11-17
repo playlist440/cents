@@ -1,4 +1,5 @@
-// Pace chart for the Overzicht hero: this period's cumulative spending (solid line + soft
+// Pace chart for the Overzicht hero: this period's cumulative spending (or, as the Overzicht
+// passes it, what is left of a normal month's spending) (solid line + soft
 // gradient) against "normaal" (dotted), today marked with a dot. On touch it is not
 // scrubbable on purpose (horizontal swipes on the hero change the month); with a mouse
 // (`interactive`) it shows a crosshair and a read-out. `axis` adds value labels on the right
@@ -12,7 +13,7 @@ import { useWidth, monotonePath, uid, niceMax, Readout } from './util.js';
 import { euros, axisMoney } from '../format.js';
 import { drawIn, useFirstRender, SPRING } from '../anim.js';
 
-export function PaceChart({ actual = [], typical = [], height = 64, color = 'var(--tint)', label, showToday = true, axis = false, interactive = false, dayLabel }) {
+export function PaceChart({ actual = [], typical = [], height = 64, color = 'var(--tint)', label, showToday = true, axis = false, interactive = false, dayLabel, actualLabel = 'Uitgegeven' }) {
   const [ref, w] = useWidth();
   const gid = useRef(uid('pg')).current;
   const drawnKey = useRef(null);
@@ -77,7 +78,7 @@ export function PaceChart({ actual = [], typical = [], height = 64, color = 'var
     </svg>
     ${ro && html`<${Readout} x=${x(hi)} width=${plotW} top=${Math.max(0, Math.min(a[hi]?.[1] ?? t[hi]?.[1] ?? 0, t[hi]?.[1] ?? 999) - 78)}>
       ${dayLabel && html`<div class="ro-title">${dayLabel(hi, true)}</div>`}
-      ${ro.a != null && html`<div class="ro-row"><i style=${{ background: color }}></i><span>Uitgegeven</span><b class="num">${euros(ro.a)}</b></div>`}
+      ${ro.a != null && html`<div class="ro-row"><i style=${{ background: color }}></i><span>${actualLabel}</span><b class="num">${euros(ro.a)}</b></div>`}
       ${ro.t != null && html`<div class="ro-row"><i class="is-dots"></i><span>Normaal</span><b class="num">${euros(ro.t)}</b></div>`}
     </${Readout}>`}
   </div>`;

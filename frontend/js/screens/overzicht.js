@@ -69,6 +69,16 @@ export function Overzicht({ query }) {
 
 /* ---------- Hero ---------- */
 
+/** Turn cumulative spending into "what is left of a normal month": both lines start at the
+ *  normal month's total and run down to zero, so the chart falls as the month goes on. */
+function leftPace(pace) {
+  if (!pace || !pace.typical?.length) return pace;
+  const budget = pace.typical.at(-1) || 0;
+  const left = (v) => Math.max(0, budget - v);
+  return { ...pace, actual: pace.actual.map(left), typical: pace.typical.map(left) };
+}
+
+
 function heroModel(o) {
   const p = o.period;
   const daysLeft = p.days_total - p.day_index + 1;
@@ -76,7 +86,8 @@ function heroModel(o) {
     const f = o.free;
     const sub = [`tot ${shortDate(f.payday)}`];
     if (f.stale && f.as_of) sub.push(`saldo van ${shortDate(f.as_of)}`);
-    return { label: 'Vrij geld', cents: f.total_cents, warn: f.total_cents < 0, sub: sub.join(' · '), free: f };
+    if (f.total_cents < 0) sub.unshift(`${euros(-f.total_cents)} spaargeld gebruikt`);
+    return { label: 'Vrij geld', cents: Math.max(0, f.total_cents), warn: f.total_cents < 0, sub: sub.join(' · '), free: f };
   }
   if (p.is_current) {
     return { label: 'Uitgegeven', cents: o.fixed_cents + o.daily_cents, sub: daysLeft === 1 ? 'laatste dag' : `nog ${daysLeft} dagen` };
@@ -105,7 +116,8 @@ function FreeBreakdown({ f }) {
         <dt>${label}${note && html`<span class="free-note">${note}</span>`}</dt>
         <dd class="num">${money(cents, { whole: true, negative: true })}</dd>
       </div>`)}
-      <div class="free-row is-total"><dt>Vrij</dt><dd class=${'num' + (f.total_cents < 0 ? ' is-warn' : '')}>${money(f.total_cents, { whole: true, negative: true })}</dd></div>
+      <div class="free-row is-total"><dt>Vrij</dt><dd class="num">${money(Math.max(0, f.total_cents), { whole: true })}</dd></div>
+      ${f.total_cents < 0 && html`<div class="free-row"><dt>Spaargeld gebruikt<span class="free-note">uit buffer of potjes</span></dt><dd class="num is-warn">${money(-f.total_cents, { whole: true })}</dd></div>`}
     </dl>
     ${f.as_of && html`<p class="free-foot">Saldo van ${shortDate(f.as_of)}${f.payday_source === 'period' ? ' · salaris niet herkend' : ''}</p>`}
     <button class="dk-link free-link" onClick=${() => navigate('/instellingen/aannames')}>Aannames aanpassen</button>
@@ -173,9 +185,9 @@ function Hero({ o, canPrev, canNext, setPeriod, desk = false }) {
   const ref = useRef(null);
   const g = useRef(null);
   const p = o.period;
-  const pace = o.pace;
+  const pace = leftPace(o.pace);
   const paceLabel = pace
-    ? `Uitgaven ${monthLabel(p.id)}: ${euros(pace.actual.at(-1) || 0)} ${p.is_current ? 'tot nu toe' : 'in totaal'}, normaal ${euros(pace.typical[pace.actual.length - 1] || 0)}`
+    ? `Over van een normale maand ${monthLabel(p.id)}: ${euros(pace.actual.at(-1) || 0)} ${p.is_current ? 'nu' : 'aan het eind'}, normaal ${euros(pace.typical[pace.actual.length - 1] || 0)}`
     : '';
 
   // Horizontal swipe on the hero changes the month.
@@ -209,7 +221,7 @@ function Hero({ o, canPrev, canNext, setPeriod, desk = false }) {
       <div class="hero-label">${m.label}</div>
       ${m.free
         ? html`<button class=${'hero-amount rounded is-button' + (m.warn ? ' is-warn' : '')} aria-haspopup="dialog"
-            aria-label=${`Vrij geld ${money(m.cents, { whole: true, negative: true })}. Toon opbouw`} onClick=${(e) => openFree(e, m.free)}>
+            aria-label=${`Vrij geld ${money(m.cents, { whole: true })}. ${m.sub}. Toon opbouw`} onClick=${(e) => openFree(e, m.free)}>
             <${Amount} key=${p.id} cents=${m.cents} whole animate negative />
             <span class="hero-info" aria-hidden="true"><${Icon} name="info" size=${18} stroke=${2} /></span>
           </button>`
@@ -220,9 +232,9 @@ function Hero({ o, canPrev, canNext, setPeriod, desk = false }) {
       ${p.is_current && m.free && html`<${Tempo} t=${o.tempo} />`}
       ${pace && html`<div class="hero-pace">
         ${desk
-          ? html`<${PaceChart} actual=${pace.actual} typical=${pace.typical} label=${paceLabel} showToday=${p.is_current}
+          ? html`<${PaceChart} actual=${pace.actual} typical=${pace.typical} label=${paceLabel} showToday=${p.is_current} actualLabel="Nog over"
               height=${220} axis interactive dayLabel=${(i, long) => paceDay(p, i, long)} />`
-          : html`<${PaceChart} actual=${pace.actual} typical=${pace.typical} label=${paceLabel} showToday=${p.is_current} />`}
+          : html`<${PaceChart} actual=${pace.actual} typical=${pace.typical} label=${paceLabel} showToday=${p.is_current} actualLabel="Nog over" />`}
         <div class="pace-legend" aria-hidden="true">
           <span><i class="lg-solid"></i>${monthSmart(p.id)}</span>
           <span><i class="lg-dot"></i>normaal</span>
