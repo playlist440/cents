@@ -21,6 +21,7 @@ Buys and sells never touch `transactions`, so they never count as spending.
 from __future__ import annotations
 
 import bisect
+import math
 import sqlite3
 from datetime import date, timedelta
 
@@ -197,10 +198,13 @@ class PriceBook:
     def __init__(self, conn: sqlite3.Connection, isins: list[str]):
         self.series: dict[str, tuple[list[str], list[float], list[str]]] = {}
         for isin in isins:
+            rows = db.rows(conn, """SELECT date, source, close_eur FROM trades_prices
+                                    WHERE isin = ? ORDER BY date, prio""", (isin,))
+            name = db.value(conn, "SELECT name FROM securities WHERE isin = ?", (isin,)) or ""
+            scale = _source_scales(rows, any_gap="%" in name)
             pts: dict[str, tuple[float, str]] = {}
-            for r in db.rows(conn, """SELECT date, source, close_eur FROM trades_prices
-                                      WHERE isin = ? ORDER BY date, prio""", (isin,)):
-                pts[r["date"]] = (r["close_eur"], r["source"])
+            for r in rows:
+                pts[r["date"]] = (r["close_eur"] * scale.get(r["source"], 1.0), r["source"])
             days = sorted(pts)
             self.series[isin] = (days, [pts[d][0] for d in days], [pts[d][1] for d in days])
 
@@ -210,6 +214,37 @@ class PriceBook:
         if not i:
             return None, None, None
         return vals[i - 1], days[i - 1], srcs[i - 1]
+
+
+def _source_scales(rows: list, any_gap: bool = False) -> dict[str, float]:
+    """Bonds are quoted as a percentage of the nominal amount (98.5 = 98.5 %), while a trade
+    gives the real price per unit (value / quantity). A quote source can therefore be off by a
+    power of ten. Per source, compare its price nearest to a trade (within 10 days) with that
+    trade's real price; when they differ by about 10x, 100x or 1000x, rescale that source.
+    Normal funds get factor 1. For a bond (a "%" in the name, like DEGIRO's "NL2.5%DSL...") the
+    nearest trade counts at any distance: a bond does not move tenfold."""
+    trades = [(date.fromisoformat(r["date"]), r["close_eur"]) for r in rows
+              if r["source"] == "trade" and r["close_eur"]]
+    if not trades:
+        return {}
+    out: dict[str, float] = {}
+    for src in {r["source"] for r in rows} - {"trade"}:
+        best = None
+        for r in rows:
+            if r["source"] != src or not r["close_eur"] or r["close_eur"] <= 0:
+                continue
+            d = date.fromisoformat(r["date"])
+            for td, tp in trades:
+                gap = abs((d - td).days)
+                if (gap <= 10 or any_gap) and (best is None or gap < best[0]):
+                    best = (gap, tp / r["close_eur"])
+        if best is None:
+            continue
+        exp = math.log10(best[1])
+        k = round(exp)
+        if k != 0 and abs(exp - k) < 0.2:
+            out[src] = 10.0 ** k
+    return out
 
 
 PRICE_VIEW = """CREATE TEMP VIEW IF NOT EXISTS trades_prices AS

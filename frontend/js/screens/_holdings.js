@@ -20,6 +20,13 @@ const pct = (f) => (f == null ? '' : `${f > 0 ? '+' : f < 0 ? '−' : ''}${Math.
 const qty = (q) => number(Math.round(q * 10000) / 10000);
 const SOURCE = { yahoo: 'Yahoo Finance', degiro_portfolio: 'DEGIRO-export', trade: 'laatste aankoop' };
 
+// Obligaties (een "%" in de naam) noteren in procenten van de nominale waarde: 0,985 per
+// euro nominaal tonen we als 98,50 %, zoals DEGIRO.
+const isBond = (f) => (f.name || '').includes('%');
+const px = (f, cents) => (isBond(f)
+  ? `${(cents).toLocaleString('nl-NL', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} %`
+  : money(cents));
+
 export function resultText(cents, fraction) {
   if (cents == null) return '';
   return `${money(cents, { whole: true, signed: true, negative: true })}${fraction != null ? ` · ${pct(fraction)}` : ''}`;
@@ -82,7 +89,7 @@ function FundRow({ f, account }) {
     <span class=${'num vm-result' + (res > 0 ? ' is-income' : '')}>${money(res, { whole: true, signed: true, negative: true })}</span>
   </span>`;
   const sub = f.quantity > 0
-    ? `${qty(f.quantity)} × ${f.price_cents != null ? money(f.price_cents) : '—'}${f.avg_price_cents ? ` · gem. ${money(f.avg_price_cents)}` : ''}`
+    ? `${qty(f.quantity)} × ${f.price_cents != null ? px(f, f.price_cents) : '—'}${f.avg_price_cents ? ` · gem. ${px(f, f.avg_price_cents)}` : ''}`
     : `${f.trades.length} transacties`;
   return html`<${ListRow} title=${f.name} subtitle=${html`<span class="num">${sub}</span>`} value=${value} chevron
     onClick=${() => openSheet(FundSheet, { fund: f, account })} label=${`${f.name}, ${money(f.value_cents)}`} />`;
@@ -109,8 +116,8 @@ export function FundSheet({ close, fund: f }) {
       </div>
       <${List} footer=${f.price_date ? `Koers van ${longDate(f.price_date)} · ${SOURCE[f.price_source] || f.price_source}` : null}>
         <${ListRow} title="Aantal" value=${html`<span class="num">${qty(f.quantity)}</span>`} />
-        <${ListRow} title="Koers" value=${html`<span class="num">${f.price_cents != null ? money(f.price_cents) : '—'}</span>`} />
-        ${f.avg_price_cents != null && html`<${ListRow} title="Gemiddelde aankoopprijs" value=${html`<span class="num">${money(f.avg_price_cents)}</span>`} />`}
+        <${ListRow} title="Koers" value=${html`<span class="num">${f.price_cents != null ? px(f, f.price_cents) : '—'}</span>`} />
+        ${f.avg_price_cents != null && html`<${ListRow} title="Gemiddelde aankoopprijs" value=${html`<span class="num">${px(f, f.avg_price_cents)}</span>`} />`}
         <${ListRow} title="Koersresultaat" value=${html`<span class="num">${money(f.price_result_cents, { signed: true, negative: true })}</span>`} />
         ${f.dividends_cents !== 0 && html`<${ListRow} title="Dividend" value=${html`<span class="num">${money(f.dividends_cents, { negative: true })}</span>`} />`}
         <${ListRow} title="Kosten" value=${html`<span class="num">${money(f.fees_cents)}</span>`} />

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from book import book, today  # noqa: F401,E402  (fixtures)
+
 from datetime import date, datetime, timezone
 from pathlib import Path
 
@@ -289,3 +291,21 @@ def test_networth_uses_real_value(client):
     ov = client.get("/api/overview").json()
     if ov.get("free"):
         assert ov["free"]["balances_cents"] <= 30000
+
+
+def test_bond_quoted_in_percent_is_rescaled(client, book):
+    """A bond bought at 98.50 % for 1.000 nominal costs 985; a quote of 99.00 (percent) must
+    value it at 990, not 99.000."""
+    from cents.services import investments
+    acc = book.account("DEGIRO", "investment")
+    book.conn.execute("INSERT INTO securities (isin, name, currency) VALUES "
+                      "('NL0000000001', 'NL2.5%DSL15JUL2035F', 'EUR')")
+    book.conn.execute("""INSERT INTO trades (account_id, date, isin, quantity, price, currency,
+                         value_eur_cents, fees_cents, manual, created_at)
+                         VALUES (?, '2026-01-10', 'NL0000000001', 1000, 98.5, 'EUR', -98500, 0, 1, 'x')""", (acc,))
+    book.conn.execute("""INSERT INTO prices (isin, date, source, close, currency, close_eur)
+                         VALUES ('NL0000000001', '2026-03-10', 'yahoo', 99.0, 'EUR', 99.0)""")
+    book.commit()
+    h = investments.holdings(book.conn, acc, "2026-03-15")
+    assert h["holdings"][0]["value_cents"] == 99000
+    assert h["result_cents"] == 500
