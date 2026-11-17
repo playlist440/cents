@@ -139,6 +139,17 @@
 .mg-month { height: 40px; border-radius: 10px; font: 500 var(--fs-subhead)/1 var(--font); }
 .mg-month.is-selected { background: var(--tint); color: var(--on-tint); }
 .mg-month:disabled { color: var(--label-4); }
+/* Maand / Jaar picker (Overzicht) */
+.pp-seg { padding: 12px 12px 0; }
+.pp-seg .segmented { width: 100%; }
+.year-list { padding: 10px 8px 8px; max-height: 60vh; overflow-y: auto; display: grid; gap: 2px; }
+.yl-year { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; height: 44px; padding: 0 12px; border-radius: 10px; text-align: left; transition: background-color 250ms linear; }
+.yl-name { font: 600 var(--fs-body)/1 var(--font); font-variant-numeric: tabular-nums; }
+.yl-sub { font: 400 var(--fs-footnote)/1 var(--font); color: var(--label-2); }
+.yl-year.is-selected { background: var(--tint); color: var(--on-tint); }
+.yl-year.is-selected .yl-sub { color: inherit; opacity: .8; }
+.yl-year:focus-visible { outline: none; background-color: var(--fill-3); }
+@media (hover: hover) { .yl-year:hover:not(.is-selected) { background-color: var(--fill-4); } }
 
 /* ---------- Inset grouped lists ---------- */
 .list-group { margin: 0 0 24px; }

@@ -381,6 +381,75 @@ function overview(pid) {
   return result;
 }
 
+/** GET /overview?period=YYYY: the started periods of a year added up (SPEC §9 "Jaar"). */
+function yearOverview(year) {
+  const cur = currentPeriod();
+  const first = firstPeriod();
+  const ids = [];
+  for (let m = 1; m <= 12; m++) {
+    const id = `${year}-${String(m).padStart(2, '0')}`;
+    if (id <= cur) ids.push(id);
+  }
+  if (!ids.length) return null;
+  const sum = (list) => {
+    const out = { income: 0, fixed: 0, daily: 0, saved: 0, cats: new Map(), incomeCats: new Map() };
+    for (const id of list) {
+      const f = flows(id);
+      out.income += f.income; out.fixed += f.fixed; out.daily += f.daily; out.saved += f.saved;
+      for (const [k, map] of [['cats', f.cats], ['incomeCats', f.incomeCats]]) {
+        for (const [cid, e] of map) {
+          const o = out[k].get(cid) || { cents: 0, count: 0 };
+          o.cents += e.cents; o.count += e.count; out[k].set(cid, o);
+        }
+      }
+    }
+    out.net = out.income - out.fixed - out.daily - out.saved;
+    return out;
+  };
+  const t = sum(ids);
+  const prevIds = ids.map((id) => shiftPeriod(id, -12));
+  const prev = prevIds[0] > first ? sum(prevIds) : null;
+  const ytd = ids.includes(cur);
+  const from = periodBounds(ids[0]).from;
+  const lastTo = periodBounds(ids.at(-1)).to;
+  const to = ytd ? db.today : lastTo;
+  const days_total = daysBetween(from, lastTo) + 1;
+  const n = Math.max(1, ids.filter((id) => { const f = flows(id); return f.income || f.fixed || f.daily || f.saved; }).length);
+  const pm = (v) => Math.round(v / n);
+  const q = sortQueue();
+  const checking = db.accounts.filter((a) => a.type === 'checking').reduce((s, a) => s + (accountBalance(a).balance_cents || 0), 0);
+  return {
+    period: {
+      id: String(year), kind: 'year', label: ytd ? `${year} tot nu` : String(year), year, from, to,
+      is_current: ytd, ytd, months: ids.length, first_period: ids[0], last_period: ids.at(-1),
+      day_index: Math.min(days_total, daysBetween(from, to) + 1), days_total,
+      prev: `${year - 1}-12` >= first ? String(year - 1) : null,
+      next: `${year + 1}-01` <= cur ? String(year + 1) : null,
+    },
+    income_cents: t.income, expected_income_cents: t.income, fixed_cents: t.fixed, fixed_upcoming_cents: 0,
+    daily_cents: t.daily, saved_cents: t.saved, saving_upcoming_cents: 0,
+    left_cents: null, per_day_left_cents: null, net_cents: t.net,
+    per_month: { income_cents: pm(t.income), fixed_cents: pm(t.fixed), daily_cents: pm(t.daily), saved_cents: pm(t.saved), net_cents: pm(t.net) },
+    previous_year: prev && { income_cents: prev.income, fixed_cents: prev.fixed, daily_cents: prev.daily, saved_cents: prev.saved, net_cents: prev.net,
+      from: periodBounds(prevIds[0]).from, to: periodBounds(prevIds.at(-1)).to },
+    months: ids.map((id) => {
+      const f = flows(id);
+      return { period: id, label: monthLabel(id), income_cents: f.income, fixed_cents: f.fixed, daily_cents: f.daily,
+        saved_cents: f.saved, net_cents: f.income - f.fixed - f.daily - f.saved, partial: id === cur };
+    }),
+    pace: null,
+    categories: [...t.cats.entries()]
+      .map(([category_id, e]) => ({ category_id, spent_cents: e.cents, avg_cents: prev?.cats.get(category_id)?.cents || 0, count: e.count, per_month_cents: pm(e.cents) }))
+      .filter((c) => c.spent_cents !== 0)
+      .sort((a, b) => b.spent_cents - a.spent_cents),
+    income: [...t.incomeCats.entries()].map(([category_id, e]) => ({ category_id, cents: e.cents })).sort((a, b) => b.cents - a.cents),
+    upcoming: [], insights: [],
+    unsorted: { merchants: q.length, transactions: q.reduce((s, x) => s + x.count, 0), cents: q.reduce((s, x) => s + x.total_cents, 0) },
+    balance: { checking_cents: checking, expected_end_cents: null },
+    free: null, tempo: null, checking_warning: null,
+  };
+}
+
 /* ---------- Vrij geld, tempo, betaalrekening (SPEC §9, services/outlook.py) ---------- */
 
 const OCC_STEP_DAYS = { weekly: 7, '2-weekly': 14, '4-weekly': 28, quarterly: 91, 'half-year': 182, yearly: 365 };
@@ -1402,7 +1471,13 @@ const ROUTES = [
   ['DELETE', /^\/rules\/(\d+)$/, ({ params: [id] }) => { need(db.rules.find((r) => r.id === id)); db.rules = db.rules.filter((r) => r.id !== id); return ok({ ok: true }); }],
 
   /* Overview and trends */
-  ['GET', /^\/overview$/, ({ query }) => ok(overview(query.period || currentPeriod()))],
+  ['GET', /^\/overview$/, ({ query }) => {
+    if (/^\d{4}$/.test(query.period || '')) {
+      const y = yearOverview(Number(query.period));
+      return y ? ok(y) : fail(400, 'future_year', 'Dat jaar is nog niet begonnen.');
+    }
+    return ok(overview(query.period || currentPeriod()));
+  }],
   ['GET', /^\/trends$/, ({ query }) => ok(trends(Number(query.periods) || 12))],
   ['GET', /^\/calendar$/, ({ query }) => ok(calendar(query.period || currentPeriod()))],
   ['GET', /^\/recap\/index$/, () => ok(recapIndex())],

@@ -114,6 +114,26 @@ def complete_periods_before(period: Period, n: int, start_day: int = 1) -> list[
     return [shift(period, -i, start_day) for i in range(1, n + 1)]
 
 
+# ---------------------------------------------------------------- years
+
+def is_year_id(value: str | None) -> bool:
+    """A year id is four digits ("2026"); a period id is "YYYY-MM"."""
+    return bool(value) and len(value) == 4 and value.isdigit()
+
+
+def year_periods(year: int, start_day: int = 1) -> list[Period]:
+    """The twelve periods whose id lies in `year` ("2026-01" .. "2026-12"). With a late start
+    day the first one starts in December of the year before (the id rule above)."""
+    return [period_by_id(f"{year:04d}-{m:02d}", start_day) for m in range(1, 13)]
+
+
+def started_year_periods(year: int, start_day: int = 1, now: date | None = None) -> list[Period]:
+    """The periods of `year` that have started on `now` (year to date for the current year,
+    all twelve for a past year, none for a future year)."""
+    now = now or today()
+    return [p for p in year_periods(year, start_day) if p.start <= now]
+
+
 # ---------------------------------------------------------------- database-aware helpers
 
 def start_day_of(conn: sqlite3.Connection) -> int:

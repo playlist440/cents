@@ -1,6 +1,8 @@
 // Overzicht (DESIGN §3): hero "Vrij geld" (breakdown popover) with Tempo and the pace chart,
 // a betaalrekening warning when relevant, four tiles, sort banner, "Waar het heen ging",
 // insights, Binnenkort, Potjes peek. Empty state: one drop zone.
+// A year ("?period=2026") shows the year's sums instead: hero Over / Tekort, a bar chart per
+// month in place of the pace chart, tiles with per-month figures (SPEC §9 "Jaar").
 
 import { html, useRef, useState } from '../vendor/preact-htm.js';
 import { api } from '../api.js';
@@ -11,13 +13,14 @@ import { useLayout } from '../hooks.js';
 import { EmojiTile } from '../components/EmojiTile.js';
 import { Icon } from '../icons.js';
 import { Screen, NavButton } from '../components/Screen.js';
-import { MonthSwitcher } from '../components/MonthSwitcher.js';
+import { MonthSwitcher, isYear, yearLabel } from '../components/MonthSwitcher.js';
 import { Amount } from '../components/Amount.js';
 import { Tile, Card } from '../components/Card.js';
 import { Section, List, ListRow } from '../components/List.js';
 import { Button } from '../components/Controls.js';
 import { Skeleton, DropZone, ProgressRing } from '../components/Feedback.js';
 import { PaceChart } from '../charts/PaceChart.js';
+import { BarChart } from '../charts/BarChart.js';
 import { StackedCapsule } from '../charts/StackedCapsule.js';
 import { RankedBars } from '../charts/RankedBars.js';
 import { colorVar } from '../colors.js';
@@ -30,7 +33,7 @@ import { commitLater, usePending } from './_kit.js';
 export function Overzicht({ query }) {
   const boot = useStore((s) => s.boot);
   const periods = boot.periods;
-  const period = query.period && query.period <= periods.last ? query.period : periods.current;
+  const period = validPeriod(query.period, periods);
   const hasData = boot.has_data;
   const ov = useQuery(hasData ? 'overview:' + period : null, () => api.overview(period));
   const goals = useQuery(hasData ? 'goals' : null, () => api.goals());
@@ -42,7 +45,7 @@ export function Overzicht({ query }) {
 
   const setPeriod = (p) => replaceQuery({ period: p === periods.current ? undefined : p });
 
-  const titleView = hasData && html`<${MonthSwitcher} value=${period} first=${periods.first} last=${periods.last} onChange=${setPeriod} />`;
+  const titleView = hasData && html`<${MonthSwitcher} value=${period} first=${periods.first} last=${periods.last} years onChange=${setPeriod} />`;
   const trailing = html`<${NavButton} icon="plus" label="Toevoegen" onClick=${(e) => openAddMenu(e.currentTarget)} />`;
 
   if (!hasData) {
@@ -53,9 +56,9 @@ export function Overzicht({ query }) {
 
   return html`<${Screen} title="Overzicht" titleView=${titleView} trailing=${trailing} add=${[]} class="ov">
     ${!data ? html`<${OverzichtSkeleton} desk=${desk} />` : desk ? html`<${Dashboard} o=${data} goals=${goals.data?.goals} stale=${stale}
-        canPrev=${!!data.period.prev && data.period.prev >= periods.first} canNext=${data.period.id < periods.last} setPeriod=${setPeriod} />`
+        canPrev=${canPrev(data.period, periods)} canNext=${canNext(data.period, periods)} setPeriod=${setPeriod} />`
     : html`<div class=${'ov-body' + (stale ? ' is-stale' : '')}>
-      <${Hero} o=${data} canPrev=${!!data.period.prev && data.period.prev >= periods.first} canNext=${data.period.id < periods.last} setPeriod=${setPeriod} />
+      <${Hero} o=${data} canPrev=${canPrev(data.period, periods)} canNext=${canNext(data.period, periods)} setPeriod=${setPeriod} />
       <${CheckingWarning} o=${data} />
       <${Tiles} o=${data} />
       ${data.unsorted.merchants > 0 && html`<${SortBanner} n=${data.unsorted.merchants} />`}
@@ -66,6 +69,16 @@ export function Overzicht({ query }) {
     </div>`}
   </${Screen}>`;
 }
+
+/** The `period` query: a month id up to the last one, or a year id from the first year up to
+ *  the current one; anything else means the current month. */
+function validPeriod(q, periods) {
+  if (isYear(q)) return q >= periods.first.slice(0, 4) && q <= periods.current.slice(0, 4) ? q : periods.current;
+  return q && q <= periods.last ? q : periods.current;
+}
+
+const canPrev = (p, periods) => (p.kind === 'year' ? !!p.prev : !!p.prev && p.prev >= periods.first);
+const canNext = (p, periods) => (p.kind === 'year' ? !!p.next : p.id < periods.last);
 
 /* ---------- Hero ---------- */
 
@@ -81,6 +94,15 @@ function leftPace(pace) {
 
 function heroModel(o) {
   const p = o.period;
+  if (p.kind === 'year') {
+    const over = o.net_cents >= 0;
+    return {
+      label: `${over ? 'Over' : 'Tekort'} in ${yearLabel(p.id)}`,
+      cents: Math.abs(o.net_cents),
+      warn: !over,
+      sub: `${euros(o.income_cents)} inkomen · ${euros(o.fixed_cents + o.daily_cents)} uitgegeven`,
+    };
+  }
   const daysLeft = p.days_total - p.day_index + 1;
   if (p.is_current && o.free) {
     const f = o.free;
@@ -231,6 +253,7 @@ function Hero({ o, canPrev, canNext, setPeriod, desk = false }) {
           </div>`}
       <div class="hero-sub num">${m.sub}</div>
       ${p.is_current && m.free && html`<${Tempo} t=${o.tempo} />`}
+      ${p.kind === 'year' && o.months?.length > 0 && html`<${YearBars} o=${o} desk=${desk} />`}
       ${pace && html`<div class="hero-pace">
         ${desk
           ? html`<${PaceChart} actual=${pace.actual} typical=${pace.typical} label=${paceLabel} showToday=${p.is_current} actualLabel="Nog over"
@@ -243,6 +266,38 @@ function Hero({ o, canPrev, canNext, setPeriod, desk = false }) {
       </div>`}
     </div>
   </section>`;
+}
+
+const YEAR_SERIES = [
+  { key: 'fixed_cents', name: 'Vast', color: 'var(--chart-fixed, var(--indigo))' },
+  { key: 'daily_cents', name: 'Dagelijks', color: 'var(--chart-daily, var(--blue))' },
+  { key: 'saved_cents', name: 'Gespaard', color: 'var(--chart-saved, var(--teal))' },
+];
+
+/** A year: vast, dagelijks and gespaard per month as stacked bars, inkomen as a line; the
+ *  read-out adds the month's result (over / tekort). */
+function YearBars({ o, desk }) {
+  // Months before the first import are left out (a year whose data starts in June).
+  const empty = (m) => !m.income_cents && !m.fixed_cents && !m.daily_cents && !m.saved_cents;
+  const start = o.months.findIndex((m) => !empty(m));
+  const months = start < 0 ? o.months : o.months.slice(start);
+  const data = months.map((m) => ({
+    label: monthLabel(m.period), short: monthLabel(m.period, { short: true, year: false }),
+    values: YEAR_SERIES.map((s) => Math.max(0, m[s.key] || 0)), partial: m.partial,
+  }));
+  const extra = (i) => {
+    const n = months[i]?.net_cents ?? 0;
+    return html`<div class="ro-row"><span>${n >= 0 ? 'Over' : 'Tekort'}</span><b class=${'num' + (n < 0 ? ' is-warn' : '')}>${euros(Math.abs(n))}</b></div>`;
+  };
+  return html`<div class="hero-pace hero-year">
+    <${BarChart} data=${data} series=${YEAR_SERIES} height=${desk ? 220 : 150}
+      line=${{ name: 'Inkomen', color: 'var(--green)', values: months.map((m) => m.income_cents) }}
+      readoutExtra=${extra} label=${`Per maand in ${yearLabel(o.period.id)}: vast, dagelijks en gespaard, met inkomen als lijn`} />
+    <div class="pace-legend" aria-hidden="true">
+      ${YEAR_SERIES.map((s) => html`<span key=${s.key}><i style=${{ background: s.color }}></i>${s.name}</span>`)}
+      <span><i style=${{ background: 'var(--green)' }}></i>Inkomen</span>
+    </div>
+  </div>`;
 }
 
 /** Day i of the period: "3 nov" on the axis, "ma 3 november" in the read-out. */
@@ -281,7 +336,7 @@ function WhereTable({ o }) {
   if (!rows.length) return html`<section class="dk-card ov-where"><div class="dk-card-h"><h2>Waar het heen ging</h2></div><p class="quiet">Nog niets uitgegeven</p></section>`;
   const total = rows.reduce((s, r) => s + r.c.spent_cents, 0);
   const max = Math.max(...rows.map((r) => r.c.spent_cents));
-  const open = (r) => navigate(`/overzicht/bakje/${r.c.category_id}`, { query: p.is_current ? {} : { period: p.id } });
+  const open = (r) => navigate(`/overzicht/bakje/${r.c.category_id}`, { query: bakjeQuery(p) });
   return html`<section class="dk-card ov-where" aria-labelledby="ov-where-h">
     <div class="dk-card-h"><h2 id="ov-where-h">Waar het heen ging</h2><span class="section-value num"><span class="ov-total-lbl">alles samen</span> ${euros(total)}</span></div>
     <div class="capsule-wrap"><${StackedCapsule} segments=${rows.map((r) => ({ key: r.c.category_id, value: r.c.spent_cents, color: r.cat.color, label: r.cat.name }))} label="Uitgaven per bakje" /></div>
@@ -290,7 +345,7 @@ function WhereTable({ o }) {
         <span role="columnheader">Bakje</span>
         <span role="columnheader" class="is-num">Bedrag</span>
         <span role="columnheader" class="is-num">Aandeel</span>
-        <span role="columnheader" class="is-num">t.o.v. normaal</span>
+        <span role="columnheader" class="is-num">${p.kind === 'year' ? 't.o.v. vorig jaar' : 't.o.v. normaal'}</span>
       </div>
       ${rows.map((r) => html`<button class="dt-row" role="row" key=${r.c.category_id} onClick=${() => open(r)}
           aria-label=${`${r.cat.name}, ${euros(r.c.spent_cents)}${r.chip ? ', ' + r.chip.text : ''}`}>
@@ -311,8 +366,30 @@ function WhereTable({ o }) {
 
 /* ---------- Tiles ---------- */
 
+/** A bakje opened from a year shows the year's last month (bakje is per month). */
+const bakjeQuery = (p) => (p.kind === 'year' ? (p.is_current ? {} : { period: p.last_period }) : p.is_current ? {} : { period: p.id });
+
+function YearTiles({ o }) {
+  const p = o.period;
+  const pm = o.per_month || {};
+  const py = o.previous_year;
+  // Same months a year earlier; for the running year scaled to the days seen so far.
+  const scale = p.ytd && p.days_total ? p.day_index / p.days_total : 1;
+  const perMonth = (c) => `${euros(c)} per maand`;
+  return html`<div class="tiles">
+    <${Tile} label="Inkomen" icon="euro" color="green" cents=${o.income_cents} sub=${perMonth(pm.income_cents || 0)} />
+    <${Tile} label="Vaste lasten" icon="vaste-lasten" color="indigo" cents=${o.fixed_cents} sub=${perMonth(pm.fixed_cents || 0)}
+      onClick=${() => navigate('/vaste-lasten')} />
+    <${Tile} label="Dagelijks" icon="creditcard" color="blue" cents=${o.daily_cents}
+      sub=${py ? `vorig jaar ${euros(Math.round(py.daily_cents * scale))}` : perMonth(pm.daily_cents || 0)} />
+    <${Tile} label="Gespaard" icon="piggy" color="teal" cents=${o.saved_cents} sub=${perMonth(pm.saved_cents || 0)}
+      onClick=${() => navigate('/potjes')} />
+  </div>`;
+}
+
 function Tiles({ o }) {
   const p = o.period;
+  if (p.kind === 'year') return html`<${YearTiles} o=${o} />`;
   const exp = o.expected_income_cents;
   const fixedTotal = o.fixed_cents + (o.fixed_upcoming_cents || 0);
   const savedTotal = o.saved_cents + (o.saving_upcoming_cents || 0);
@@ -373,7 +450,7 @@ function WhereItWent({ o }) {
         label: cat.name,
         value: c.spent_cents,
         chip: chipFor(c, cat, p),
-        onClick: () => navigate(`/overzicht/bakje/${c.category_id}`, { query: p.is_current ? {} : { period: p.id } }),
+        onClick: () => navigate(`/overzicht/bakje/${c.category_id}`, { query: bakjeQuery(p) }),
       };
     });
   if (!rows.length) return null;

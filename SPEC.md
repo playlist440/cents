@@ -374,6 +374,18 @@ fly and cached until the next write:
   previous up to six complete periods at the same day index).
 - Per category: spent, the average of the previous six complete periods, count.
 
+**Jaar** (`build_year_overview`, `GET /overview?period=2026`): the periods whose id lies in the
+year (`2026-01` … `2026-12`, so with `month_start_day` 24 the year starts on 24 December) and
+that have started on today. The running year is year to date (`period.ytd`, label "2026 tot
+nu", `to` = today; the running month counts as far as it goes); a past year has all twelve.
+A year that has not started is a 400 (`future_year`). Totals (`income`, `fixed`, `daily`,
+`saved`, `net`, per bakje, income per category) are the sums of those periods, so they always
+equal the sum of the month overviews. `per_month` divides by the months that have data.
+"Normaal" for a year is the same months one year earlier (`previous_year`, per bakje
+`avg_cents`), only when the data covers all of them (else `null` / 0). Now-only figures
+(`free`, `tempo`, `checking_warning`, `left`, `per_day_left`, `expected_end`, `pace`,
+`upcoming`, `insights`) are `null` / empty for a year.
+
 **Insights** (`services/insights.py`): each returns `{id, kind, tone, emoji, title, value_cents?,
 detail?, link}` with one short Dutch sentence as `title`. Compute all, rank, return at most five.
 Only show an insight when the data really supports it (minimum history per rule):
@@ -503,6 +515,14 @@ Overview: `GET /overview?period` →
   unsorted: { merchants, transactions, cents },
   balance: { checking_cents, expected_end_cents: number|null } }
 ```
+`GET /overview?period=YYYY` (a year, §9 "Jaar") returns the same shape with
+`period: { id: "2026", kind: "year", label: "2026 tot nu"|"2025", year, from, to, is_current,
+ytd, months /* started periods */, first_period, last_period, day_index, days_total,
+prev: "2025"|null, next: "2027"|null }`, `expected_income_cents` = `income_cents`, upcoming
+amounts 0, plus `per_month: {income_cents, fixed_cents, daily_cents, saved_cents, net_cents}`,
+`previous_year: {income_cents, fixed_cents, daily_cents, saved_cents, net_cents, from, to} |
+null`, `months: [{period, label, income_cents, fixed_cents, daily_cents, saved_cents,
+net_cents, partial}]` and `categories[].per_month_cents`.
 `GET /trends?periods=12` → `{periods:[{period: Period-id, label, income_cents, fixed_cents,
 daily_cents, saved_cents, net_cents}], categories:[{category_id, cents: number[]}],
 top_merchants:[{merchant_key, merchant_name, category_id, cents, count}]}`.

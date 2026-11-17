@@ -58,7 +58,15 @@ field shakes. Nothing else on the screen.
 
 ### Overzicht
 A month switcher pill in the nav bar ("‹ november ›"); swiping the hero left/right also changes
-month. Top to bottom:
+month. Tapping the label opens a popover with a Maand / Jaar switch above a month grid or a
+list of years ("2026 · tot nu", "2025 · heel jaar"). In year mode the pill reads "‹ 2026 tot
+nu ›" and ‹ › (and swipe, ←/→) step through years; the URL keeps it (`?period=2026`). A year
+shows: hero "Over in 2026 tot nu" / "Tekort in 2025" with inkomen and uitgegeven as subline;
+instead of the pace chart stacked bars per month (vast, dagelijks, gespaard) with inkomen as a
+line and the month's result in the read-out; tiles with the year total and "€ X per maand"
+(Dagelijks: "vorig jaar € X" over the same months when the data covers them); "Waar het heen
+ging" compared with the same months last year. No Vrij geld, Tempo, warning, Binnenkort or
+insights for a year (they are about now). Top to bottom (month):
 
 1. **Hero.** Label "Vrij geld", a very large count-up amount (all checking + savings minus
    potjes, buffer and vaste lasten until payday), subline "tot 27 nov" (plus "saldo van 9 nov"
@@ -239,6 +247,6 @@ column headers in small caps-less secondary text and right-aligned tabular amoun
 cursor on rows, pointer only on links; visible focus rings; tooltips on icon-only buttons.
 Pickers and small forms open as popovers anchored to their control; only real tasks (import,
 new potje, new expense) use a centred sheet. Shortcuts: `/` or ⌘K search, ←/→ previous/next
-month on Overzicht, N new expense, I import, Esc closes, `?` shows a small shortcut list.
+month (or year) on Overzicht, N new expense, I import, Esc closes, `?` shows a small shortcut list.
 Never hijack browser shortcuts. Dropping a file anywhere imports it. Text in details and
 amounts is selectable.

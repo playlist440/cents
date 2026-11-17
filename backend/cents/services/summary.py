@@ -14,7 +14,7 @@ from .. import db
 from . import cache, ledger as ledger_mod, networth, outlook, recurring, txquery
 from .imports import unsorted_merchant_count
 from .ledger import DAILY, FIXED, INCOME, SAVING, Flows, Ledger
-from .periods import Period, period_json
+from .periods import Period, is_year_id, period_json, started_year_periods
 
 HISTORY = 6
 
@@ -165,9 +165,134 @@ def build_overview(conn: sqlite3.Connection, lg: Ledger, p: Period) -> dict:
     return ov
 
 
+# ---------------------------------------------------------------------------- year
+
+def _spending_cats(lg: Ledger) -> list[int]:
+    return [cid for cid, cat in lg.categories.items()
+            if cat["grp"] in (FIXED, DAILY) or cat["key"] in ("unsorted", "creditcard")]
+
+
+def _sum_flows(flows: list[Flows]) -> dict:
+    out = {"income": 0, "fixed": 0, "daily": 0, "saved": 0, "spent": {}, "counts": {},
+           "income_by_cat": {}}
+    for f in flows:
+        for k in ("income", "fixed", "daily", "saved"):
+            out[k] += getattr(f, k)
+        for name, src in (("spent", f.spent), ("counts", f.counts), ("income_by_cat", f.income_by_cat)):
+            for cid, v in src.items():
+                out[name][cid] = out[name].get(cid, 0) + v
+    out["net"] = out["income"] - out["fixed"] - out["daily"] - out["saved"]
+    return out
+
+
+def year_period_json(lg: Ledger, year: int, plist: list[Period]) -> dict:
+    """The `Period` object for a year: from the first period of the year up to today (year to
+    date, `ytd`) or the end of its last period (a past year)."""
+    now = lg.today
+    current = lg.current()
+    ytd = any(p.id == current.id for p in plist)
+    first, last = plist[0], plist[-1]
+    span_end = now if ytd else last.last
+    days_total = (last.end - first.start).days
+    prev_last = started_year_periods(year - 1, lg.start_day, now)
+    has_prev = bool(prev_last) and lg.first is not None and prev_last[-1].end > lg.first
+    has_next = bool(started_year_periods(year + 1, lg.start_day, now))
+    return {
+        "id": str(year),
+        "kind": "year",
+        "label": f"{year} tot nu" if ytd else str(year),
+        "year": year,
+        "from": first.start.isoformat(),
+        "to": span_end.isoformat(),
+        "is_current": ytd,
+        "ytd": ytd,
+        "months": len(plist),
+        "first_period": first.id,
+        "last_period": last.id,
+        "day_index": min(days_total, (span_end - first.start).days + 1),
+        "days_total": days_total,
+        "prev": str(year - 1) if has_prev else None,
+        "next": str(year + 1) if has_next else None,
+    }
+
+
+def build_year_overview(conn: sqlite3.Connection, lg: Ledger, year: int) -> dict:
+    """GET /overview?period=YYYY: the started periods of a year added up (SPEC 9 "Jaar")."""
+    plist = started_year_periods(year, lg.start_day, lg.today)
+    if not plist:
+        raise ValueError("year has not started")
+    flows = [lg.flows_for(p) for p in plist]
+    tot = _sum_flows(flows)
+    current = lg.current()
+    # "Normaal" for a year: the same months one year earlier, when the data covers all of them.
+    prev_ids = [lg.shift(p, -12) for p in plist]
+    covered = all(q.id in lg.flows and q.start < current.start for q in prev_ids)
+    prev_tot = _sum_flows([lg.flows_for(q) for q in prev_ids]) if covered else None
+
+    # Per month over the months the data covers (a year whose imports start in June is not
+    # averaged over twelve).
+    n = max(1, sum(1 for p in plist if p.id in lg.flows))
+    cats = []
+    for cid in _spending_cats(lg):
+        spent = tot["spent"].get(cid, 0)
+        avg = prev_tot["spent"].get(cid, 0) if prev_tot else 0
+        count = tot["counts"].get(cid, 0)
+        if spent or avg or count:
+            cats.append({"category_id": cid, "spent_cents": spent, "avg_cents": avg, "count": count,
+                         "per_month_cents": int(round(spent / n))})
+    cats.sort(key=lambda c: (-c["spent_cents"], -c["avg_cents"], c["category_id"]))
+
+    months = [{"period": p.id, "label": p.label, "income_cents": f.income, "fixed_cents": f.fixed,
+               "daily_cents": f.daily, "saved_cents": f.saved, "net_cents": f.net,
+               "partial": p.id == current.id}
+              for p, f in zip(plist, flows)]
+    unsorted_rows = db.row(conn, """
+        SELECT COUNT(*) AS n, COALESCE(SUM(t.amount_cents), 0) AS cents FROM transactions t
+        JOIN categories c ON c.id = t.category_id WHERE c.key = 'unsorted' AND t.kind = 'normal'""")
+    checking = networth.balance_of_type(conn, "checking")
+    return {
+        "period": year_period_json(lg, year, plist),
+        "income_cents": tot["income"],
+        "expected_income_cents": tot["income"],
+        "fixed_cents": tot["fixed"],
+        "fixed_upcoming_cents": 0,
+        "daily_cents": tot["daily"],
+        "saved_cents": tot["saved"],
+        "saving_upcoming_cents": 0,
+        "left_cents": None,
+        "per_day_left_cents": None,
+        "net_cents": tot["net"],
+        "per_month": {"income_cents": int(round(tot["income"] / n)),
+                      "fixed_cents": int(round(tot["fixed"] / n)),
+                      "daily_cents": int(round(tot["daily"] / n)),
+                      "saved_cents": int(round(tot["saved"] / n)),
+                      "net_cents": int(round(tot["net"] / n))},
+        "previous_year": ({"income_cents": prev_tot["income"], "fixed_cents": prev_tot["fixed"],
+                           "daily_cents": prev_tot["daily"], "saved_cents": prev_tot["saved"],
+                           "net_cents": prev_tot["net"], "from": prev_ids[0].start.isoformat(),
+                           "to": prev_ids[-1].last.isoformat()} if prev_tot else None),
+        "months": months,
+        "pace": None,
+        "categories": cats,
+        "income": sorted(({"category_id": c, "cents": v} for c, v in tot["income_by_cat"].items()),
+                         key=lambda x: -x["cents"]),
+        "upcoming": [],
+        "insights": [],
+        "unsorted": {"merchants": unsorted_merchant_count(conn), "transactions": unsorted_rows["n"],
+                     "cents": unsorted_rows["cents"]},
+        "balance": {"checking_cents": checking or 0, "expected_end_cents": None},
+        "free": None,
+        "tempo": None,
+        "checking_warning": None,
+    }
+
+
 def overview(conn: sqlite3.Connection, period_id: str | None) -> dict:
-    """GET /overview (cached per database state)."""
+    """GET /overview (cached per database state). `period_id` may be a year ("2026")."""
     lg = ledger_mod.get(conn)
+    if is_year_id(period_id):
+        year = int(period_id)
+        return cache.memo(conn, f"overview:{year}", lambda: build_year_overview(conn, lg, year))
     p = lg.period(period_id) if period_id else lg.current()
     return cache.memo(conn, f"overview:{p.id}", lambda: build_overview(conn, lg, p))
 

@@ -3,14 +3,14 @@
 // while a sheet or menu is open, or with any modifier held.
 //
 //   /  or ⌘K   search payments          N   new expense        I   import
-//   ← / →      previous / next month on Overzicht               ?   this list
+//   ← / →      previous / next month or year (Overzicht)        ?   this list
 //   Esc        closes sheets and menus (handled there), leaves the search field
 // Screens add their own (Transacties: ↑/↓, Enter, ⌘A; Sorteren: 1–9, spatie, ⌘Z).
 
 import { html } from '../vendor/preact-htm.js';
 import { current, replaceQuery, hasOpenSheet, openSheet } from '../router.js';
 import { getState } from '../store.js';
-import { shiftPeriod } from '../format.js';
+import { stepPeriod } from '../components/MonthSwitcher.js';
 import { openImport, openAddExpense } from './actions.js';
 import { focusToolbarSearch } from '../components/Toolbar.js';
 import { isMenuOpen } from '../components/Menu.js';
@@ -20,7 +20,7 @@ const typing = (el) => !!el && (/^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName) || 
 
 export const SHORTCUTS = [
   ['Zoek betalingen', ['/', '⌘K']],
-  ['Vorige / volgende maand', ['←', '→']],
+  ['Vorige / volgende maand of jaar', ['←', '→']],
   ['Uitgave toevoegen', ['N']],
   ['Bankbestand importeren', ['I']],
   ['Sluit venster of menu', ['Esc']],
@@ -60,8 +60,8 @@ export function installShortcuts() {
     if ((k === 'ArrowLeft' || k === 'ArrowRight') && r.path === '/overzicht') {
       const { periods } = getState().boot;
       const cur = r.query.period || periods.current;
-      const next = shiftPeriod(cur, k === 'ArrowLeft' ? -1 : 1);
-      if (next < periods.first || next > periods.last) return;
+      const next = stepPeriod(cur, k === 'ArrowLeft' ? -1 : 1, periods.first, periods.last);
+      if (!next) return;
       e.preventDefault();
       replaceQuery({ period: next === periods.current ? undefined : next });
     }

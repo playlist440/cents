@@ -233,6 +233,9 @@
   @keyframes dk-menu-in { from { opacity: 0; transform: scale(.98); } }
   .month-grid { padding: 10px 10px 4px; }
   .mg-month { height: 30px; border-radius: 7px; font-size: var(--fs-subhead); }
+  .pp-seg { padding: 10px 10px 0; }
+  .yl-year { height: 32px; border-radius: 7px; }
+  .yl-name { font-size: var(--fs-subhead); }
 
   .tooltip {
     position: fixed;
