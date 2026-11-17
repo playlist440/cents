@@ -35,23 +35,8 @@ Er gaan geen bedragen, aantallen, rekeningen of andere gegevens over jou mee; de
 waarde die je zelf invult.
 
 Wil je zeker weten dat het nooit aan kan, ook niet per ongeluk in de app, zet dan in de compose
-onder `cents:` bij `environment:` de regel `- CENTS_OFFLINE=1`. Dan weigert Cents elke verbinding
+onder `cents:` de regel `environment: [CENTS_OFFLINE=1]`. Dan weigert de server elke verbinding
 naar buiten, wat de instelling ook zegt.
-
-### Netwerkregel: de poortwachter
-
-Die schakelaar zit in Cents zelf. De compose voegt daarom een tweede slot toe dat buiten Cents
-ligt. Cents draait in een Docker-netwerk zonder internet (`internal: true`). Een kleine tweede
-container, `cents-poort` (Alpine met tinyproxy en socat, broncode in [`poort/`](poort/)), doet
-twee dingen:
-
-- hij geeft poort 8085 door aan Cents, zodat je de app gewoon opent;
-- hij is de enige weg naar buiten en laat alleen HTTPS naar `query1.finance.yahoo.com` en
-  `www.ecb.europa.eu` door. Elk ander adres wordt geweigerd.
-
-Zelfs een aangepaste of besmette versie van Cents kan je gegevens dus nergens anders heen
-sturen. Inloggen gaat voor Cents nu via één adres (de poortwachter): na te veel foute pogingen
-moet iedereen in huis even wachten, niet alleen het apparaat dat het fout deed.
 
 ## Installeren met Portainer
 

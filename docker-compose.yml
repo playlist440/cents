@@ -1,46 +1,20 @@
 # Cents — plak dit in Portainer onder Stacks > Add stack > Web editor.
 # Daarna openen op http://<adres-van-je-server>:8085 en een wachtwoord kiezen.
 # Er zijn geen instellingen nodig. Alle gegevens staan in het volume cents_data.
-#
-# Cents zelf zit in het netwerk "binnen", dat geen internet heeft. De poortwachter maakt
-# de app bereikbaar en laat naar buiten alleen Yahoo Finance en de ECB door (en alleen als
-# je koersen ophalen aanzet in de app).
 
 services:
   cents:
     image: ghcr.io/playlist440/cents:latest
     container_name: cents
     restart: unless-stopped
-    environment:
-      - HTTPS_PROXY=http://poort:8888
-    networks:
-      - binnen
+    ports:
+      - "8085:8000"
     volumes:
       - cents_data:/data
     security_opt:
       - no-new-privileges:true
     cap_drop:
       - ALL
-
-  poort:
-    image: ghcr.io/playlist440/cents-poort:latest
-    container_name: cents-poort
-    restart: unless-stopped
-    ports:
-      - "8085:8000"
-    networks:
-      - binnen
-      - buiten
-    read_only: true
-    security_opt:
-      - no-new-privileges:true
-    cap_drop:
-      - ALL
-
-networks:
-  binnen:
-    internal: true
-  buiten: {}
 
 volumes:
   cents_data:

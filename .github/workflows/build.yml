@@ -59,44 +59,6 @@ jobs:
           docker rm -f cents
       - uses: docker/build-push-action@v6
         with:
-          context: poort
-          load: true
-          tags: cents-poort:smoke
-      # Netwerkregel echt controleren: Cents heeft geen internet, de poortwachter laat
-      # alleen Yahoo en de ECB door en maakt de app bereikbaar.
-      - name: Smoke test poortwachter
-        run: |
-          docker network create --internal binnen
-          docker network create buiten
-          docker run -d --name cents --network binnen -e HTTPS_PROXY=http://poort:8888 \
-            --cap-drop ALL --security-opt no-new-privileges:true cents:smoke
-          docker run -d --name poort --network binnen -p 8085:8000 --read-only \
-            --cap-drop ALL --security-opt no-new-privileges:true cents-poort:smoke
-          docker network connect buiten poort
-          for i in $(seq 1 30); do
-            curl -fsS http://127.0.0.1:8085/api/healthz && break
-            sleep 1
-          done
-          curl -fsS http://127.0.0.1:8085/api/healthz | grep -q '"ok"'
-          get() { docker exec cents python -c "import sys,urllib.request as u; u.urlopen(sys.argv[1], timeout=15)" "$1"; }
-          noproxy() { docker exec -e HTTPS_PROXY= cents python -c "import sys,urllib.request as u; u.urlopen(sys.argv[1], timeout=10)" "$1"; }
-          get https://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml
-          ! get https://example.com
-          ! get https://www.google.com
-          ! noproxy https://www.ecb.europa.eu/
-          docker logs poort | tail -10
-          docker rm -f cents poort
-          docker network rm binnen buiten
-      - uses: docker/build-push-action@v6
-        with:
-          context: poort
-          platforms: linux/amd64,linux/arm64
-          push: true
-          tags: |
-            ghcr.io/${{ github.repository }}-poort:latest
-            ghcr.io/${{ github.repository }}-poort:${{ github.sha }}
-      - uses: docker/build-push-action@v6
-        with:
           context: .
           platforms: linux/amd64,linux/arm64
           push: true
