@@ -17,7 +17,7 @@ export function TextField({ label, value, onInput, placeholder, type = 'text', b
     autocapitalize=${type === 'text' ? 'sentences' : 'off'} autofocus=${autoFocus} aria-invalid=${invalid ? 'true' : null}
     aria-label=${label ? null : placeholder}
     onInput=${(e) => onInput?.(e.currentTarget.value)}
-    onKeyDown=${(e) => { if (e.key === 'Enter' && onEnter) { e.preventDefault(); onEnter(); } }} ...${rest} />`;
+    onKeyDown=${(e) => { if (e.key === 'Enter' && onEnter && !e.isComposing && e.keyCode !== 229) { e.preventDefault(); onEnter(); } }} ...${rest} />`;
   if (boxed) return html`<div class=${'field-boxed ' + (invalid ? 'is-invalid ' : '') + cls}>${input}</div>`;
   return html`<li class=${'field-row ' + cls}>
     ${label && html`<label class="field-label" for=${fid}>${label}</label>`}

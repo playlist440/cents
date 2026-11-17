@@ -41,16 +41,17 @@ export function FileButton({ onFiles, children = 'Kies bestand', variant = 'fill
 export function DropZone({ onFiles, title, compact = false }) {
   const [over, setOver] = useState(false);
   const hover = canHover();
+  // No stopPropagation: the shell's window-level drop overlay must see every drop to reset
+  // itself. preventDefault() marks the drop as handled so the shell doesn't import it twice.
   const onDrop = (e) => {
     e.preventDefault();
-    e.stopPropagation();
     setOver(false);
     const files = [...(e.dataTransfer?.files || [])];
     if (files.length) onFiles(files);
   };
   return html`<div class=${'dropzone' + (over ? ' is-over' : '') + (compact ? ' is-compact' : '')}
-    onDragOver=${(e) => { e.preventDefault(); e.stopPropagation(); setOver(true); }}
-    onDragLeave=${() => setOver(false)} onDrop=${onDrop}>
+    onDragOver=${(e) => { e.preventDefault(); if (!over) setOver(true); }}
+    onDragLeave=${(e) => { if (!e.currentTarget.contains(e.relatedTarget)) setOver(false); }} onDrop=${onDrop}>
     <div class="dz-icon" aria-hidden="true"><${Icon} name="doc" size=${compact ? 30 : 44} stroke=${1.4} /><span class="dz-arrow"><${Icon} name="import" size=${compact ? 16 : 22} stroke=${2.2} /></span></div>
     <h2 class="dz-title">${title || (hover ? 'Sleep je bankbestand hierheen' : 'Voeg je bankbestand toe')}</h2>
     <${FileButton} onFiles=${onFiles} size=${compact ? 'medium' : 'large'} />

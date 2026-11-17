@@ -85,28 +85,44 @@ function DropOverlay() {
     if (!canHover()) return;
     let depth = 0;
     const hasFiles = (e) => [...(e.dataTransfer?.types || [])].includes('Files');
+    const reset = () => { depth = 0; setOver(false); };
     const enter = (e) => { if (!hasFiles(e)) return; e.preventDefault(); depth++; setOver(true); };
-    const leave = (e) => { if (!hasFiles(e)) return; depth = Math.max(0, depth - 1); if (!depth) setOver(false); };
-    const overH = (e) => { if (hasFiles(e)) e.preventDefault(); };
-    const drop = (e) => {
+    // Safari reports relatedTarget null for every dragleave, Chrome only when the pointer
+    // leaves the window; counting depth alone can get stuck, so null + outside the viewport resets.
+    const leave = (e) => {
       if (!hasFiles(e)) return;
+      depth = Math.max(0, depth - 1);
+      const out = !e.relatedTarget && (e.clientX <= 0 || e.clientY <= 0 || e.clientX >= innerWidth || e.clientY >= innerHeight);
+      if (!depth || out) reset();
+    };
+    const overH = (e) => { if (!hasFiles(e)) return; e.preventDefault(); setOver(true); };
+    const drop = (e) => {
+      reset(); // always, also when a DropZone already handled it (defaultPrevented)
+      if (!hasFiles(e)) return;
+      const handled = e.defaultPrevented;
       e.preventDefault();
-      depth = 0;
-      setOver(false);
+      if (handled) return;
       const files = [...e.dataTransfer.files];
       if (files.length && getState().session?.authenticated) {
         window.dispatchEvent(new CustomEvent('cents:import-files', { detail: { files } }));
       }
     };
+    const vis = () => { if (document.hidden) reset(); };
     window.addEventListener('dragenter', enter);
     window.addEventListener('dragleave', leave);
     window.addEventListener('dragover', overH);
     window.addEventListener('drop', drop);
+    window.addEventListener('dragend', reset);
+    window.addEventListener('blur', reset);
+    document.addEventListener('visibilitychange', vis);
     return () => {
       window.removeEventListener('dragenter', enter);
       window.removeEventListener('dragleave', leave);
       window.removeEventListener('dragover', overH);
       window.removeEventListener('drop', drop);
+      window.removeEventListener('dragend', reset);
+      window.removeEventListener('blur', reset);
+      document.removeEventListener('visibilitychange', vis);
     };
   }, []);
   if (!over) return null;

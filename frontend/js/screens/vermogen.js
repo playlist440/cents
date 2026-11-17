@@ -574,7 +574,8 @@ function AssetSetup({ k, onCreated }) {
   };
   return html`
     <${List} footer=${k.kind === 'pension' ? 'Pensioen telt standaard niet mee in je vermogen: je kunt er pas later bij.' : null}>
-      <${TextField} label="Naam" value=${name} onInput=${setName} placeholder=${k.placeholder} maxLength=${60} enterkeyhint="done" onEnter=${create} />
+      <${TextField} label="Naam" value=${name} onInput=${setName} placeholder=${k.placeholder} maxLength=${60} enterkeyhint="done"
+        onEnter=${k.kind === 'debt' ? (() => document.activeElement?.blur()) : create} />
       ${k.kind === 'debt' && html`<li class="field-row"><span class="field-label">Soort</span>
         <${Segmented} value=${debtKind} onChange=${setDebtKind} options=${DEBT_KINDS} label="Soort schuld" size="small" /></li>`}
     </${List}>
