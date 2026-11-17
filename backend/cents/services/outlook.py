@@ -108,7 +108,9 @@ def free(conn: sqlite3.Connection, lg: Ledger, items: list[dict]) -> dict | None
     return {"total_cents": total, "balances_cents": balances, "goals_cents": goals_cents,
             "buffer_cents": buffer_cents, "fixed_until_payday_cents": fixed,
             "credit_cents": credit, "payday": pay.isoformat(), "payday_source": source,
-            "as_of": as_of, "stale": stale}
+            "as_of": as_of, "stale": stale,
+            "accounts": [{"name": a["name"], "type": a["type"], "balance_cents": a["balance_cents"],
+                          "as_of": a["as_of"]} for a in accounts]}
 
 
 def _net(lg: Ledger, p) -> int:

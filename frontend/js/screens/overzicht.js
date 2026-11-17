@@ -86,7 +86,8 @@ function heroModel(o) {
     const f = o.free;
     const sub = [`tot ${shortDate(f.payday)}`];
     if (f.stale && f.as_of) sub.push(`saldo van ${shortDate(f.as_of)}`);
-    if (f.total_cents < 0) sub.unshift(`${euros(-f.total_cents)} spaargeld gebruikt`);
+    if (f.total_cents < 0) sub.unshift(`${euros(-f.total_cents)} te weinig voor buffer en vaste lasten`);
+    else if (o.saved_cents < 0) sub.unshift(`${euros(-o.saved_cents)} spaargeld gebruikt deze maand`);
     return { label: 'Vrij geld', cents: Math.max(0, f.total_cents), warn: f.total_cents < 0, sub: sub.join(' · '), free: f };
   }
   if (p.is_current) {
@@ -104,7 +105,7 @@ function heroModel(o) {
 /** Breakdown of Vrij geld: saldi − potjes − buffer − vaste lasten tot salaris (− creditcard). */
 function FreeBreakdown({ f }) {
   const rows = [
-    ['Saldi', f.balances_cents, 'betaal + spaar'],
+    ...(f.accounts?.length ? f.accounts.map((a) => [a.name, a.balance_cents, a.as_of ? `saldo ${shortDate(a.as_of)}` : 'handmatig saldo']) : [['Saldi', f.balances_cents, 'betaal + spaar']]),
     ['Potjes', -f.goals_cents],
     ['Buffer', -f.buffer_cents],
     [`Vaste lasten tot ${shortDate(f.payday)}`, -f.fixed_until_payday_cents],
@@ -117,7 +118,7 @@ function FreeBreakdown({ f }) {
         <dd class="num">${money(cents, { whole: true, negative: true })}</dd>
       </div>`)}
       <div class="free-row is-total"><dt>Vrij</dt><dd class="num">${money(Math.max(0, f.total_cents), { whole: true })}</dd></div>
-      ${f.total_cents < 0 && html`<div class="free-row"><dt>Spaargeld gebruikt<span class="free-note">uit buffer of potjes</span></dt><dd class="num is-warn">${money(-f.total_cents, { whole: true })}</dd></div>`}
+      ${f.total_cents < 0 && html`<div class="free-row"><dt>Tekort<span class="free-note">saldi dekken buffer, potjes en vaste lasten niet</span></dt><dd class="num is-warn">${money(-f.total_cents, { whole: true })}</dd></div>`}
     </dl>
     ${f.as_of && html`<p class="free-foot">Saldo van ${shortDate(f.as_of)}${f.payday_source === 'period' ? ' · salaris niet herkend' : ''}</p>`}
     <button class="dk-link free-link" onClick=${() => navigate('/instellingen/aannames')}>Aannames aanpassen</button>
