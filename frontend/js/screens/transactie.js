@@ -12,6 +12,7 @@ import { api } from '../api.js';
 import { useQuery, useStore, categoryById, accountById, invalidate, getState } from '../store.js';
 import { freqLabel, money, euros, plural, longDate, dayLabel, addDays, todayISO, shiftPeriod } from '../format.js';
 import { Sheet } from '../components/Sheet.js';
+import { DateField } from '../components/Fields.js';
 import { EmojiTile } from '../components/EmojiTile.js';
 import { Switch, Button, Segmented } from '../components/Controls.js';
 import { Skeleton } from '../components/Feedback.js';
@@ -381,8 +382,9 @@ function Details({ t, account }) {
     ['Soort winkel', t.mcc_label],
     ['Tegenrekening', [t.counterparty_name, t.counterparty_iban ? t.counterparty_iban.replace(/(.{4})/g, '$1 ').trim() : null].filter(Boolean).join(' · ') || null],
     ['Datum', longDate(t.date)],
+    t.book_date && ['Boekdatum', `${longDate(t.book_date)} (telt mee in de overzichten)`],
     ['Saldo na', t.balance_after_cents != null ? money(t.balance_after_cents, { negative: true }) : null],
-  ].filter(([, v]) => v);
+  ].filter((x) => x && x[1]);
   // Overboeking naar een eigen rekening zonder eigen afschriften (DEGIRO, spaarrekening): koppel
   // het rekeningnummer van deze betaling met één tik, zonder het over te typen.
   const own = getState().boot?.accounts || [];
@@ -399,7 +401,40 @@ function Details({ t, account }) {
   return html`<dl class="td-details inset">
     ${rows.map(([k, v]) => html`<div class=${'td-dl-row' + (String(v).length > 34 ? ' is-long' : '')} key=${k}><dt>${k}</dt><dd class="selectable">${v}</dd></div>`)}
   </dl>
+  <${BookDate} t=${t} />
   ${t.counterparty_iban && !known && free.length > 0 && !t.manual && html`<button class="section-link td-own-link" onClick=${link}>Dit is mijn eigen rekening…</button>`}`;
+}
+
+/** Andere boekdatum: een afschrijving die te laat kwam (kinderopvang op de 1e in plaats van de
+ *  31e) telt in de overzichten mee op de dag die je kiest. De echte datum blijft staan. */
+function BookDate({ t }) {
+  const [open, setOpen] = useState(false);
+  const [value, setValue] = useState(t.book_date || t.date);
+  const [busy, setBusy] = useState(false);
+  useEffect(() => { setValue(t.book_date || t.date); setOpen(false); }, [t.id, t.book_date]);
+  const save = async (book) => {
+    setBusy(true);
+    try {
+      await api.updateTransaction(t.id, { book_date: book });
+      invalidate();
+      toast(book && book !== t.date ? `Boekdatum ${longDate(book)}` : 'Boekdatum gelijk aan de datum');
+      setOpen(false);
+    } catch (err) { toast({ text: err.message, icon: 'warning' }); }
+    setBusy(false);
+  };
+  if (!open) {
+    return html`<button class="section-link td-own-link" onClick=${() => setOpen(true)}>${t.book_date ? 'Boekdatum wijzigen…' : 'Andere boekdatum…'}</button>`;
+  }
+  return html`<div class="td-bookdate">
+    <ul class="list-group inset"><${DateField} label="Boekdatum" value=${value} onChange=${(v) => setValue(v || t.date)}
+      min=${addDays(t.date, -62)} max=${addDays(t.date, 62)} /></ul>
+    <p class="td-bookdate-hint">Telt in de overzichten mee op deze dag, bijvoorbeeld de laatste dag van de maand waar de betaling bij hoort. De echte datum (${longDate(t.date)}) blijft staan.</p>
+    <div class="td-bookdate-actions">
+      ${t.book_date && html`<${Button} variant="plain" size="small" onClick=${() => save(null)} disabled=${busy}>Gebruik de echte datum</${Button}>`}
+      <${Button} variant="plain" size="small" onClick=${() => setOpen(false)} disabled=${busy}>Annuleer</${Button}>
+      <${Button} variant="tinted" size="small" onClick=${() => save(value === t.date ? null : value)} loading=${busy}>Bewaar</${Button}>
+    </div>
+  </div>`;
 }
 
 function DetailSkeleton() {

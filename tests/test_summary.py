@@ -207,3 +207,19 @@ def test_typical_pace_is_the_median(client, book):
     book.commit()
     o = client.get("/api/overview").json()
     assert o["pace"]["typical"][9] == 20000 and o["pace"]["typical"][-1] == 20000
+
+
+def test_late_debit_counts_in_previous_month(client, book):
+    """Kinderopvang came on 1 March instead of end of February: move it back one month."""
+    chk, _ = household(book)
+    late = book.tx(chk, "2026-03-01", -80000, "kinderen", "Kinderopvang", method="debit")
+    book.commit()
+    spent = lambda p: (lambda o: o["fixed_cents"] + o["daily_cents"])(client.get(f"/api/overview?period={p}").json())  # noqa: E731
+    feb, mar = spent("2026-02"), spent("2026-03")
+    r = client.patch(f"/api/transactions/{late}", json={"book_date": "2026-02-28"})
+    assert r.status_code == 200, r.text
+    assert client.get(f"/api/transactions/{late}").json()["book_date"] == "2026-02-28"
+    assert spent("2026-02") == feb + 80000
+    assert spent("2026-03") == mar - 80000
+    client.patch(f"/api/transactions/{late}", json={"book_date": None})
+    assert spent("2026-03") == mar

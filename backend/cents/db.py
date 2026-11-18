@@ -313,8 +313,15 @@ SCHEMA_V8 = """
 ALTER TABLE accounts ADD COLUMN locked INTEGER NOT NULL DEFAULT 0;
 """
 
+# v9: a payment can count in another month than its date (a direct debit that came a day late:
+# kinderopvang on the 1st instead of the 31st). book_date is the day the overviews use.
+SCHEMA_V9 = """
+ALTER TABLE transactions ADD COLUMN book_date TEXT;
+"""
+
 # Forward-only. Append new migrations; never edit an old one.
-MIGRATIONS: list[str] = [SCHEMA_V1, SCHEMA_V2, SCHEMA_V3, SCHEMA_V4, SCHEMA_V5, SCHEMA_V6, SCHEMA_V7, SCHEMA_V8]
+MIGRATIONS: list[str] = [SCHEMA_V1, SCHEMA_V2, SCHEMA_V3, SCHEMA_V4, SCHEMA_V5, SCHEMA_V6, SCHEMA_V7, SCHEMA_V8,
+                         SCHEMA_V9]
 SCHEMA_VERSION = len(MIGRATIONS)
 
 DEFAULT_SETTINGS: dict[str, Any] = {"month_start_day": 1, "household_name": ""}

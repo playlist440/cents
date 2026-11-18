@@ -5,7 +5,7 @@ from __future__ import annotations
 import sqlite3
 import statistics
 import uuid
-from datetime import timedelta
+from datetime import date, timedelta
 
 from fastapi import APIRouter, Depends, Query
 
@@ -162,6 +162,11 @@ def patch_transaction(tx_id: int, body: TxPatch, conn: sqlite3.Connection = Depe
         updates["description"] = body.merchant_name.strip()
     if "note" in sent:
         updates["note"] = (body.note or "").strip() or None
+    if "book_date" in sent:
+        book = iso_date(body.book_date) if body.book_date else None
+        if book and abs((date.fromisoformat(book) - date.fromisoformat(tx["date"])).days) > 62:
+            raise bad_request("Een boekdatum ligt hooguit twee maanden van de echte datum.", "book_date_range")
+        updates["book_date"] = None if book == tx["date"] else book
     if "goal_id" in sent:
         if body.goal_id is not None and not db.value(conn, "SELECT 1 FROM goals WHERE id = ?", (body.goal_id,)):
             raise bad_request("Dit potje bestaat niet.", "unknown_goal")

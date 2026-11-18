@@ -65,7 +65,7 @@ function serializeTx(tx) {
     description: tx.description, method: tx.method, city: tx.city, category_id: tx.category_id,
     category_source: tx.category_source, kind: tx.kind, transfer_account_id: tx.transfer_account_id,
     tag_ids: tagIdsOf(tx.id), goal_id: tx.goal_id, note: tx.note, manual: tx.manual,
-    balance_after_cents: tx.balance_after_cents,
+    balance_after_cents: tx.balance_after_cents, book_date: tx.book_date ?? null,
   };
 }
 
@@ -1557,6 +1557,7 @@ const ROUTES = [
   ['GET', /^\/transactions\/(\d+)$/, ({ params: [id] }) => ok(txDetail(need(db.transactions.find((t) => t.id === id))))],
   ['PATCH', /^\/transactions\/(\d+)$/, ({ params: [id], body }) => {
     const t = need(db.transactions.find((x) => x.id === id));
+    if (body.book_date !== undefined) t.book_date = body.book_date && body.book_date !== t.date ? body.book_date : null;
     let updated = 1;
     const scope = body.apply_scope || (body.apply_to_merchant === false ? 'one' : 'merchant');
     if (body.category_id !== undefined && scope === 'merchant_below' && !t.manual) {

@@ -17,7 +17,7 @@ from .. import db
 TX_FIELDS = ["id", "account_id", "date", "amount_cents", "merchant_name", "merchant_key",
              "counterparty_iban", "description", "method", "city", "category_id",
              "category_source", "kind", "transfer_account_id", "goal_id", "note", "manual",
-             "balance_after_cents"]
+             "balance_after_cents", "book_date"]
 
 # Cash flow counts checking accounts and manual credit-card purchases only (SPEC 7).
 CASHFLOW_WHERE = "(a.type = 'checking' OR (a.type = 'credit' AND t.manual = 1))"
@@ -66,7 +66,7 @@ def period_rows(conn: sqlite3.Connection, start: date | str, end: date | str,
                 where: str = "", params: Iterable[Any] = ()) -> list[dict]:
     """All transactions with start <= date < end (end exclusive), oldest first.
     `where` is an extra SQL condition on aliases t (transactions), a (accounts), c (categories)."""
-    sql = _BASE_SELECT + " WHERE t.date >= ? AND t.date < ?"
+    sql = _BASE_SELECT + " WHERE COALESCE(t.book_date, t.date) >= ? AND COALESCE(t.book_date, t.date) < ?"
     if where:
         sql += f" AND ({where})"
     return db.rows(conn, sql + " ORDER BY t.date, t.id", (_to_iso(start), _to_iso(end), *params))
@@ -101,10 +101,10 @@ def build_filter(f: dict) -> tuple[str, list[Any]]:
     """WHERE clause for GET /transactions filters (keys as in the query string)."""
     where, params = ["1 = 1"], []
     if f.get("from"):
-        where.append("t.date >= ?")
+        where.append("COALESCE(t.book_date, t.date) >= ?")
         params.append(f["from"])
     if f.get("to"):
-        where.append("t.date <= ?")
+        where.append("COALESCE(t.book_date, t.date) <= ?")
         params.append(f["to"])
     for key in ("account_id", "category_id", "merchant_key", "method", "kind"):
         if f.get(key) not in (None, ""):

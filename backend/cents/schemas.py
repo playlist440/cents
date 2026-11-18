@@ -48,6 +48,8 @@ class TxPatch(BaseModel):
     tag_always: bool = False
     note: str | None = Field(default=None, max_length=2000)
     goal_id: int | None = None
+    # boekdatum: the day the overviews count this payment on ("" or null = its own date)
+    book_date: str | None = None
     # manual transactions only
     account_id: int | None = None
     date: str | None = None

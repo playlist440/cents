@@ -129,7 +129,7 @@ class Ledger:
 # ---------------------------------------------------------------------------- building
 
 _SELECT = """
-    SELECT t.id, t.date, t.amount_cents, t.category_id, t.merchant_key, t.merchant_name,
+    SELECT t.id, COALESCE(t.book_date, t.date) AS date, t.amount_cents, t.category_id, t.merchant_key, t.merchant_name,
            t.method, t.kind, t.account_id, t.transfer_account_id, t.manual, t.description,
            a.type AS account_type, c.key AS category_key, c.grp AS grp
     FROM transactions t
@@ -137,7 +137,7 @@ _SELECT = """
     LEFT JOIN categories c ON c.id = t.category_id
     WHERE a.hidden = 0 AND (a.type = 'checking' OR (a.type = 'credit' AND t.manual = 1)
        OR (a.type IN ('savings', 'investment') AND t.method = 'interest'))
-    ORDER BY t.date, t.id
+    ORDER BY COALESCE(t.book_date, t.date), t.id
 """
 
 
