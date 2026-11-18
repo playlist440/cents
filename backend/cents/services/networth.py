@@ -64,7 +64,7 @@ def _investment(conn: sqlite3.Connection, account: dict) -> dict:
     """Invested and value timelines of an investment account."""
     flows = db.rows(conn, """
         SELECT t.date, t.amount_cents FROM transactions t JOIN accounts a ON a.id = t.account_id
-        WHERE t.transfer_account_id = ? AND a.type = 'checking' ORDER BY t.date, t.id""",
+        WHERE t.transfer_account_id = ? AND a.type IN ('checking', 'savings') ORDER BY t.date, t.id""",
                     (account["id"],))
     invested_points, total = [], 0
     for f in flows:

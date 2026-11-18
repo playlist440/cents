@@ -1109,6 +1109,10 @@ function homeOut() {
     original_cents: original, repaid_pct: original && debt != null ? Math.max(0, original - debt) / original : null,
     included: db.settings.mortgage_include_home !== false && home != null };
 }
+function partOriginal(id) {
+  const first = db.mortgage_years.filter((e) => e.part_id === id).sort((a, b) => a.year - b.year)[0];
+  return first ? (first.principal_cents != null ? first.principal_cents : first.debt_end_cents + (first.repaid_cents || 0)) : null;
+}
 function mortgageOut() {
   const year = Number(db.today.slice(0, 4));
   const years = [...new Set(db.mortgage_years.map((e) => e.year))].sort((a, b) => b - a);
@@ -1120,7 +1124,7 @@ function mortgageOut() {
   const share = mortgageShare();
   return {
     exists: db.mortgage_parts.length > 0,
-    parts: db.mortgage_parts.map((p) => ({ id: p.id, name: p.name, debt_cents: partDebt(p.id, db.today),
+    parts: db.mortgage_parts.map((p) => ({ id: p.id, name: p.name, debt_cents: partDebt(p.id, db.today), original_cents: partOriginal(p.id),
       years: db.mortgage_years.filter((e) => e.part_id === p.id).sort((a, b) => b.year - a.year).map(({ part_id, ...e }) => e) })),
     years, latest_year: mortgageLatestYear(), form_year: year - 1,
     missing_year: db.mortgage_parts.length && !years.includes(year - 1) ? year - 1 : null,
@@ -1128,6 +1132,7 @@ function mortgageOut() {
     repaid_this_year_cents: repaidEvents().reduce((s, [d, v]) => s + (d >= `${year}-01-01` ? v : 0), 0),
     home_cents: home, home_values: [...db.home_values].sort((a, b) => (a.date < b.date ? -1 : 1)),
     equity_cents: home == null ? null : home - (debt || 0),
+    original_cents: homeOut()?.original_cents ?? null, repaid_pct: homeOut()?.repaid_pct ?? null,
     include_in_networth: db.settings.mortgage_include_home !== false,
     payment: key ? { merchant_key: key, merchant_name: linked?.merchant_name || key, amount_cents: linked?.amount_cents ?? null, auto } : null,
     candidates: cands.slice(0, 8).map(({ description, ...c }) => c),

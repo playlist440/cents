@@ -267,7 +267,7 @@ def _deposits(conn: sqlite3.Connection, account_id: int) -> list[tuple[str, int]
     """Cumulative net money moved in from checking accounts (bank side)."""
     flows = db.rows(conn, """
         SELECT t.date, t.amount_cents FROM transactions t JOIN accounts a ON a.id = t.account_id
-        WHERE t.transfer_account_id = ? AND a.type = 'checking' ORDER BY t.date, t.id""", (account_id,))
+        WHERE t.transfer_account_id = ? AND a.type IN ('checking', 'savings') ORDER BY t.date, t.id""", (account_id,))
     out, total = [], 0
     for f in flows:
         total += -f["amount_cents"]

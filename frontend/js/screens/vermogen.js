@@ -485,8 +485,13 @@ function MortgageDetail({ m, onChange, close }) {
     <${List} header="Hypotheek" footer=${m.latest_year
       ? `Geschat vanaf je jaaropgave ${m.latest_year}${m.repaid_this_year_cents > 0 ? `, min ${euros(m.repaid_this_year_cents)} afgelost dit jaar` : ''}.` : 'Vul je jaaropgave in voor de schuld.'}>
       ${m.parts.map((p) => html`<${ListRow} key=${p.id} title=${p.name}
+        subtitle=${p.original_cents ? `geleend ${euros(p.original_cents)}` : null}
         value=${html`<span class="num">${p.debt_cents == null ? '—' : money(-p.debt_cents, { negative: true })}</span>`} />`)}
+      ${m.parts.length > 1 && m.debt_cents != null && html`<${ListRow} title=${html`<strong>Totaal</strong>`}
+        subtitle=${m.original_cents ? `geleend ${euros(m.original_cents)}` : null}
+        value=${html`<strong class="num">${money(-m.debt_cents, { negative: true })}</strong>`} />`}
     </${List}>
+    <${MortgageSummary} m=${m} />
     <${YearForm} m=${m} onChange=${onChange} />
     <${HomeValue} m=${m} onChange=${onChange} />
     <${List} footer=${m.repaid_share != null && m.payment ? `Van elke betaling telt ${Math.round(m.repaid_share * 100)} % als afgelost (gespaard), de rest als vaste lasten.` : null}>
@@ -497,6 +502,26 @@ function MortgageDetail({ m, onChange, close }) {
         chevron onClick=${setLink} label=${`Gekoppelde betaling: ${m.payment ? m.payment.merchant_name : 'geen'}. Wijzig`} />
     </${List}>
     <${List}><${ListRow} title="Verwijder hypotheek" destructive onClick=${remove} /></${List}>`;
+}
+
+// Alle leningdelen samen: woning, schuld, overwaarde, hoe ver met aflossen en het laatste jaar.
+function MortgageSummary({ m }) {
+  if (m.debt_cents == null) return null;
+  const y = m.latest_year;
+  const inYear = (k) => m.parts.reduce((t, p) => t + ((p.years.find((e) => e.year === y) || {})[k] || 0), 0);
+  const pct = m.repaid_pct;
+  const rows = [
+    m.home_cents != null && ['Woningwaarde', money(m.home_cents)],
+    ['Openstaande schuld', money(-m.debt_cents, { negative: true })],
+    m.equity_cents != null && ['Overwaarde', money(m.equity_cents, { negative: true })],
+    pct != null && ['Afgelost', html`<span class="vm-progress"><span style=${{ width: `${Math.min(100, pct * 100)}%` }}></span></span>
+      ${(pct * 100).toLocaleString('nl-NL', { maximumFractionDigits: 1 })}% · ${money(Math.max(0, m.original_cents - m.debt_cents))}`],
+    y && [`Rente ${y}`, money(inYear('interest_cents'))],
+    y && [`Afgelost ${y}`, money(inYear('repaid_cents'))],
+  ].filter(Boolean);
+  return html`<${List} header="Samen">
+    ${rows.map(([t, v]) => html`<${ListRow} key=${t} title=${t} value=${html`<span class="num">${v}</span>`} />`)}
+  </${List}>`;
 }
 
 function YearForm({ m, onChange }) {

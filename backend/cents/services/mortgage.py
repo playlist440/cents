@@ -177,6 +177,23 @@ class Estimator:
         return home - (self.debt(day) or 0)
 
 
+def part_original(conn: sqlite3.Connection, part_id: int) -> int | None:
+    """The amount borrowed for one part: the start of its first entered year (hoofdsom for a
+    loan that began that year, else restant op 1 januari = end + repaid)."""
+    first = db.row(conn, "SELECT * FROM mortgage_years WHERE part_id = ? ORDER BY year LIMIT 1", (part_id,))
+    if not first:
+        return None
+    return first["principal_cents"] if first["principal_cents"] is not None \
+        else first["debt_end_cents"] + (first["repaid_cents"] or 0)
+
+
+def progress(conn: sqlite3.Connection, debt: int | None) -> tuple[int | None, float | None]:
+    """(amount borrowed over all parts, share repaid since)."""
+    original = sum(part_original(conn, p["id"]) or 0 for p in parts(conn)) or None
+    pct = round(max(0, original - (debt or 0)) / original, 4) if original and debt is not None else None
+    return original, pct
+
+
 def networth_part(conn: sqlite3.Connection, lg) -> dict | None:
     """The `home` block of GET /networth and the value function for the series."""
     if not parts(conn) and not db.value(conn, "SELECT 1 FROM home_values LIMIT 1"):
@@ -185,18 +202,10 @@ def networth_part(conn: sqlite3.Connection, lg) -> dict | None:
     today = lg.today.isoformat()
     home, debt = est.home(today), est.debt(today)
     included = include_home(conn) and home is not None
-    # the amount borrowed: per part the start of its first entered year (hoofdsom for a loan
-    # that began that year, else restant op 1 januari = end + repaid)
-    original = 0
-    for p in parts(conn):
-        first = db.row(conn, "SELECT * FROM mortgage_years WHERE part_id = ? ORDER BY year LIMIT 1", (p["id"],))
-        if first:
-            original += first["principal_cents"] if first["principal_cents"] is not None \
-                else first["debt_end_cents"] + (first["repaid_cents"] or 0)
-    original = original or None
-    repaid_pct = round(max(0, original - (debt or 0)) / original, 4) if original and debt is not None else None
+    original, repaid_pct = progress(conn, debt)
     return {"home_cents": home, "debt_cents": debt, "original_cents": original, "repaid_pct": repaid_pct,
             "equity_cents": (home - (debt or 0)) if home is not None else None,
+        "original_cents": progress(conn, debt)[0], "repaid_pct": progress(conn, debt)[1],
             "included": included, "_estimator": est}
 
 
@@ -218,6 +227,7 @@ def summary(conn: sqlite3.Connection, lg) -> dict:
         "exists": bool(plist),
         "parts": [{"id": p["id"], "name": p["name"],
                    "debt_cents": est.part_debt(p["id"], today),
+                   "original_cents": part_original(conn, p["id"]),
                    "years": [{"year": y, "debt_end_cents": per[p["id"]]["debt_end_cents"],
                               "interest_cents": per[p["id"]]["interest_cents"],
                               "repaid_cents": per[p["id"]]["repaid_cents"],
