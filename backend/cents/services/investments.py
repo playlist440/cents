@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import bisect
 import math
+import re
 import sqlite3
 from datetime import date, timedelta
 
@@ -318,6 +319,16 @@ def _replay(trades: list[dict]) -> dict[str, dict]:
     return state
 
 
+BOND_WORDS = re.compile(r"%|\b(bond|bonds|obligatie|obligaties|treasury|govt|government|staatslening|"
+                        r"aggregate|corporate|duration|t-bill|inflation linked)\b", re.I)
+
+
+def is_bond(name: str | None) -> bool:
+    """Obligatie of obligatiefonds, herkend aan de naam: DEGIRO zet bij een losse obligatie de
+    rente in de naam ("NL2.5%DSL15JUL2035F"), fondsen noemen zich bond/govt/treasury/aggregate."""
+    return bool(BOND_WORDS.search(name or ""))
+
+
 def holdings(conn: sqlite3.Connection, account_id: int, today: str | None = None) -> dict:
     """Holdings and figures of one investment account (GET /accounts/{id}/holdings)."""
     today = today or date.today().isoformat()
@@ -347,6 +358,7 @@ def holdings(conn: sqlite3.Connection, account_id: int, today: str | None = None
         price_result = value - s["cost_ex"] + s["realised_ex"]
         items.append({
             "isin": isin, "name": names[isin]["name"], "symbol": names[isin]["symbol"],
+            "asset_class": "bond" if is_bond(names[isin]["name"]) else "stock",
             "price_symbol": names[isin]["price_symbol"], "currency": names[isin]["currency"],
             "quantity": round(s["quantity"], 6), "avg_price_cents": avg,
             "price_cents": int(round(price * 100)) if price is not None else None,

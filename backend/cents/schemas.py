@@ -119,6 +119,7 @@ class AccountPatch(BaseModel):
     iban: str | None = Field(default=None, max_length=40)
     match: list[str] | None = None
     hidden: bool | None = None
+    locked: bool | None = None
     sort: int | None = None
     manual_balance_cents: Money | None = None
     manual_balance_date: str | None = None

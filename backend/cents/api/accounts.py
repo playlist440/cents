@@ -27,6 +27,7 @@ def account_json(conn: sqlite3.Connection, row: dict) -> dict:
             "match": json.loads(row["match"] or "[]"),
             "manual_balance_cents": row["manual_balance_cents"],
             "manual_balance_date": row["manual_balance_date"], "hidden": bool(row["hidden"]),
+            "locked": bool(row["locked"]),
             "sort": row["sort"], "created_at": row["created_at"],
             "type_source": row["type_source"], "name_source": row["name_source"],
             "n_transactions": counts["n"], "n_imported": counts["imported"]}
@@ -84,6 +85,8 @@ def patch_account(account_id: int, body: AccountPatch, conn: sqlite3.Connection 
         updates["match"] = json.dumps(_clean_match(body.match or []))
     if "hidden" in sent and body.hidden is not None:
         updates["hidden"] = int(body.hidden)
+    if "locked" in sent and body.locked is not None:
+        updates["locked"] = int(body.locked)
     if "sort" in sent and body.sort is not None:
         updates["sort"] = body.sort
     if "manual_balance_cents" in sent:

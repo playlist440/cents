@@ -325,3 +325,12 @@ def test_degiro_deposits_and_withdrawals_make_invested_complete():
     ]
     got = [(e["kind"], e["amount_cents"]) for e in degiro.parse_account(header, rows)]
     assert got == [("deposit", 50000), ("deposit", 25000), ("withdrawal", -10000)]
+
+
+def test_bonds_are_recognised_by_name():
+    from cents.services.investments import is_bond
+    assert is_bond("NL2.5%DSL15JUL2035F")
+    assert is_bond("ISHARES CORE EURO GOVT BOND UCITS ETF")
+    assert is_bond("Vanguard Global Aggregate Bond")
+    assert not is_bond("VANGUARD FTSE ALL-WORLD UCITS ETF")
+    assert not is_bond("ISHARES CORE MSCI WORLD UCITS ETF")

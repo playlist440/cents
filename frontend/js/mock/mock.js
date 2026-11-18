@@ -889,7 +889,10 @@ function accountBalance(a) {
     const h = holdingsOut(a.id);
     return { balance_cents: h.value_cents, as_of: h.price_date, invested_cents: h.invested_cents, result_cents: h.result_cents, result_pct: h.result_pct,
       price_result_cents: h.price_result_cents, market_value_cents: h.market_value_cents, cash_cents: h.cash_cents, dividends_cents: h.dividends_cents,
-      costs_cents: h.costs_cents, price_stale: h.price_stale, has_holdings: true, holdings_count: h.holdings.filter((x) => x.quantity > 0).length, values: [] };
+      costs_cents: h.costs_cents, price_stale: h.price_stale, has_holdings: true,
+      bonds_cents: h.holdings.filter((x) => /%|\b(bond|govt|treasury|aggregate)\b/i.test(x.name || '')).reduce((t, x) => t + x.value_cents, 0),
+      stocks_cents: h.holdings.filter((x) => !/%|\b(bond|govt|treasury|aggregate)\b/i.test(x.name || '')).reduce((t, x) => t + x.value_cents, 0),
+      holdings_count: h.holdings.filter((x) => x.quantity > 0).length, values: [] };
   }
   if (a.type === 'investment') {
     const vals = db.account_values.filter((v) => v.account_id === a.id).sort((x, y) => (x.date < y.date ? -1 : 1));
@@ -906,7 +909,7 @@ function accountBalance(a) {
 }
 
 function networth() {
-  const accounts = db.accounts.filter((a) => !a.hidden).map((a) => ({ id: a.id, name: a.name, type: a.type, iban: a.iban, ...accountBalance(a) }));
+  const accounts = db.accounts.filter((a) => !a.hidden).map((a) => ({ id: a.id, name: a.name, type: a.type, iban: a.iban, locked: !!a.locked, ...accountBalance(a) }));
   const total_cents = accounts.reduce((s, a) => s + (a.balance_cents || 0), 0);
   const home = homeOut();
   const counted = db.assets.filter((a) => a.include);
@@ -1979,7 +1982,7 @@ const ROUTES = [
   }],
   ['PATCH', /^\/accounts\/(\d+)$/, ({ params: [id], body }) => {
     const a = need(accById(id));
-    for (const k of ['name', 'type', 'match', 'manual_balance_cents', 'manual_balance_date', 'hidden', 'sort', 'iban']) if (body[k] !== undefined) a[k] = body[k];
+    for (const k of ['name', 'type', 'match', 'manual_balance_cents', 'manual_balance_date', 'hidden', 'locked', 'sort', 'iban']) if (body[k] !== undefined) a[k] = body[k];
     return ok({ ...a });
   }],
   ['DELETE', /^\/accounts\/(\d+)$/, ({ params: [id], query }) => {

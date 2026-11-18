@@ -85,3 +85,18 @@ def test_manual_savings_balance_is_a_fixed_point_moved_by_transfers(client, book
     acc, series = savings()
     assert acc["balance_cents"] == 415000
     assert series == {"2026-01": 350000, "2026-02": 400000, "2026-03": 415000}
+
+
+def test_locked_savings_counts_in_networth_not_in_free_money(client, book):
+    chk = book.account("Betaal", "checking", "NL01TEST0000000001")
+    sav = book.account("Vast", "savings", manual_balance=1000000, manual_date="2026-03-01")
+    book.tx(chk, "2026-03-01", 200000, "salaris", "Werk", balance=200000)
+    book.commit()
+    before = client.get("/api/overview").json()
+    r = client.patch(f"/api/accounts/{sav}", json={"locked": True})
+    assert r.status_code == 200 and r.json()["locked"] is True
+    nw = client.get("/api/networth").json()
+    assert nw["total_cents"] == 1200000
+    assert {a["name"]: a["locked"] for a in nw["accounts"]} == {"Betaal": False, "Vast": True}
+    after = client.get("/api/overview").json()
+    assert before != after          # the fixed account no longer feeds Nog te besteden / buffer

@@ -115,7 +115,7 @@ def compute(conn: sqlite3.Connection) -> dict:
     first_days: list[str] = []
     for a in accounts:
         item = {"id": a["id"], "name": a["name"], "type": a["type"], "iban": a["iban"],
-                "balance_cents": None, "as_of": None}
+                "balance_cents": None, "as_of": None, "locked": bool(a["locked"])}
         if a["type"] in ("checking", "savings"):
             points = _balance_points(conn, a["id"])
             if points:
@@ -138,6 +138,8 @@ def compute(conn: sqlite3.Connection) -> dict:
                 "market_value_cents": h["market_value_cents"], "cash_cents": h["cash_cents"],
                 "dividends_cents": h["dividends_cents"], "costs_cents": h["costs_cents"],
                 "price_stale": h["price_stale"], "has_holdings": True,
+                "bonds_cents": sum(x["value_cents"] for x in h["holdings"] if x["asset_class"] == "bond"),
+                "stocks_cents": sum(x["value_cents"] for x in h["holdings"] if x["asset_class"] == "stock"),
                 "holdings_count": sum(1 for x in h["holdings"] if x["quantity"] > 0),
                 "values": []})
             timelines.append(("investment", value_at))
@@ -221,7 +223,7 @@ def get(conn: sqlite3.Connection) -> dict:
 
 
 def balance_of_type(conn: sqlite3.Connection, kind: str) -> int | None:
-    """Sum of the known balances of visible accounts of one type (None when there is none)."""
+    """Sum of the known balances of visible, not fixed accounts of one type (None when none)."""
     found = [a["balance_cents"] for a in get(conn)["accounts"]
-             if a["type"] == kind and a["balance_cents"] is not None]
+             if a["type"] == kind and a["balance_cents"] is not None and not a.get("locked")]
     return sum(found) if found else None

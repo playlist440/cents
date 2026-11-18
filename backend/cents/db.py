@@ -307,8 +307,14 @@ SCHEMA_V7 = """
 ALTER TABLE mortgage_years ADD COLUMN principal_cents INTEGER;   -- hoofdsom, only for a new loan
 """
 
+# v8: a savings account can be fixed (vast: deposit/term account, not freely withdrawable). It
+# counts in net worth but not in vrij vermogen, Nog te besteden or the buffer.
+SCHEMA_V8 = """
+ALTER TABLE accounts ADD COLUMN locked INTEGER NOT NULL DEFAULT 0;
+"""
+
 # Forward-only. Append new migrations; never edit an old one.
-MIGRATIONS: list[str] = [SCHEMA_V1, SCHEMA_V2, SCHEMA_V3, SCHEMA_V4, SCHEMA_V5, SCHEMA_V6, SCHEMA_V7]
+MIGRATIONS: list[str] = [SCHEMA_V1, SCHEMA_V2, SCHEMA_V3, SCHEMA_V4, SCHEMA_V5, SCHEMA_V6, SCHEMA_V7, SCHEMA_V8]
 SCHEMA_VERSION = len(MIGRATIONS)
 
 DEFAULT_SETTINGS: dict[str, Any] = {"month_start_day": 1, "household_name": ""}

@@ -95,3 +95,4 @@
 .vm-p-chev { display: flex; color: var(--label-3); }
 .vm-assets { margin-top: 8px; }
 .vm-p-fact .is-expense { color: var(--red-text); }
+.vm-p-split { padding-bottom: 6px; margin-bottom: 6px; border-bottom: .5px solid var(--sep); }

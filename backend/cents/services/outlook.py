@@ -66,8 +66,8 @@ def balance_accounts(conn: sqlite3.Connection) -> list[dict]:
     out = []
     last = periods.last_imported(conn)
     for a in networth.get(conn)["accounts"]:
-        if a["type"] not in ("checking", "savings") or a["balance_cents"] is None:
-            continue
+        if a["type"] not in ("checking", "savings") or a["balance_cents"] is None or a.get("locked"):
+            continue                       # a fixed (vaste) account is not money you can use
         imported = db.value(conn, """
             SELECT MAX(substr(i.imported_at, 1, 10)) FROM imports i WHERE i.account_id = ? OR EXISTS (
                 SELECT 1 FROM transactions t WHERE t.import_id = i.id AND t.account_id = ?)""",

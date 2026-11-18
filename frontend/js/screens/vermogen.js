@@ -110,9 +110,10 @@ export function Vermogen() {
 function pillarSplit(data, accounts) {
   const sum = (types) => accounts.filter((a) => types.includes(a.type)).reduce((t, a) => t + (a.balance_cents || 0), 0);
   const bank = sum(['checking', 'savings', 'credit']);
+  const locked = accounts.filter((a) => a.locked).reduce((t, a) => t + (a.balance_cents || 0), 0);
   const invest = sum(['investment']);
   const home = data.home?.equity_cents ?? null;
-  return { bank, invest, home, hasInvest: accounts.some((a) => a.type === 'investment') };
+  return { bank, free: bank - locked, locked, invest, home, hasInvest: accounts.some((a) => a.type === 'investment') };
 }
 
 const PILLAR_COLORS = { bank: 'blue', invest: 'indigo', home: 'green' };
@@ -158,16 +159,18 @@ function PillarRows({ list }) {
 function BankPillar({ accounts, total, share }) {
   const of = (type) => accounts.filter((a) => a.type === type);
   const sum = (list) => list.reduce((t, a) => t + (a.balance_cents || 0), 0);
-  const checking = of('checking'), savings = of('savings'), credit = of('credit');
+  const checking = of('checking'), credit = of('credit');
+  const savings = of('savings').filter((a) => !a.locked), fixed = of('savings').filter((a) => a.locked);
   const open = credit.reduce((t, a) => t + (a.outstanding_cents || 0), 0);
   return html`<section class="vm-pillar" aria-label="Bank">
-    <${PillarHead} kind="bank" icon="wallet" title="Bank" cents=${total} share=${share} note="vrij te besteden of op te nemen" />
+    <${PillarHead} kind="bank" icon="wallet" title="Bank" cents=${total} share=${share} note=${fixed.length ? `waarvan ${euros(total - sum(fixed))} vrij` : 'vrij te besteden of op te nemen'} />
     <div class="vm-p-facts">
       ${checking.length > 0 && html`<${Fact} label="Betaalrekening${checking.length > 1 ? 'en' : ''}" value=${money(sum(checking), { negative: true })} />`}
       ${savings.length > 0 && html`<${Fact} label="Sparen" value=${money(sum(savings), { negative: true })} />`}
+      ${fixed.length > 0 && html`<${Fact} label="Vast (niet vrij)" value=${money(sum(fixed), { negative: true })} />`}
       ${credit.length > 0 && html`<${Fact} label="Creditcard open" value=${money(-open, { negative: true })} />`}
     </div>
-    <${PillarRows} list=${[...checking, ...savings, ...credit]} />
+    <${PillarRows} list=${[...checking, ...savings, ...fixed, ...credit]} />
   </section>`;
 }
 
@@ -188,12 +191,27 @@ function InvestPillar({ accounts, total, share }) {
   return html`<section class="vm-pillar" aria-label="Beleggingen">
     <${PillarHead} kind="invest" icon="arrow-up-right" title="Beleggingen" cents=${total} share=${share} />
     <div class="vm-p-facts">
+      ${(() => {
+        const withH = list.filter((a) => a.has_holdings);
+        const bonds = withH.reduce((t, a) => t + (a.bonds_cents || 0), 0);
+        const stocks = withH.reduce((t, a) => t + (a.stocks_cents || 0), 0);
+        const cash = withH.reduce((t, a) => t + (a.cash_cents || 0), 0);
+        const other = list.filter((a) => !a.has_holdings).reduce((t, a) => t + (a.balance_cents || 0), 0);
+        if (!bonds || !withH.length) return null;
+        const all = stocks + bonds + cash + other;
+        const pct = (v) => (all > 0 ? ` · ${Math.round(v / all * 100)}%` : '');
+        return html`<div class="vm-p-split">
+          <${Fact} label="Aandelen" value=${money(stocks + other, { whole: true }) + pct(stocks + other)} />
+          <${Fact} label="Obligaties" value=${money(bonds, { whole: true }) + pct(bonds)} />
+          ${cash > 0 && html`<${Fact} label="Geld bij de broker" value=${money(cash, { whole: true }) + pct(cash)} />`}
+        </div>`;
+      })()}
       <${Fact} label="Ingelegd" value=${money(invested)} />
       ${known.length > 0 && html`<${Fact} label="Resultaat" tone=${tone}
         value=${`${money(result, { signed: true, negative: true })}${pct != null ? ` · ${(pct * 100).toLocaleString('nl-NL', { maximumFractionDigits: 1, signDisplay: 'exceptZero' })}%` : ''}`} />`}
     </div>
     ${invested > 0 && known.length > 0 && html`<${Meter} value=${Math.max(0, total)} of=${Math.max(total, invested)} mark=${invested}
-      label=${result >= 0 ? `${money(result, { whole: true })} boven je inleg` : `${money(-result, { whole: true })} onder je inleg`} kind="invest" />`}
+      label=${result >= 0 ? `${money(result, { whole: true })} boven je inleg · streepje = wat je inlegde` : `${money(-result, { whole: true })} onder je inleg · streepje = wat je inlegde`} kind="invest" />`}
     <${PillarRows} list=${list} />
   </section>`;
 }
@@ -252,14 +270,14 @@ function Hero({ data, accounts, desk = false }) {
   const span = range === '6m' ? 'in 6 maanden' : range === '1j' ? 'in een jaar' : pts.length ? `sinds ${monthLabel(pts[0].month)}` : '';
   // Vrij vermogen = geld op de bank (betaal- en spaarrekeningen, min wat open staat op de
   // creditcard). De balk eronder toont hoe het hele vermogen over de drie pijlers verdeeld is.
-  const { bank, invest, home, hasInvest } = pillarSplit(data, accounts || data.accounts || []);
+  const { bank, free, invest, home, hasInvest } = pillarSplit(data, accounts || data.accounts || []);
   const segs = [['bank', 'Bank', bank], hasInvest && ['invest', 'Beleggingen', invest],
     home != null && data.home?.included && ['home', 'Vastgoed', home]].filter(Boolean).map(([k, l, v]) => [k, l, Math.max(0, v || 0)]);
   const whole = segs.reduce((t, [, , v]) => t + v, 0);
   return html`<section class="vm-hero" aria-label="Vermogen">
     <div class="vm-hero-label">Vrij vermogen</div>
-    <div class="vm-hero-amount rounded"><${Amount} cents=${bank} whole animate negative /></div>
-    <div class="vm-hero-sub">geld op de bank</div>
+    <div class="vm-hero-amount rounded"><${Amount} cents=${free} whole animate negative /></div>
+    <div class="vm-hero-sub">${free !== bank ? 'geld op de bank, zonder vaste rekeningen' : 'geld op de bank'}</div>
     ${segs.length > 1 && whole > 0 && html`<div class="vm-mix" role="img" aria-label=${'Verdeling: ' + segs.map(([, l, v]) => `${l} ${Math.round(v / whole * 100)}%`).join(', ')}>
       <div class="vm-mix-bar">${segs.map(([k, , v]) => v > 0 && html`<span key=${k} style=${{ flexGrow: v, '--c': colorVar(PILLAR_COLORS[k]) }}></span>`)}</div>
       <div class="vm-mix-legend">${segs.map(([k, l, v]) => html`<span key=${k} style=${{ '--c': colorVar(PILLAR_COLORS[k]) }}><i></i>${l} <b class="num">${Math.round(v / whole * 100)}%</b></span>`)}</div>
@@ -433,6 +451,11 @@ export function AccountSheet({ close, account = null }) {
         ${TYPES.map((t) => html`<${ListRow} key=${t.type} icon=${t.icon} iconColor=${t.color} title=${t.label}
           selected=${type === t.type} onClick=${() => setType(t.type)} />`)}
       </${List}>
+      ${!isNew && type === 'savings' && html`<${List} footer="Een vaste rekening (deposito, termijnrekening) telt mee in je vermogen, maar niet als vrij geld: niet in vrij vermogen, nog te besteden en de buffer.">
+        <li class="field-row"><label class="field-label sa-grow" for="vm-locked">Vaste rekening</label>
+          <${Switch} id="vm-locked" checked=${!!(full?.locked ?? account.locked)} label="Vaste rekening"
+            onChange=${(on) => api.updateAccount(account.id, { locked: on }).then(() => invalidate(), apiFail)} /></li>
+      </${List}>`}
       ${canBalance && html`<${List} header="Saldo" footer=${full?.manual_balance_date ? `Laatst ingevuld ${longDate(full.manual_balance_date)}` : null}>
         <${AmountField} label="Saldo nu" cents=${touched ? balance : (full?.manual_balance_cents ?? null)} onChange=${(c) => { setBalance(c); setTouched(true); }} />
       </${List}>`}
