@@ -47,3 +47,15 @@
 
 /* Pension line under the hero total (SPEC §7.3) */
 .vm-hero-note { margin-top: 2px; font: 400 var(--fs-footnote)/1.3 var(--font); color: var(--label-2); }
+
+/* Vrij vermogen: drie soorten onder het grote getal, daarna het totaal bij de grafiek */
+.vm-cats { display: grid; grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); gap: 8px; margin: 14px 0 12px; }
+.vm-cat { background: var(--fill-4); border-radius: 12px; padding: 10px 12px; min-width: 0; }
+.vm-cat-label { font: 500 var(--fs-footnote)/1.3 var(--font); color: var(--label-2); }
+.vm-cat-amount { font: 600 var(--fs-body)/1.25 var(--font-rounded); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.vm-cat-note { font: 400 var(--fs-caption1)/1.3 var(--font); color: var(--label-3); }
+.vm-total { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-top: 4px; }
+.vm-total-label { font: 600 var(--fs-subhead)/1.3 var(--font); color: var(--label-2); }
+.vm-total-amount { font: 600 var(--fs-headline)/1.3 var(--font-rounded); }
+.vm-progress { display: inline-block; width: 64px; height: 6px; border-radius: 3px; background: var(--fill-3); vertical-align: middle; margin-right: 6px; overflow: hidden; }
+.vm-progress > span { display: block; height: 100%; background: var(--green); border-radius: 3px; }

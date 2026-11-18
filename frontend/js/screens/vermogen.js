@@ -98,7 +98,7 @@ export function Vermogen() {
             <${List}>${list.map((a) => html`<${AccountRow} key=${a.id} a=${a} />`)}</${List}>
           </section>`)}
           ${accounts.length > 0 && html`<section class="vm-group">
-            <h2 class="vm-group-h"><span>Woning</span>${data.home?.equity_cents != null && html`<span class="num">${money(data.home.equity_cents, { negative: true })}</span>`}</h2>
+            <h2 class="vm-group-h"><span>Vastgoed</span>${data.home?.equity_cents != null && html`<span class="num">${money(data.home.equity_cents, { negative: true })}</span>`}</h2>
             <${List}><${HomeRow} home=${data.home} /></${List}>
           </section>`}
           ${assetGroups.map(({ k, list, sum }) => html`<section class="vm-group" key=${k.kind}>
@@ -122,7 +122,7 @@ export function Vermogen() {
         <${List}>${list.map((a) => html`<${AccountRow} key=${a.id} a=${a} />`)}</${List}>
       </${Section}>`;
     })}
-    ${accounts.length > 0 && html`<${Section} title="Woning"><${List}><${HomeRow} home=${data.home} /></${List}></${Section}>`}
+    ${accounts.length > 0 && html`<${Section} title="Vastgoed"><${List}><${HomeRow} home=${data.home} /></${List}></${Section}>`}
     ${assetGroups.map(({ k, list, sum }) => html`<${Section} key=${k.kind} title=${k.group} trailing=${list.length > 1 && sum != null && html`<span class="section-value num">${money(sum, { negative: true })}</span>`}>
       <${List}>${list.map((a) => html`<${AssetRow} key=${a.id} a=${a} />`)}</${List}>
     </${Section}>`)}
@@ -143,11 +143,30 @@ function Hero({ data, desk = false }) {
   const first = pts[0]?.total_cents;
   const diff = pts.length > 1 ? data.total_cents - first : null;
   const span = range === '6m' ? 'in 6 maanden' : range === '1j' ? 'in een jaar' : pts.length ? `sinds ${monthLabel(pts[0].month)}` : '';
+  // Vrij vermogen = geld op de bank (betaal- en spaarrekeningen, min wat open staat op de
+  // creditcard). Daaronder de drie soorten: bank, beleggingen en vastgoed (overwaarde).
+  const acc = data.accounts || [];
+  const sumOf = (types) => acc.filter((a) => types.includes(a.type)).reduce((t, a) => t + (a.balance_cents || 0), 0);
+  const bank = sumOf(['checking', 'savings', 'credit']);
+  const hasInvest = acc.some((a) => a.type === 'investment');
+  const cats = [
+    { key: 'bank', label: 'Bank', cents: bank },
+    hasInvest && { key: 'invest', label: 'Beleggingen', cents: sumOf(['investment']) },
+    data.home?.equity_cents != null && { key: 'home', label: 'Vastgoed', cents: data.home.equity_cents, note: data.home.included ? null : 'niet in totaal' },
+  ].filter(Boolean);
   return html`<section class="vm-hero" aria-label="Vermogen">
-    <div class="vm-hero-label">${sel ? `Eind ${monthLabel(sel.month)}` : 'Totaal'}</div>
-    <div class="vm-hero-amount rounded">${sel
-      ? html`<span class="amount num">${money(value, { whole: true, negative: true })}</span>`
-      : html`<${Amount} cents=${value} whole animate negative />`}</div>
+    <div class="vm-hero-label">Vrij vermogen</div>
+    <div class="vm-hero-amount rounded"><${Amount} cents=${bank} whole animate negative /></div>
+    <div class="vm-hero-sub">geld op de bank</div>
+    ${cats.length > 1 && html`<div class="vm-cats">${cats.map((c) => html`<div class="vm-cat" key=${c.key}>
+      <div class="vm-cat-label">${c.label}</div>
+      <div class="vm-cat-amount num">${money(c.cents, { whole: true, negative: true })}</div>
+      ${c.note && html`<div class="vm-cat-note">${c.note}</div>`}
+    </div>`)}</div>`}
+    <div class="vm-total">
+      <span class="vm-total-label">${sel ? `Totaal eind ${monthLabel(sel.month)}` : 'Totaal vermogen'}</span>
+      <span class="vm-total-amount num">${money(value, { whole: true, negative: true })}</span>
+    </div>
     <div class="vm-hero-sub num">${sel
       ? (scrub > 0 ? deltaText(sel.total_cents - pts[scrub - 1].total_cents, 'die maand') : ' ')
       : diff != null ? deltaText(diff, span) : ' '}</div>
@@ -252,6 +271,11 @@ export function AccountSheet({ close, account = null }) {
   const [touched, setTouched] = useState(false);
   const [busy, setBusy] = useState(false);
   const canBalance = (type === 'checking' || type === 'savings') && !imported;
+  // Rekeningnummer zelf invullen kan bij een rekening zonder eigen afschriften (DEGIRO, een
+  // spaarrekening): betalingen naar dat nummer zijn dan altijd een overboeking naar deze rekening.
+  const canIban = type !== 'credit' && !imported;
+  const [iban, setIban] = useState(account?.iban || '');
+  const cleanIban = (v) => v.replace(/\s+/g, '').toUpperCase();
 
   const save = async () => {
     if (!name.trim() || busy) return;
@@ -259,10 +283,13 @@ export function AccountSheet({ close, account = null }) {
     try {
       let id = account?.id;
       if (isNew) {
-        const res = await api.createAccount({ name: name.trim(), type });
+        const res = await api.createAccount({ name: name.trim(), type, iban: canIban && iban.trim() ? cleanIban(iban) : undefined });
         id = res.id;
       } else if (name.trim() !== account.name || type !== account.type) {
         await api.updateAccount(id, { name: name.trim(), type });
+      }
+      if (!isNew && canIban && cleanIban(iban) !== (account.iban || '')) {
+        await api.updateAccount(id, { iban: cleanIban(iban) || null });
       }
       if (canBalance && touched && balance != null) {
         await api.updateAccount(id, { manual_balance_cents: balance, manual_balance_date: todayISO() });
@@ -291,7 +318,10 @@ export function AccountSheet({ close, account = null }) {
         <div class="vm-sheet-amount rounded num">${account.type === 'credit' ? money(account.outstanding_cents || 0) : account.balance_cents == null ? '—' : money(account.balance_cents, { negative: true })}</div>
         <div class="vm-sheet-sub">${account.type === 'credit' ? 'open' : account.as_of ? `op ${longDate(account.as_of)}` : account.iban ? maskIban(account.iban) : ''}</div>
       </div>`}
-      ${!isNew && account.iban && html`<${List} footer="Tik om te kopiëren.">
+      ${canIban && html`<${List} footer=${type === 'investment' ? 'Het rekeningnummer waar je naar overmaakt, bij DEGIRO je persoonlijke stortingsrekening. Zo herkent Cents elke inleg, ook als die op dezelfde naam staat als je andere overboekingen.' : 'Optioneel. Betalingen naar dit nummer telt Cents als overboeking naar deze rekening.'}>
+        <${TextField} label="Rekeningnummer" value=${iban} onInput=${setIban} placeholder="NL00 BANK 0000 0000 00" maxLength=${40} />
+      </${List}>`}
+      ${!isNew && !canIban && account.iban && html`<${List} footer="Tik om te kopiëren.">
         <${ListRow} title="Rekeningnummer" value=${html`<span class="num" style=${{ userSelect: 'text' }}>${account.iban.replace(/(.{4})/g, '$1 ').trim()}</span>`}
           onClick=${() => copyText(account.iban)} />
       </${List}>`}
@@ -374,9 +404,15 @@ function HomeRow({ home }) {
   const value = home.equity_cents != null ? money(home.equity_cents, { negative: true }) : '—';
   const sub = home.home_cents == null ? html`<span class="vm-home-line">WOZ-waarde nog invullen</span>` : html`
     <span class="vm-home-line num">Woning ${euros(home.home_cents)}</span>
-    ${home.debt_cents != null && html`<span class="vm-home-line num">Hypotheek − ${euros(home.debt_cents)}</span>`}`;
+    ${home.debt_cents != null && html`<span class="vm-home-line num">Openstaande schuld − ${euros(home.debt_cents)}</span>`}`;
+  const pct = home.repaid_pct;
+  const progress = pct != null && html`<span class="vm-home-line">
+    <span class="vm-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow=${Math.round(pct * 100)}
+      aria-label=${`${Math.round(pct * 100)} procent afgelost`}><span style=${{ width: `${Math.min(100, pct * 100)}%` }}></span></span>
+    <span class="num">${(pct * 100).toLocaleString('nl-NL', { maximumFractionDigits: 1 })}% afgelost van ${euros(home.original_cents)}</span>
+  </span>`;
   return html`<${ListRow} class="vm-home" emoji="🏠" color="indigo" title="Overwaarde"
-    subtitle=${html`${sub}${!home.included && home.home_cents != null ? html`<span class="vm-home-line">niet meegeteld</span>` : ''}`}
+    subtitle=${html`${sub}${progress || ''}${!home.included && home.home_cents != null ? html`<span class="vm-home-line">niet meegeteld</span>` : ''}`}
     value=${html`<span class="num vm-balance">${value}</span>`} chevron
     onClick=${() => openSheet(MortgageSheet, {})} label=${`Woning, overwaarde ${value}`} />`;
 }

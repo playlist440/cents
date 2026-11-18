@@ -136,6 +136,15 @@ def classify(tx: dict, ctx: Context) -> Result:
     if tx.get("category_source") == "user" and tx.get("category_id"):
         return Result(tx["category_id"], "user", kind, transfer_account_id, "user")
 
+    # A payment to the account number of one of your own accounts is a transfer to that account,
+    # whatever a rule for the name says: your pocket-money account and DEGIRO can share one name
+    # ("p:<jullie naam>"), only the account number tells them apart.
+    if transfer_category and tx.get("counterparty_iban") and transfer_account_id and any(
+            a["id"] == transfer_account_id and a["iban"] == tx["counterparty_iban"] for a in ctx.accounts):
+        result = done(transfer_category, "heuristic", "transfer")
+        if result:
+            return result
+
     amount = tx.get("amount_cents") or 0
     rule = ctx.rules.get(tx.get("merchant_key") or "")
     if rule:

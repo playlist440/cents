@@ -125,8 +125,8 @@ def test_networth_overwaarde_and_switch(client, book, today):
     client.post("/api/mortgage/home-values", json={"date": "2026-01-15", "value_cents": 45000000})
     nw = client.get("/api/networth").json()
     debt = 30000000 - 11 * 40000
-    assert nw["home"] == {"home_cents": 45000000, "debt_cents": debt,
-                          "equity_cents": 45000000 - debt, "included": True}
+    assert {k: nw["home"][k] for k in ("home_cents", "debt_cents", "equity_cents", "included")} == {
+        "home_cents": 45000000, "debt_cents": debt, "equity_cents": 45000000 - debt, "included": True}
     assert nw["total_cents"] == base["total_cents"] + 45000000 - debt
     june = next(p for p in nw["series"] if p["month"] == "2026-06")
     assert june["home_cents"] == 45000000 - (30000000 - 6 * 40000)
@@ -184,3 +184,17 @@ def test_new_loan_keeps_principal(client, book, today):
     client.put("/api/mortgage/years/2025", json={"parts": [
         {"part_id": pid, "debt_end_cents": 23814600, "interest_cents": 300000, "repaid_cents": 185400}]})
     assert client.get("/api/mortgage").json()["parts"][0]["years"][0]["principal_cents"] is None
+
+
+def test_networth_home_shows_repaid_progress(client, book, today):
+    today("2026-11-17")
+    m = client.post("/api/mortgage", json={"parts": [{"name": "A"}, {"name": "B"}]}).json()
+    a, b = (p["id"] for p in m["parts"])
+    client.put("/api/mortgage/years/2025", json={"parts": [
+        {"part_id": a, "debt_end_cents": 19000000, "interest_cents": 500000, "repaid_cents": 1000000},
+        {"part_id": b, "debt_end_cents": 9800000, "interest_cents": 100000, "repaid_cents": 200000,
+         "principal_cents": 10000000}]})
+    home = client.get("/api/networth").json()["home"]
+    assert home["original_cents"] == 20000000 + 10000000
+    assert home["debt_cents"] == 28800000
+    assert home["repaid_pct"] == round(1200000 / 30000000, 4)

@@ -1099,7 +1099,14 @@ function homeOut() {
   if (!db.mortgage_parts.length && !db.home_values.length) return null;
   const home = homeAt(db.today);
   const debt = debtAt(db.today);
+  let original = 0;
+  for (const p of db.mortgage_parts) {
+    const first = db.mortgage_years.filter((e) => e.part_id === p.id).sort((a, b) => a.year - b.year)[0];
+    if (first) original += first.principal_cents != null ? first.principal_cents : first.debt_end_cents + (first.repaid_cents || 0);
+  }
+  original = original || null;
   return { home_cents: home, debt_cents: debt, equity_cents: home == null ? null : home - (debt || 0),
+    original_cents: original, repaid_pct: original && debt != null ? Math.max(0, original - debt) / original : null,
     included: db.settings.mortgage_include_home !== false && home != null };
 }
 function mortgageOut() {

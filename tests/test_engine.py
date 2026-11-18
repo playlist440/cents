@@ -95,10 +95,15 @@ def test_transfers(conn):
     assert (key_of(conn, r), r.kind, r.transfer_account_id) == ("beleggen", "transfer", INVEST)
     r = classify(tx(counterparty_name="International Card Services", method="debit"), c)
     assert (key_of(conn, r), r.kind, r.transfer_account_id) == ("creditcard", "settlement", CARD)
-    # a learned rule still decides the category, kind stays a fact
+    # a rule for the name does not override the account number of an own account (pocket
+    # money and the broker under the same name); a keyword match still follows the rule
     ids = db.category_ids(conn)
     c2 = ctx(conn, rules={"winkel": {"category_id": ids["wonen"], "tag_id": None}})
     r = classify(tx(counterparty_iban="NL22TEST0000000002"), c2)
+    assert (key_of(conn, r), r.kind, r.transfer_account_id) == ("sparen", "transfer", SAVINGS)
+    r = classify(tx(counterparty_iban="NL99TEST0000000009"), c2)
+    assert (key_of(conn, r), r.kind) == ("wonen", "normal")
+    r = classify(tx(counterparty_name="Testbroker"), c2)
     assert (key_of(conn, r), r.kind) == ("wonen", "transfer")
     # manual transactions are never transfers
     r = classify(tx(counterparty_name="ics", manual=1), c)

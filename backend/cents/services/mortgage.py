@@ -185,7 +185,17 @@ def networth_part(conn: sqlite3.Connection, lg) -> dict | None:
     today = lg.today.isoformat()
     home, debt = est.home(today), est.debt(today)
     included = include_home(conn) and home is not None
-    return {"home_cents": home, "debt_cents": debt,
+    # the amount borrowed: per part the start of its first entered year (hoofdsom for a loan
+    # that began that year, else restant op 1 januari = end + repaid)
+    original = 0
+    for p in parts(conn):
+        first = db.row(conn, "SELECT * FROM mortgage_years WHERE part_id = ? ORDER BY year LIMIT 1", (p["id"],))
+        if first:
+            original += first["principal_cents"] if first["principal_cents"] is not None \
+                else first["debt_end_cents"] + (first["repaid_cents"] or 0)
+    original = original or None
+    repaid_pct = round(max(0, original - (debt or 0)) / original, 4) if original and debt is not None else None
+    return {"home_cents": home, "debt_cents": debt, "original_cents": original, "repaid_pct": repaid_pct,
             "equity_cents": (home - (debt or 0)) if home is not None else None,
             "included": included, "_estimator": est}
 
