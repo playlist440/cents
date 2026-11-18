@@ -679,6 +679,16 @@
 
   /* ---------- Vermogen ---------- */
   .vm-grid { margin-top: 4px; }
+  .vm-pillars { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--dk-gap); margin-top: var(--dk-gap); align-items: start; }
+  .vm-pillar { padding: 20px 20px 10px; }
+  .vm-assets { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--dk-gap); margin-top: var(--dk-gap); }
+  .vm-assets > * { margin: 0; }
+  .vm > .vm-suggestions { margin-top: var(--dk-gap); }
+  /* smallere vensters: rijen in de pijlers zonder icoon en onderregel, zodat de naam past */
+  @media (max-width: 1180px) {
+    .vm-p-dot, .vm-p-row-sub { display: none; }
+    .vm-p-row { gap: 6px; }
+  }
   .vm-chart-card { position: relative; padding: 20px 22px 16px; }
   .vm-chart-card .vm-hero { padding: 0; margin: 0; --surface: var(--bg-grouped-2); }
   .vm-chart-card .vm-hero-amount { font-size: var(--fs-hero); }

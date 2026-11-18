@@ -27,6 +27,8 @@ import { openAddExpense } from '../shell/actions.js';
 import { commitLater, usePending } from './_kit.js';
 import { useLayout } from '../hooks.js';
 import { HoldingsPart, TradeSheet, resultText } from './_holdings.js';
+import { colorVar } from '../colors.js';
+import { Icon } from '../icons.js';
 
 export const TYPES = [
   { type: 'checking', label: 'Betaalrekening', group: 'Betaalrekeningen', icon: 'wallet', color: 'blue' },
@@ -85,53 +87,158 @@ export function Vermogen() {
     return { k, list, sum: known.length ? known.reduce((s, a) => s + a.signed_cents, 0) : null };
   }).filter(Boolean);
 
-  if (desk) {
-    // Mac: chart large on the left (8 columns), accounts on the right (4 columns), totals per group.
-    return html`<${Screen} title="Vermogen" trailing=${trailing} add=${addItems} class="vm">
-      <div class="dk-grid vm-grid">
-        <div class="dk-col-8 dk-card vm-chart-card"><${Hero} data=${data} desk /></div>
-        <div class="dk-col-4 dk-stack vm-side">
-          ${suggestions.length > 0 && html`<div class="vm-suggestions">${suggestions.map((s) => html`<${Suggestion} key=${s.key} s=${s} />`)}</div>`}
-          ${!accounts.length && html`<${EmptyState} emoji="🏦" title="Nog geen rekeningen" action=${{ label: 'Rekening toevoegen', onClick: () => openSheet(AccountSheet, {}) }} />`}
-          ${groups.map(({ t, list, sum }) => html`<section class="vm-group" key=${t.type}>
-            <h2 class="vm-group-h"><span>${t.group}</span><span class="num">${t.type === 'credit' ? money(list.reduce((s, a) => s + (a.outstanding_cents || 0), 0)) : money(sum, { negative: true })}</span></h2>
-            <${List}>${list.map((a) => html`<${AccountRow} key=${a.id} a=${a} />`)}</${List}>
-          </section>`)}
-          ${accounts.length > 0 && html`<section class="vm-group">
-            <h2 class="vm-group-h"><span>Vastgoed</span>${data.home?.equity_cents != null && html`<span class="num">${money(data.home.equity_cents, { negative: true })}</span>`}</h2>
-            <${List}><${HomeRow} home=${data.home} /></${List}>
-          </section>`}
-          ${assetGroups.map(({ k, list, sum }) => html`<section class="vm-group" key=${k.kind}>
-            <h2 class="vm-group-h"><span>${k.group}</span>${sum != null && html`<span class="num">${money(sum, { negative: true })}</span>`}</h2>
-            <${List}>${list.map((a) => html`<${AssetRow} key=${a.id} a=${a} />`)}</${List}>
-          </section>`)}
-        </div>
-      </div>
-    </${Screen}>`;
-  }
-
-  return html`<${Screen} title="Vermogen" trailing=${trailing} add=${addItems} class="vm">
-    <${Hero} data=${data} />
-    ${suggestions.length > 0 && html`<div class="vm-suggestions">${suggestions.map((s) => html`<${Suggestion} key=${s.key} s=${s} />`)}</div>`}
-    ${!accounts.length && html`<${EmptyState} emoji="🏦" title="Nog geen rekeningen" action=${{ label: 'Rekening toevoegen', onClick: () => openSheet(AccountSheet, {}) }} />`}
-    ${TYPES.map((t) => {
-      const list = accounts.filter((a) => a.type === t.type);
-      if (!list.length) return null;
-      const sum = list.reduce((s, a) => s + (a.balance_cents || 0), 0);
-      return html`<${Section} key=${t.type} title=${t.group} trailing=${list.length > 1 && html`<span class="section-value num">${money(sum, { negative: true })}</span>`}>
-        <${List}>${list.map((a) => html`<${AccountRow} key=${a.id} a=${a} />`)}</${List}>
-      </${Section}>`;
-    })}
-    ${accounts.length > 0 && html`<${Section} title="Vastgoed"><${List}><${HomeRow} home=${data.home} /></${List}></${Section}>`}
-    ${assetGroups.map(({ k, list, sum }) => html`<${Section} key=${k.kind} title=${k.group} trailing=${list.length > 1 && sum != null && html`<span class="section-value num">${money(sum, { negative: true })}</span>`}>
+  const assetSections = assetGroups.map(({ k, list, sum }) => html`<${Section} key=${k.kind} title=${k.group} trailing=${list.length > 1 && sum != null && html`<span class="section-value num">${money(sum, { negative: true })}</span>`}>
       <${List}>${list.map((a) => html`<${AssetRow} key=${a.id} a=${a} />`)}</${List}>
-    </${Section}>`)}
+    </${Section}>`);
+  const sugg = suggestions.length > 0 && html`<div class="vm-suggestions">${suggestions.map((s) => html`<${Suggestion} key=${s.key} s=${s} />`)}</div>`;
+  const empty = !accounts.length && html`<${EmptyState} emoji="🏦" title="Nog geen rekeningen" action=${{ label: 'Rekening toevoegen', onClick: () => openSheet(AccountSheet, {}) }} />`;
+
+  // Mac: brede kaart met vrij vermogen en grafiek, daaronder drie pijlers naast elkaar, dan de
+  // overige bezittingen. iPhone: hetzelfde, onder elkaar.
+  return html`<${Screen} title="Vermogen" trailing=${trailing} add=${addItems} class="vm">
+    ${desk ? html`<div class="dk-card vm-chart-card"><${Hero} data=${data} accounts=${accounts} desk /></div>` : html`<${Hero} data=${data} accounts=${accounts} />`}
+    ${sugg}
+    ${empty}
+    ${accounts.length > 0 && html`<${Pillars} data=${data} accounts=${accounts} />`}
+    ${assetGroups.length > 0 && html`<div class="vm-assets">${assetSections}</div>`}
   </${Screen}>`;
+}
+
+/* ---------- Pillars: bank, beleggingen, vastgoed ---------- */
+
+/** Aandelen van het vermogen per pijler (alleen positieve delen; vastgoed telt als het meetelt). */
+function pillarSplit(data, accounts) {
+  const sum = (types) => accounts.filter((a) => types.includes(a.type)).reduce((t, a) => t + (a.balance_cents || 0), 0);
+  const bank = sum(['checking', 'savings', 'credit']);
+  const invest = sum(['investment']);
+  const home = data.home?.equity_cents ?? null;
+  return { bank, invest, home, hasInvest: accounts.some((a) => a.type === 'investment') };
+}
+
+const PILLAR_COLORS = { bank: 'blue', invest: 'indigo', home: 'green' };
+
+function Pillars({ data, accounts }) {
+  const { bank, invest, home, hasInvest } = pillarSplit(data, accounts);
+  const parts = [bank, hasInvest ? invest : 0, home && data.home.included ? home : 0].map((v) => Math.max(0, v || 0));
+  const whole = parts.reduce((t, v) => t + v, 0);
+  const share = (v) => (whole > 0 && v > 0 ? Math.round((v / whole) * 100) : null);
+  return html`<div class="vm-pillars">
+    <${BankPillar} accounts=${accounts} total=${bank} share=${share(bank)} />
+    <${InvestPillar} accounts=${accounts} total=${invest} share=${share(invest)} />
+    <${HomePillar} home=${data.home} share=${data.home?.included ? share(home) : null} />
+  </div>`;
+}
+
+function PillarHead({ kind, icon, title, cents, share, note }) {
+  return html`<header class="vm-p-head" style=${{ '--c': colorVar(PILLAR_COLORS[kind]) }}>
+    <div class="vm-p-title"><span class="vm-p-icon"><${Icon} name=${icon} size=${16} stroke=${2} /></span>${title}
+      ${share != null && html`<span class="vm-p-share num">${share}%</span>`}</div>
+    <div class="vm-p-amount rounded num">${cents == null ? '—' : money(cents, { whole: true, negative: true })}</div>
+    ${note && html`<div class="vm-p-note">${note}</div>`}
+  </header>`;
+}
+
+/** Een regel cijfers in een pijler: label links, bedrag rechts. */
+const Fact = ({ label, value, tone }) => html`<div class="vm-p-fact"><span>${label}</span><span class=${'num' + (tone ? ' ' + tone : '')}>${value}</span></div>`;
+
+function PillarRows({ list }) {
+  return html`<div class="vm-p-rows">${list.map((a) => {
+    const t = typeInfo(a.type);
+    const main = a.type === 'credit' ? money(-(a.outstanding_cents || 0), { negative: true })
+      : a.balance_cents == null ? '—' : money(a.balance_cents, { negative: true });
+    return html`<button class="vm-p-row" key=${a.id} onClick=${() => openSheet(AccountSheet, { account: a })} aria-label=${`${a.name}, ${main}. Open`}>
+      <span class="vm-p-dot" style=${{ '--c': colorVar(t.color) }}><${Icon} name=${t.icon} size=${14} stroke=${2} /></span>
+      <span class="vm-p-row-main"><span class="vm-p-row-name">${a.name}</span><span class="vm-p-row-sub num">${subtitleFor(a)}</span></span>
+      <span class="num vm-p-row-amt">${main}</span>
+      <span class="vm-p-chev"><${Icon} name="chevron-right" size=${13} stroke=${2.6} /></span>
+    </button>`;
+  })}</div>`;
+}
+
+function BankPillar({ accounts, total, share }) {
+  const of = (type) => accounts.filter((a) => a.type === type);
+  const sum = (list) => list.reduce((t, a) => t + (a.balance_cents || 0), 0);
+  const checking = of('checking'), savings = of('savings'), credit = of('credit');
+  const open = credit.reduce((t, a) => t + (a.outstanding_cents || 0), 0);
+  return html`<section class="vm-pillar" aria-label="Bank">
+    <${PillarHead} kind="bank" icon="wallet" title="Bank" cents=${total} share=${share} note="vrij te besteden of op te nemen" />
+    <div class="vm-p-facts">
+      ${checking.length > 0 && html`<${Fact} label="Betaalrekening${checking.length > 1 ? 'en' : ''}" value=${money(sum(checking), { negative: true })} />`}
+      ${savings.length > 0 && html`<${Fact} label="Sparen" value=${money(sum(savings), { negative: true })} />`}
+      ${credit.length > 0 && html`<${Fact} label="Creditcard open" value=${money(-open, { negative: true })} />`}
+    </div>
+    <${PillarRows} list=${[...checking, ...savings, ...credit]} />
+  </section>`;
+}
+
+function InvestPillar({ accounts, total, share }) {
+  const list = accounts.filter((a) => a.type === 'investment');
+  if (!list.length) {
+    return html`<section class="vm-pillar is-empty" aria-label="Beleggingen">
+      <${PillarHead} kind="invest" icon="arrow-up-right" title="Beleggingen" cents=${null} />
+      <p class="vm-p-empty">Voeg een beleggingsrekening toe of importeer je DEGIRO-export.</p>
+      <button class="section-link" onClick=${() => openSheet(AccountSheet, {})}>Rekening toevoegen</button>
+    </section>`;
+  }
+  const invested = list.reduce((t, a) => t + (a.invested_cents || 0), 0);
+  const known = list.filter((a) => a.result_cents != null);
+  const result = known.reduce((t, a) => t + a.result_cents, 0);
+  const pct = invested > 0 && known.length ? result / invested : null;
+  const tone = result > 0 ? 'is-income' : result < 0 ? 'is-expense' : '';
+  return html`<section class="vm-pillar" aria-label="Beleggingen">
+    <${PillarHead} kind="invest" icon="arrow-up-right" title="Beleggingen" cents=${total} share=${share} />
+    <div class="vm-p-facts">
+      <${Fact} label="Ingelegd" value=${money(invested)} />
+      ${known.length > 0 && html`<${Fact} label="Resultaat" tone=${tone}
+        value=${`${money(result, { signed: true, negative: true })}${pct != null ? ` · ${(pct * 100).toLocaleString('nl-NL', { maximumFractionDigits: 1, signDisplay: 'exceptZero' })}%` : ''}`} />`}
+    </div>
+    ${invested > 0 && known.length > 0 && html`<${Meter} value=${Math.max(0, total)} of=${Math.max(total, invested)} mark=${invested}
+      label=${result >= 0 ? `${money(result, { whole: true })} boven je inleg` : `${money(-result, { whole: true })} onder je inleg`} kind="invest" />`}
+    <${PillarRows} list=${list} />
+  </section>`;
+}
+
+function HomePillar({ home, share }) {
+  if (!home) {
+    return html`<section class="vm-pillar is-empty" aria-label="Vastgoed">
+      <${PillarHead} kind="home" icon="vermogen" title="Vastgoed" cents=${null} />
+      <p class="vm-p-empty">Woning en hypotheek in je vermogen, met hoe ver je bent met aflossen.</p>
+      <button class="section-link" onClick=${() => openSheet(MortgageSheet, {})}>Hypotheek toevoegen</button>
+    </section>`;
+  }
+  const pct = home.repaid_pct;
+  const repaid = home.original_cents != null && home.debt_cents != null ? Math.max(0, home.original_cents - home.debt_cents) : null;
+  return html`<section class="vm-pillar" aria-label="Vastgoed">
+    <${PillarHead} kind="home" icon="vermogen" title="Vastgoed" cents=${home.equity_cents} share=${share}
+      note=${home.home_cents == null ? 'WOZ-waarde nog invullen' : home.included ? 'overwaarde' : 'overwaarde · niet in totaal'} />
+    <div class="vm-p-facts">
+      ${home.home_cents != null && html`<${Fact} label="Woning" value=${money(home.home_cents, { whole: true })} />`}
+      ${home.debt_cents != null && html`<${Fact} label="Openstaande schuld" value=${money(-home.debt_cents, { whole: true, negative: true })} />`}
+      ${repaid != null && html`<${Fact} label="Afgelost" value=${money(repaid, { whole: true })} />`}
+    </div>
+    ${pct != null && html`<${Meter} value=${repaid} of=${home.original_cents} kind="home"
+      label=${`${(pct * 100).toLocaleString('nl-NL', { maximumFractionDigits: 1 })}% afgelost van ${euros(home.original_cents)}`} />`}
+    ${home.home_cents != null && home.debt_cents != null && html`<${Meter} value=${Math.max(0, home.equity_cents)} of=${home.home_cents} kind="home" soft
+      label=${`${Math.round(Math.max(0, home.equity_cents) / home.home_cents * 100)}% van de woning is van jullie`} />`}
+    <button class="vm-p-row is-link" onClick=${() => openSheet(MortgageSheet, {})}>
+      <span class="vm-p-row-main"><span class="vm-p-row-name">Hypotheek en jaaropgaven</span></span>
+      <span class="vm-p-chev"><${Icon} name="chevron-right" size=${13} stroke=${2.6} /></span>
+    </button>
+  </section>`;
+}
+
+function Meter({ value, of, mark = null, label, kind, soft = false }) {
+  const w = of > 0 ? Math.min(100, Math.max(0, (value / of) * 100)) : 0;
+  const m = mark != null && of > 0 ? Math.min(100, (mark / of) * 100) : null;
+  return html`<div class=${'vm-meter' + (soft ? ' is-soft' : '')} style=${{ '--c': colorVar(PILLAR_COLORS[kind]) }}>
+    <div class="vm-meter-bar" role="img" aria-label=${label}><span style=${{ width: `${w}%` }}></span>${m != null && html`<i style=${{ left: `${m}%` }}></i>`}</div>
+    <div class="vm-meter-label num">${label}</div>
+  </div>`;
 }
 
 /* ---------- Hero ---------- */
 
-function Hero({ data, desk = false }) {
+function Hero({ data, accounts, desk = false }) {
   const [range, setRange] = useState('1j');
   const [scrub, setScrub] = useState(null);
   const series = data.series || [];
@@ -144,25 +251,19 @@ function Hero({ data, desk = false }) {
   const diff = pts.length > 1 ? data.total_cents - first : null;
   const span = range === '6m' ? 'in 6 maanden' : range === '1j' ? 'in een jaar' : pts.length ? `sinds ${monthLabel(pts[0].month)}` : '';
   // Vrij vermogen = geld op de bank (betaal- en spaarrekeningen, min wat open staat op de
-  // creditcard). Daaronder de drie soorten: bank, beleggingen en vastgoed (overwaarde).
-  const acc = data.accounts || [];
-  const sumOf = (types) => acc.filter((a) => types.includes(a.type)).reduce((t, a) => t + (a.balance_cents || 0), 0);
-  const bank = sumOf(['checking', 'savings', 'credit']);
-  const hasInvest = acc.some((a) => a.type === 'investment');
-  const cats = [
-    { key: 'bank', label: 'Bank', cents: bank },
-    hasInvest && { key: 'invest', label: 'Beleggingen', cents: sumOf(['investment']) },
-    data.home?.equity_cents != null && { key: 'home', label: 'Vastgoed', cents: data.home.equity_cents, note: data.home.included ? null : 'niet in totaal' },
-  ].filter(Boolean);
+  // creditcard). De balk eronder toont hoe het hele vermogen over de drie pijlers verdeeld is.
+  const { bank, invest, home, hasInvest } = pillarSplit(data, accounts || data.accounts || []);
+  const segs = [['bank', 'Bank', bank], hasInvest && ['invest', 'Beleggingen', invest],
+    home != null && data.home?.included && ['home', 'Vastgoed', home]].filter(Boolean).map(([k, l, v]) => [k, l, Math.max(0, v || 0)]);
+  const whole = segs.reduce((t, [, , v]) => t + v, 0);
   return html`<section class="vm-hero" aria-label="Vermogen">
     <div class="vm-hero-label">Vrij vermogen</div>
     <div class="vm-hero-amount rounded"><${Amount} cents=${bank} whole animate negative /></div>
     <div class="vm-hero-sub">geld op de bank</div>
-    ${cats.length > 1 && html`<div class="vm-cats">${cats.map((c) => html`<div class="vm-cat" key=${c.key}>
-      <div class="vm-cat-label">${c.label}</div>
-      <div class="vm-cat-amount num">${money(c.cents, { whole: true, negative: true })}</div>
-      ${c.note && html`<div class="vm-cat-note">${c.note}</div>`}
-    </div>`)}</div>`}
+    ${segs.length > 1 && whole > 0 && html`<div class="vm-mix" role="img" aria-label=${'Verdeling: ' + segs.map(([, l, v]) => `${l} ${Math.round(v / whole * 100)}%`).join(', ')}>
+      <div class="vm-mix-bar">${segs.map(([k, , v]) => v > 0 && html`<span key=${k} style=${{ flexGrow: v, '--c': colorVar(PILLAR_COLORS[k]) }}></span>`)}</div>
+      <div class="vm-mix-legend">${segs.map(([k, l, v]) => html`<span key=${k} style=${{ '--c': colorVar(PILLAR_COLORS[k]) }}><i></i>${l} <b class="num">${Math.round(v / whole * 100)}%</b></span>`)}</div>
+    </div>`}
     <div class="vm-total">
       <span class="vm-total-label">${sel ? `Totaal eind ${monthLabel(sel.month)}` : 'Totaal vermogen'}</span>
       <span class="vm-total-amount num">${money(value, { whole: true, negative: true })}</span>
@@ -173,7 +274,7 @@ function Hero({ data, desk = false }) {
     ${data.pension_excluded_cents != null && html`<div class="vm-hero-note num">Pensioen (later beschikbaar) ${euros(data.pension_excluded_cents)}</div>`}
     ${desk && points.length > 1 && html`<div class="vm-range is-top"><${Segmented} value=${range} onChange=${(r) => { setRange(r); setScrub(null); }} options=${RANGES} label="Periode" size="small" /></div>`}
     ${desk && points.length > 1 && html`<div class="vm-chart">
-      <${LineChart} points=${points} scrub=${scrub} onScrub=${setScrub} height=${320} axis
+      <${LineChart} points=${points} scrub=${scrub} onScrub=${setScrub} height=${240} axis
         label=${`Vermogen per maand, nu ${euros(data.total_cents)}`} />
     </div>`}
     ${!desk && points.length > 1 && html`<div class="vm-chart">
