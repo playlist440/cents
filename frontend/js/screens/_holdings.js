@@ -45,7 +45,8 @@ export function HoldingsPart({ account }) {
     ? `${h.price_stale ? 'Koers van' : 'Koersen van'} ${longDate(h.price_date)}`
     : null;
   return html`
-    <${List} header="Resultaat" footer=${h.invested_source === 'trades' ? 'Ingelegd = wat je kocht (geen overboekingen naar deze rekening gevonden).' : null}>
+    <${List} header="Resultaat" footer=${h.invested_source === 'trades' ? 'Ingelegd = wat je kocht (geen overboekingen naar deze rekening gevonden).'
+      : h.invested_source === 'degiro' ? 'Ingelegd = stortingen min opnames uit je DEGIRO-rekeningoverzicht.' : null}>
       <${ListRow} title="Waarde fondsen" value=${html`<span class="num">${money(h.market_value_cents)}</span>`} />
       ${h.cash_cents > 0 && html`<${ListRow} title="Geld op de rekening" subtitle="geschat" value=${html`<span class="num">${money(h.cash_cents)}</span>`} />`}
       <${ListRow} title="Ingelegd" value=${html`<span class="num">${money(h.invested_cents)}</span>`} />

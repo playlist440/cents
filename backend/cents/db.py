@@ -229,7 +229,7 @@ CREATE TABLE cash_events (
     import_id INTEGER REFERENCES imports(id) ON DELETE CASCADE,
     date TEXT NOT NULL,
     isin TEXT,
-    kind TEXT NOT NULL,                         -- dividend|dividend_tax|fee
+    kind TEXT NOT NULL,                         -- dividend|dividend_tax|fee|deposit|withdrawal
     amount_cents INTEGER NOT NULL,              -- EUR, signed (+ received, - paid)
     currency TEXT NOT NULL DEFAULT 'EUR',
     amount_local REAL,

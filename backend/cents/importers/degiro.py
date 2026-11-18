@@ -4,8 +4,9 @@ Three files, Dutch or English headers, comma or semicolon separated, decimal com
 
 - Transactions ("Transacties.csv"): one row per (partial) fill.
 - Account statement ("Account.csv" / Rekeningoverzicht): we keep dividends, dividend tax and
-  fees that are not already in the transactions file. Deposits, cash sweeps and currency
-  conversions are ignored (the bank side already has the deposits).
+  fees that are not already in the transactions file, and deposits/withdrawals (they make
+  "ingelegd" complete when a deposit is missing on the bank side). Cash sweeps, reservations and
+  currency conversions are ignored.
 - Portfolio ("Portfolio.csv" / Portefeuille): a snapshot with closing prices.
 
 Amount columns come in pairs: a named column and an unnamed one next to it, one holding the
@@ -47,11 +48,17 @@ PF_COLS = {
 
 # Account statement rows we keep (lowercase substrings of the description), first match wins.
 EVENT_KINDS = [
+    # money in and out of DEGIRO itself (bank deposits, withdrawals); checked against SKIP first
+    ("withdrawal", ("terugstorting", "withdrawal", "opname")),
+    ("deposit", ("storting", "deposit")),
     ("dividend_tax", ("dividendbelasting", "dividend tax", "bronbelasting", "withholding tax")),
     ("dividend", ("dividend",)),
     ("fee", ("aansluitingskosten", "connection fee", "servicekosten", "service fee",
              "adr/gdr", "kosten van derden voor aansluiting")),
 ]
+
+
+MOVE_SKIP = ("reserv", "sweep", "overboeking", "geldrekening", "cash fund")
 
 
 def decode(raw: bytes) -> str:
@@ -219,6 +226,13 @@ def parse_account(header: list[str], rows: list[list[str]]) -> list[dict]:
         kind = next((k for k, keys in EVENT_KINDS if any(x in low for x in keys)), None)
         if kind is None:
             continue
+        if kind in ("deposit", "withdrawal"):
+            # a reservation is followed by the real deposit; sweeps between DEGIRO and its
+            # flatex cash account are not money in or out
+            if any(x in low for x in MOVE_SKIP) or cur != "EUR":
+                continue
+            if (kind == "deposit") != (amount > 0):
+                continue
         rate = 1.0 if cur == "EUR" else (fx or fx_by_date.get((day, cur))
                                          or next((v for (d, c), v in sorted(fx_by_date.items()) if c == cur and d >= day), None))
         isin = _cell(r, ix.get("isin")).upper()

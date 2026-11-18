@@ -41,13 +41,16 @@ EN: `Date,Time,Product,ISIN,Reference exchange,Venue,Quantity,Price,,Local value
 NL: `Datum,Tijd,Valutadatum,Product,ISIN,Omschrijving,FX,Mutatie,,Saldo,,Order Id`
 EN: `Date,Time,Value date,Product,ISIN,Description,FX,Change,,Balance,,Order Id`
 
-All cash movements. Cents keeps only:
+All cash movements. Cents keeps:
 - `Dividend` → dividend; `Dividendbelasting` / `Dividend tax` → dividend tax;
-- `Aansluitingskosten` / `Connection fee` (yearly exchange connection), service fees → fee.
+- `Aansluitingskosten` / `Connection fee` (yearly exchange connection), service fees → fee;
+- deposits (`iDEAL storting`, `Storting`, `Deposit`, positive, EUR) and withdrawals
+  (`Terugstorting`, `Withdrawal`, negative). When present they define "ingelegd" for the account
+  instead of the bank side, so a deposit from a bank account outside Cents still counts.
 
-Ignored on purpose: iDEAL/bank deposits and withdrawals and the flatex cash sweeps (the bank
-side already has the deposits as `beleggen` transfers), `Transactiekosten` rows (duplicate the
-fee column of Transacties), buy/sell rows, currency conversion rows ("Valuta Creditering/
+Ignored on purpose: reservations ("Reservation iDEAL"), the flatex cash sweeps ("Overboeking
+naar/van uw geldrekening", "Cash Sweep Transfer"), `Transactiekosten` rows (duplicate the fee
+column of Transacties), buy/sell rows, currency conversion rows ("Valuta Creditering/
 Debitering"). For a dividend in another currency the FX of the row, or of a conversion row on
 the same date, converts it to EUR.
 

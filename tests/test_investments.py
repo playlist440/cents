@@ -96,15 +96,16 @@ def test_choose_account_when_several(client):
     assert r["files"][0]["ok"] and r["files"][0]["account_id"] == a["id"]
 
 
-def test_account_statement_keeps_dividend_tax_and_fees_only(client):
+def test_account_statement_keeps_dividends_fees_and_deposits(client):
     upload(client, ("Transacties.csv", fixture("degiro_transacties_nl.csv")))
     f = upload(client, ("Account.csv", fixture("degiro_account_nl.csv")))["files"][0]
-    assert f["ok"] and f["new"] == 3
+    assert f["ok"] and f["new"] == 4
     again = upload(client, ("Account.csv", fixture("degiro_account_nl.csv")))["files"][0]
-    assert again["new"] == 0 and again["duplicates"] == 3
+    assert again["new"] == 0 and again["duplicates"] == 4
     c = conn_of(client)
     kinds = sorted((r["kind"], r["amount_cents"]) for r in db.rows(c, "SELECT * FROM cash_events"))
-    assert kinds == [("dividend", 840), ("dividend_tax", -126), ("fee", -250)]
+    # the flatex sweep ("Overboeking naar uw geldrekening") is not money out
+    assert kinds == [("deposit", 150000), ("dividend", 840), ("dividend_tax", -126), ("fee", -250)]
     c.close()
 
 
@@ -136,7 +137,7 @@ def test_value_and_result_with_portfolio_prices(client):
     assert h["price_result_cents"] == market - cost_ex
     assert h["dividends_cents"] == 840 - 126 and h["costs_cents"] == 400 + 250
     assert h["result_cents"] == market - cost_ex + 714 - 650
-    assert h["invested_source"] == "trades" and h["cash_cents"] == 0
+    assert h["invested_source"] == "degiro" and h["invested_cents"] == 150000 and h["cash_cents"] == 0
     assert h["chart"] and h["chart"][-1]["value_cents"] == market
 
 
@@ -309,3 +310,18 @@ def test_bond_quoted_in_percent_is_rescaled(client, book):
     h = investments.holdings(book.conn, acc, "2026-03-15")
     assert h["holdings"][0]["value_cents"] == 99000
     assert h["result_cents"] == 500
+
+
+def test_degiro_deposits_and_withdrawals_make_invested_complete():
+    """Reservations and sweeps are skipped; a withdrawal lowers what was put in."""
+    from cents.importers import degiro
+    header = "Datum,Tijd,Valutadatum,Product,ISIN,Omschrijving,FX,Mutatie,,Saldo,,Order Id".split(",")
+    rows = [
+        ["01-02-2026", "09:00", "01-02-2026", "", "", "Reservation iDEAL / Sofort Deposit", "", "EUR", "500,00", "EUR", "500,00", ""],
+        ["01-02-2026", "09:01", "01-02-2026", "", "", "iDEAL Deposit", "", "EUR", "500,00", "EUR", "1000,00", ""],
+        ["01-02-2026", "09:02", "01-02-2026", "", "", "Degiro Cash Sweep Transfer", "", "EUR", "-500,00", "EUR", "500,00", ""],
+        ["01-03-2026", "09:00", "01-03-2026", "", "", "Storting", "", "EUR", "250,00", "EUR", "750,00", ""],
+        ["01-04-2026", "09:00", "01-04-2026", "", "", "Terugstorting", "", "EUR", "-100,00", "EUR", "650,00", ""],
+    ]
+    got = [(e["kind"], e["amount_cents"]) for e in degiro.parse_account(header, rows)]
+    assert got == [("deposit", 50000), ("deposit", 25000), ("withdrawal", -10000)]

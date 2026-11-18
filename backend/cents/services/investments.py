@@ -264,7 +264,17 @@ def _price_book(conn: sqlite3.Connection, isins: list[str]) -> PriceBook:
 # ---------------------------------------------------------------- holdings
 
 def _deposits(conn: sqlite3.Connection, account_id: int) -> list[tuple[str, int]]:
-    """Cumulative net money moved in from checking accounts (bank side)."""
+    """Cumulative net money moved in. DEGIRO's own account statement (deposits and withdrawals)
+    when imported: it is complete, also for money from a bank account that is not in Cents.
+    Else the bank side: transfers from own checking/savings accounts."""
+    own = db.rows(conn, """SELECT date, amount_cents FROM cash_events WHERE account_id = ?
+                           AND kind IN ('deposit', 'withdrawal') ORDER BY date, id""", (account_id,))
+    if own:
+        out, total = [], 0
+        for f in own:
+            total += f["amount_cents"]
+            out.append((f["date"], total))
+        return out
     flows = db.rows(conn, """
         SELECT t.date, t.amount_cents FROM transactions t JOIN accounts a ON a.id = t.account_id
         WHERE t.transfer_account_id = ? AND a.type IN ('checking', 'savings') ORDER BY t.date, t.id""", (account_id,))
@@ -313,7 +323,8 @@ def holdings(conn: sqlite3.Connection, account_id: int, today: str | None = None
     today = today or date.today().isoformat()
     trades = db.rows(conn, """SELECT t.*, s.name FROM trades t JOIN securities s ON s.isin = t.isin
                               WHERE t.account_id = ? ORDER BY t.date, t.time, t.id""", (account_id,))
-    events = db.rows(conn, "SELECT * FROM cash_events WHERE account_id = ? ORDER BY date, id", (account_id,))
+    events = db.rows(conn, "SELECT * FROM cash_events WHERE account_id = ? "
+                           "AND kind IN ('dividend', 'dividend_tax', 'fee') ORDER BY date, id", (account_id,))
     isins = sorted({t["isin"] for t in trades})
     book = _price_book(conn, isins)
     state = _replay(trades)
@@ -369,7 +380,10 @@ def holdings(conn: sqlite3.Connection, account_id: int, today: str | None = None
     return {
         "account_id": account_id, "holdings": items, "market_value_cents": value_total,
         "cash_cents": cash, "value_cents": value_total + cash,
-        "invested_cents": invested, "invested_source": "bank" if bank_invested is not None else "trades",
+        "invested_cents": invested,
+        "invested_source": ("degiro" if db.value(conn, "SELECT 1 FROM cash_events WHERE account_id = ? AND kind "
+                                             "IN ('deposit', 'withdrawal') LIMIT 1", (account_id,))
+                            else "bank") if bank_invested is not None else "trades",
         "net_bought_cents": net_bought,
         "result_cents": result, "result_pct": round(result / base, 4) if base else None,
         "price_result_cents": price_result,
@@ -386,7 +400,8 @@ def holdings(conn: sqlite3.Connection, account_id: int, today: str | None = None
 def value_timeline(conn: sqlite3.Connection, account_id: int):
     """value_at(day) -> cents (market value + cash) for net-worth history and the chart."""
     trades = db.rows(conn, "SELECT * FROM trades WHERE account_id = ? ORDER BY date, time, id", (account_id,))
-    events = db.rows(conn, "SELECT date, kind, amount_cents FROM cash_events WHERE account_id = ? ORDER BY date", (account_id,))
+    events = db.rows(conn, "SELECT date, kind, amount_cents FROM cash_events WHERE account_id = ? "
+                           "AND kind IN ('dividend', 'dividend_tax', 'fee') ORDER BY date", (account_id,))
     isins = sorted({t["isin"] for t in trades})
     book = _price_book(conn, isins)
     deposits = _deposits(conn, account_id)
