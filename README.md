@@ -15,6 +15,8 @@ en hoe je potjes ervoor staan.
 - Elke aanname van de app is zichtbaar en aan te passen onder Instellingen → Slimme aannames.
 - Beleggingen bij DEGIRO: importeer de Transacties-, Rekeningoverzicht- of Portefeuille-CSV en
   Cents toont de echte waarde van je fondsen, wat je inlegde en je resultaat.
+- Beleggingen bij eToro: importeer het rekeningoverzicht (Account Statement, Excel). Telkens
+  opnieuw vanaf 2020 exporteren mag: Cents voegt alleen nieuwe posities en boekingen toe.
 - Alle gegevens staan in één bestand op je eigen server.
 
 ### Internet: standaard uit

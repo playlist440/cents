@@ -18,7 +18,7 @@ import { LineChart } from '../charts/LineChart.js';
 
 const pct = (f) => (f == null ? '' : `${f > 0 ? '+' : f < 0 ? '−' : ''}${Math.abs(f * 100).toFixed(1).replace('.', ',')}%`);
 const qty = (q) => number(Math.round(q * 10000) / 10000);
-const SOURCE = { yahoo: 'Yahoo Finance', degiro_portfolio: 'DEGIRO-export', trade: 'laatste aankoop' };
+const SOURCE = { yahoo: 'Yahoo Finance', degiro_portfolio: 'DEGIRO-export', etoro: 'eToro-overzicht', trade: 'laatste aankoop' };
 
 // Obligaties (een "%" in de naam) noteren in procenten van de nominale waarde: 0,985 per
 // euro nominaal tonen we als 98,50 %, zoals DEGIRO.
@@ -46,7 +46,7 @@ export function HoldingsPart({ account }) {
     : null;
   return html`
     <${List} header="Resultaat" footer=${h.invested_source === 'trades' ? 'Ingelegd = wat je kocht (geen overboekingen naar deze rekening gevonden).'
-      : h.invested_source === 'degiro' ? 'Ingelegd = stortingen min opnames uit je DEGIRO-rekeningoverzicht.' : null}>
+      : h.invested_source === 'degiro' ? 'Ingelegd = stortingen min opnames uit het rekeningoverzicht van je broker.' : null}>
       <${ListRow} title="Waarde fondsen" value=${html`<span class="num">${money(h.market_value_cents)}</span>`} />
       ${h.cash_cents > 0 && html`<${ListRow} title="Geld op de rekening" subtitle="geschat" value=${html`<span class="num">${money(h.cash_cents)}</span>`} />`}
       <${ListRow} title="Ingelegd" value=${html`<span class="num">${money(h.invested_cents)}</span>`} />

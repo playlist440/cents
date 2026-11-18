@@ -291,7 +291,9 @@ def import_file(conn: sqlite3.Connection, filename: str, source: Source,
         conn.execute("BEGIN")
     conn.execute("SAVEPOINT import_file")
     try:
-        if pairs is None:
+        if fmt == "etoro":
+            investments.import_etoro(conn, filename, source, investment_account_id, result)
+        elif pairs is None:
             investments.import_degiro(conn, filename, source, fmt, investment_account_id, result)
         else:
             _store(conn, filename, fmt, pairs, lib, result)

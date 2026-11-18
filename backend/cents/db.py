@@ -241,7 +241,7 @@ CREATE INDEX ix_cash_events_account ON cash_events(account_id, date);
 CREATE TABLE prices (
     isin TEXT NOT NULL,
     date TEXT NOT NULL,
-    source TEXT NOT NULL,                       -- yahoo|degiro_portfolio|trade
+    source TEXT NOT NULL,                       -- yahoo|degiro_portfolio|etoro|trade
     close REAL NOT NULL,                        -- in `currency`
     currency TEXT NOT NULL,
     close_eur REAL NOT NULL,                    -- converted at that day's rate

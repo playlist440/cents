@@ -12,7 +12,7 @@ import { colorVar } from '../colors.js';
 import { canHover } from '../hooks.js';
 import { useDrawIn } from '../anim.js';
 
-export const ACCEPT_FILES = '.csv,.xml,.txt,text/csv,text/xml,application/xml,text/plain';
+export const ACCEPT_FILES = '.csv,.xml,.txt,.xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv,text/xml,application/xml,text/plain';
 
 export function Skeleton({ w = '100%', h = 16, r = 6, class: cls = '', style = {} }) {
   return html`<span class=${'skeleton ' + cls} aria-hidden="true"

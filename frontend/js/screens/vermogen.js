@@ -179,7 +179,7 @@ function InvestPillar({ accounts, total, share }) {
   if (!list.length) {
     return html`<section class="vm-pillar is-empty" aria-label="Beleggingen">
       <${PillarHead} kind="invest" icon="arrow-up-right" title="Beleggingen" cents=${null} />
-      <p class="vm-p-empty">Voeg een beleggingsrekening toe of importeer je DEGIRO-export.</p>
+      <p class="vm-p-empty">Voeg een beleggingsrekening toe of importeer je DEGIRO- of eToro-export.</p>
       <button class="section-link" onClick=${() => openSheet(AccountSheet, {})}>Rekening toevoegen</button>
     </section>`;
   }
@@ -462,7 +462,7 @@ export function AccountSheet({ close, account = null }) {
       ${!isNew && account.type === 'investment' && type === 'investment' && (account.has_holdings
         ? html`<${HoldingsPart} account=${account} />`
         : html`<${InvestmentValues} account=${account} />
-          <${List} footer="Of importeer je DEGIRO-export (Transacties, Rekeningoverzicht of Portefeuille) via Importeren.">
+          <${List} footer="Of importeer je DEGIRO-export (Transacties, Rekeningoverzicht of Portefeuille) of je eToro-rekeningoverzicht (Excel) via Importeren.">
             <${ListRow} icon="plus" title="Aankoop toevoegen" tint onClick=${() => openSheet(TradeSheet, { account })} />
           </${List}>`)}
       ${!isNew && account.type === 'credit' && type === 'credit' && html`<${CreditPart} account=${account} close=${close} />`}

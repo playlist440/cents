@@ -156,7 +156,7 @@ function FileRow({ row, onChoose }) {
     icon = html`<${Icon} name="check" size=${20} stroke=${2.6} />`;
     const range = result.date_from && result.date_to ? `${shortDate(result.date_from)} – ${shortDate(result.date_to)}` : null;
     const inv = result.investment;
-    const what = inv?.kind === 'degiro_portfolio' ? 'koersen' : inv?.kind === 'degiro_account' ? 'dividend/kosten' : inv ? 'transacties' : null;
+    const what = inv?.kind === 'degiro_portfolio' ? 'koersen' : inv?.kind === 'degiro_account' ? 'dividend/kosten' : inv?.kind === 'etoro' ? 'posities en boekingen' : inv ? 'transacties' : null;
     sub = result.new === 0
       ? (result.duplicates > 0 ? 'Alles was al bekend' : inv ? 'Niets bruikbaars gevonden' : 'Geen betalingen gevonden')
       : [`${number(result.new)} ${what ? what + ' ' : ''}nieuw`, result.duplicates ? `${number(result.duplicates)} al bekend` : null, inv?.kind === 'degiro_portfolio' ? null : range].filter(Boolean).join(' · ');

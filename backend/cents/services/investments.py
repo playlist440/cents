@@ -28,16 +28,18 @@ from datetime import date, timedelta
 
 from .. import db
 from ..errors import ApiError
-from ..importers import Source, degiro
+from ..importers import Source, degiro, etoro
 
 STALE_DAYS = 4
 
 
 # ---------------------------------------------------------------- import
 
-def pick_account(conn: sqlite3.Connection, account_id: int | None, result: dict) -> dict | None:
-    """The investment account a DEGIRO file goes to. Creates "DEGIRO" when there is none.
-    With several and no choice: sets result error_code 'choose_account' and returns None."""
+def pick_account(conn: sqlite3.Connection, account_id: int | None, result: dict,
+                 broker: str = "DEGIRO") -> dict | None:
+    """The investment account a broker file goes to. Creates one named after the broker when
+    there is none (for eToro also when only other brokers exist). With several and no choice:
+    sets result error_code 'choose_account' and returns None."""
     from . import imports as import_service
     if account_id is not None:
         acc = db.row(conn, "SELECT * FROM accounts WHERE id = ? AND type = 'investment'", (account_id,))
@@ -45,18 +47,20 @@ def pick_account(conn: sqlite3.Connection, account_id: int | None, result: dict)
             raise ApiError(422, "invalid", "Kies een beleggingsrekening.")
         return acc
     accs = db.rows(conn, "SELECT * FROM accounts WHERE type = 'investment' ORDER BY sort, id")
+    named = [a for a in accs if broker.lower() in a["name"].lower()]
+    if len(named) == 1:
+        return named[0]
+    if broker != "DEGIRO" and not named:
+        accs = []
     if len(accs) > 1:
-        named = [a for a in accs if "degiro" in a["name"].lower()]
-        if len(named) == 1:
-            return named[0]
         result["error_code"] = "choose_account"
         result["choices"] = [{"id": a["id"], "name": a["name"]} for a in accs]
         result["error"] = "Bij welke beleggingsrekening hoort dit bestand?"
         return None
     if accs:
         return accs[0]
-    new_id = import_service.create_account(conn, "DEGIRO", "investment", None, ["degiro", "flatex"],
-                                           source="user")
+    hints = ["degiro", "flatex"] if broker == "DEGIRO" else [broker.lower()]
+    new_id = import_service.create_account(conn, broker, "investment", None, hints, source="user")
     acc = db.row(conn, "SELECT * FROM accounts WHERE id = ?", (new_id,))
     result["new_accounts"].append({"id": acc["id"], "name": acc["name"], "type": "investment", "iban": None})
     result["is_new_account"] = True
@@ -178,6 +182,69 @@ def import_degiro(conn: sqlite3.Connection, filename: str, source: Source, fmt: 
                                            "date_from": result["date_from"], "date_to": result["date_to"]})
 
 
+def import_etoro(conn: sqlite3.Connection, filename: str, source: Source,
+                 account_id: int | None, result: dict) -> None:
+    """Store an eToro account statement. Each position becomes a buy (and a sell when closed),
+    keyed on its Positie-ID, so a later statement over the same years only adds what is new."""
+    data = etoro.parse(source)
+    acc = pick_account(conn, account_id, result, broker="eToro")
+    if acc is None:
+        return
+    result["account_id"], result["account_name"] = acc["id"], acc["name"]
+    now = db.now_iso()
+    import_id = db.insert(conn, "imports", {"filename": filename, "format": "etoro", "imported_at": now,
+                                            "account_id": acc["id"]})
+    days: list[str] = []
+    for ident, (name, tick) in data["names"].items():
+        upsert_security(conn, ident, name, "EUR", symbol=tick)
+
+    def put_trade(key: str, pos: dict, day: tuple, qty: float, value: int) -> None:
+        old = db.row(conn, "SELECT id, isin FROM trades WHERE dedupe_key = ?", (key,))
+        days.append(day[0])
+        if old:
+            if old["isin"] != pos["isin"] and etoro.ISIN_RE.match(pos["isin"]):
+                conn.execute("UPDATE trades SET isin = ? WHERE id = ?", (pos["isin"], old["id"]))
+            result["duplicates"] += 1
+            return
+        db.insert(conn, "trades", {
+            "account_id": acc["id"], "import_id": import_id, "date": day[0], "time": day[1],
+            "isin": pos["isin"], "quantity": qty, "price": abs(value) / 100 / abs(qty), "currency": "EUR",
+            "fx_rate": None, "value_eur_cents": value, "fees_cents": 0, "order_id": pos["pid"],
+            "dedupe_key": key, "manual": 0, "created_at": now})
+        result["new"] += 1
+
+    for p in data["positions"]:
+        put_trade(f"etoro|{acc['id']}|{p['pid']}|open", p, p["open"], p["units"], -p["cost_cents"])
+        if p["close"]:
+            put_trade(f"etoro|{acc['id']}|{p['pid']}|close", p, p["close"], -p["units"], p["proceeds_cents"])
+    seen: dict[str, int] = {}
+    for e in data["events"]:
+        base = f"etoro|{acc['id']}|{e['date']}|{e['time']}|{e['kind']}|{e['pid']}|{e['amount_local']:.4f}"
+        seen[base] = seen.get(base, 0) + 1
+        key = f"{base}|{seen[base]}"
+        days.append(e["date"])
+        if db.value(conn, "SELECT 1 FROM cash_events WHERE dedupe_key = ?", (key,)):
+            result["duplicates"] += 1
+            continue
+        isin = next((p["isin"] for p in data["positions"] if p["pid"] == e["pid"]), None) if e["pid"] else None
+        db.insert(conn, "cash_events", {
+            "account_id": acc["id"], "import_id": import_id, "date": e["date"], "isin": isin,
+            "kind": e["kind"], "amount_cents": e["amount_cents"], "currency": "USD",
+            "amount_local": e["amount_local"], "description": e["description"], "dedupe_key": key})
+        result["new"] += 1
+    for pr in data["prices"]:
+        conn.execute("""INSERT INTO prices (isin, date, source, close, currency, close_eur, import_id)
+                        VALUES (?, ?, 'etoro', ?, 'EUR', ?, ?)
+                        ON CONFLICT(isin, date, source) DO UPDATE SET close = excluded.close,
+                        close_eur = excluded.close_eur, import_id = excluded.import_id""",
+                     (pr["isin"], pr["date"], pr["close_eur"], pr["close_eur"], import_id))
+    result["investment"] = {"kind": "etoro", "leveraged": data["leveraged"]}
+    result.update({"ok": True, "import_id": import_id,
+                   "date_from": min(days) if days else None, "date_to": max(days) if days else None})
+    db.update(conn, "imports", import_id, {"n_new": result["new"], "n_duplicate": result["duplicates"],
+                                           "date_from": result["date_from"], "date_to": result["date_to"]})
+
+
 # ---------------------------------------------------------------- manual trades
 
 def add_trade(conn: sqlite3.Connection, account_id: int, *, day: str, isin: str, name: str | None,
@@ -249,7 +316,7 @@ def _source_scales(rows: list, any_gap: bool = False) -> dict[str, float]:
 
 
 PRICE_VIEW = """CREATE TEMP VIEW IF NOT EXISTS trades_prices AS
-    SELECT isin, date, source, close_eur, CASE source WHEN 'degiro_portfolio' THEN 2 ELSE 1 END AS prio
+    SELECT isin, date, source, close_eur, CASE source WHEN 'degiro_portfolio' THEN 2 WHEN 'etoro' THEN 2 ELSE 1 END AS prio
     FROM prices
     UNION ALL
     SELECT isin, date, 'trade' AS source,
