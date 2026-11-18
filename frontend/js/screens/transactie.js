@@ -24,6 +24,7 @@ import { navigate } from '../router.js';
 import { useId, useLayout } from '../hooks.js';
 import { openBakjePopover } from './_txdesk.js';
 import { BakjeGrid, TagEditor, METHOD_LABEL, maskIban, emitTxChange, isUnsorted } from './_tx.js';
+import { CostSection, canSpread, canPossess, COSTS_FROM } from './_costs.js';
 
 export function TransactieSheet({ id, tx, close }) {
   return html`<${Sheet} title="" label=${tx?.merchant_name || 'Betaling'} detents=${['medium', 'large']} class="td-sheet">
@@ -40,8 +41,12 @@ export function TransactieDetail({ id, tx: listTx, onDone, inline = false }) {
   const desk = useLayout() === 'wide';
   const [below, setBelow] = useState(null);
   const [showDetails, setShowDetails] = useState(false);
+  const [forceCosts, setForceCosts] = useState(false);
   const lastAdded = useRef(null);
-  useEffect(() => { setOver({}); setShowDetails(false); setScope(null); setBelow(null); }, [id]);
+  useEffect(() => { setOver({}); setShowDetails(false); setScope(null); setBelow(null); setForceCosts(false); }, [id]);
+  useEffect(() => {
+    if (forceCosts) document.getElementById('td-costs-' + id)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, [forceCosts]);
   // Server data wins once it arrives after a save.
   useEffect(() => { setOver({}); }, [detail.data]);
 
@@ -208,6 +213,13 @@ export function TransactieDetail({ id, tx: listTx, onDone, inline = false }) {
     } catch (err) { toast({ text: err.message, icon: 'warning' }); }
   };
 
+  /* ---------- Kosten over de tijd ---------- */
+  const spreadable = canSpread(t, account);
+  const costsEligible = spreadable || canPossess(t, account);
+  const costsOpen = !!t.possession || t.spread_months > 1
+    || (costsEligible && (Math.abs(t.amount_cents || 0) >= COSTS_FROM || forceCosts));
+  const onCostTx = (ch) => { setOver((o) => ({ ...o, ...ch })); emitTxChange({ ids: [t.id], set: ch }); };
+
   if (!base) return html`<${DetailSkeleton} />`;
   return html`<div class=${'td' + (inline ? ' is-inline' : '')}>
     <header class="td-hero">
@@ -232,6 +244,9 @@ export function TransactieDetail({ id, tx: listTx, onDone, inline = false }) {
           below=${belowCents} setBelow=${setBelow} threshold=${threshold} onRemove=${removeThreshold} />`}
       </div>
     </section>
+
+    ${costsOpen && html`<${CostSection} t=${t} info=${detail.data?.spread} account=${account} spreadable=${spreadable}
+      anchor=${'td-costs-' + t.id} onTx=${onCostTx} />`}
 
     ${isSaving && goalList.length > 0 && html`<section class="td-sec">
       <h3 class="list-header">Potje</h3>
@@ -266,7 +281,8 @@ export function TransactieDetail({ id, tx: listTx, onDone, inline = false }) {
       <button class="td-disclosure" aria-expanded=${showDetails ? 'true' : 'false'} onClick=${() => setShowDetails(!showDetails)}>
         <span>Details</span><${Icon} name="chevron-right" size=${13} stroke=${2.6} />
       </button>
-      ${showDetails && html`<${Details} t=${detail.data || t} account=${account} />`}
+      ${showDetails && html`<${Details} t=${detail.data || t} account=${account}
+        onCosts=${costsEligible && !costsOpen ? () => setForceCosts(true) : null} />`}
     </section>
 
     ${!!t.manual && html`<div class="td-sec td-delete">
@@ -373,7 +389,7 @@ function MerchantLine({ t, m }) {
 
 /* ---------- Details ---------- */
 
-function Details({ t, account }) {
+function Details({ t, account, onCosts }) {
   const rows = [
     ['Omschrijving', t.raw_description || t.description],
     ['Rekening', account ? `${account.name}${account.iban ? ' · ' + maskIban(account.iban) : ''}` : null],
@@ -402,6 +418,7 @@ function Details({ t, account }) {
     ${rows.map(([k, v]) => html`<div class=${'td-dl-row' + (String(v).length > 34 ? ' is-long' : '')} key=${k}><dt>${k}</dt><dd class="selectable">${v}</dd></div>`)}
   </dl>
   <${BookDate} t=${t} />
+  ${onCosts && html`<button class="section-link td-own-link" onClick=${onCosts}>Kosten verdelen over maanden…</button>`}
   ${t.counterparty_iban && !known && free.length > 0 && !t.manual && html`<button class="section-link td-own-link" onClick=${link}>Dit is mijn eigen rekening…</button>`}`;
 }
 

@@ -10,6 +10,9 @@
   repaid / (repaid + interest) counts as saving ("Afgelost"), the rest stays a fixed cost. The
   debt on a day = latest entry on or before that day minus the repaid amounts since; before the
   first entry, the first entry plus the repaid amounts until then. Never below zero.
+- Possession (bezitting, services/spread.py): a car or anything else you sell again later. Its
+  value goes down linearly from the price to the expected resale value over its life; 0 once
+  sold. Its waardeverlies counts as a cost per month (ledger), the purchase does not.
 - Cash projections (outlook, Nog te besteden) never look at these items.
 """
 
@@ -21,10 +24,11 @@ import sqlite3
 from datetime import date
 
 from .. import db
+from . import periods, spread
 
-KINDS = ("pension", "debt", "other")
+KINDS = ("pension", "debt", "other", "possession")
 DEBT_KINDS = ("studieschuld", "lening", "overig")
-DEFAULT_INCLUDE = {"pension": False, "debt": True, "other": True}
+DEFAULT_INCLUDE = {"pension": False, "debt": True, "other": True, "possession": True}
 DUO = re.compile(r"\bduo\b|dienst uitvoering onderwijs")
 
 
@@ -80,6 +84,12 @@ class Item:
 
     def __init__(self, conn: sqlite3.Connection, a: dict, lg):
         self.a = a
+        self.start_day = lg.start_day
+        self.plan = None
+        if a["kind"] == "possession":
+            sale = (db.row(conn, "SELECT COALESCE(book_date, date) AS date, amount_cents FROM transactions "
+                                 "WHERE id = ?", (a["sale_tx_id"],)) if a["sale_tx_id"] else None)
+            self.plan = spread.possession_plan(a, {"_sale": sale} if sale else None)
         self.ents = entries(conn, a["id"])
         self.share = ratio(self.ents) if a["kind"] == "debt" else None
         key = a["merchant_key"]
@@ -94,6 +104,8 @@ class Item:
         return sum(v for d, v in self.events if after < d <= upto)
 
     def value(self, day: str) -> int | None:
+        if self.plan is not None:
+            return spread.value_on(self.plan, self.plan.total or 0, day, self.start_day)
         if not self.ents:
             return None
         known = [e for e in self.ents if e["date"] <= day]
@@ -114,7 +126,83 @@ def estimators(conn: sqlite3.Connection, lg) -> list[Item]:
     return [Item(conn, a, lg) for a in items(conn)]
 
 
+def _tx_brief(conn: sqlite3.Connection, tx_id: int | None) -> dict | None:
+    if not tx_id:
+        return None
+    t = db.row(conn, "SELECT id, COALESCE(book_date, date) AS date, amount_cents, merchant_name, category_id "
+                     "FROM transactions WHERE id = ?", (tx_id,))
+    return dict(t) if t else None
+
+
+def possession_out(conn: sqlite3.Connection, it: Item, today: str) -> dict:
+    a, plan = it.a, it.plan
+    total = plan.total or 0
+    sd = it.start_day
+    first = periods.period_for(date.fromisoformat(plan.start), sd) if plan.start else None
+    value = it.value(today)
+    parts = spread.amounts(total, plan.months, plan.keep)
+    sale_tx = _tx_brief(conn, a["sale_tx_id"])
+    return {"id": a["id"], "kind": "possession", "name": a["name"], "emoji": a["emoji"],
+            "include": bool(a["include"]), "value_cents": value,
+            "signed_cents": value or 0, "as_of": today if value is not None else None,
+            "estimated": False, "repaid_since_cents": 0, "repaid_share": None, "payment": None,
+            "debt_kind": None, "entries": [],
+            "price_cents": total, "start_date": plan.start, "life_months": plan.months,
+            "residual_cents": plan.keep, "category_id": a["category_id"],
+            "monthly_cents": parts[0] if parts else 0,
+            "lost_cents": (total - value) if value is not None and not plan.sale_date else None,
+            "end_period": spread.end_period(plan, first, sd).id if first else None,
+            "purchase": _tx_brief(conn, a["tx_id"]),
+            "sale": ({"date": plan.sale_date, "cents": plan.sale_cents, "tx": sale_tx,
+                      "result_cents": next((v for _, _, v, role in spread.schedule(plan, total, first, sd)
+                                            if role == "sale"), None) if first else None}
+                     if plan.sale_date else None)}
+
+
+def sale_candidates(conn: sqlite3.Connection, a: dict) -> list[dict]:
+    """Money in after the purchase (at least € 100), newest first: likely the sale. Not from a
+    payer that paid three times or more (salary, allowances)."""
+    taken = {r["sale_tx_id"] for r in db.rows(conn, "SELECT sale_tx_id FROM assets WHERE sale_tx_id IS NOT NULL")}
+    rows = db.rows(conn, """
+        SELECT t.id, COALESCE(t.book_date, t.date) AS date, t.amount_cents, t.merchant_name
+        FROM transactions t JOIN accounts a ON a.id = t.account_id
+        WHERE t.amount_cents >= 10000 AND t.kind = 'normal' AND a.type IN ('checking', 'savings')
+          AND COALESCE(t.book_date, t.date) >= ?
+          AND (t.merchant_key IS NULL OR (SELECT COUNT(*) FROM transactions x WHERE x.merchant_key = t.merchant_key
+                                          AND x.amount_cents > 0) < 3)
+        ORDER BY COALESCE(t.book_date, t.date) DESC, t.id DESC LIMIT 40""", (a["start_date"] or "0000",))
+    return [r for r in rows if r["id"] not in taken][:15]
+
+
+def purchase_candidates(conn: sqlite3.Connection, today: date) -> list[dict]:
+    """Big payments (at least € 500) of the last three years that may be a purchase: one per
+    merchant (its largest), no merchant paid that much three times or more (rent, mortgage)."""
+    since = date(today.year - 3, today.month, 1).isoformat()
+    taken = {r["tx_id"] for r in db.rows(conn, "SELECT tx_id FROM assets WHERE tx_id IS NOT NULL")}
+    rows = db.rows(conn, """
+        SELECT t.id, COALESCE(t.book_date, t.date) AS date, t.amount_cents, t.merchant_name,
+               t.merchant_key, t.category_id
+        FROM transactions t JOIN accounts a ON a.id = t.account_id
+        LEFT JOIN categories c ON c.id = t.category_id
+        WHERE t.amount_cents <= -50000 AND t.kind = 'normal' AND a.type IN ('checking', 'savings', 'credit')
+          AND COALESCE(c.grp, 'daily') IN ('fixed', 'daily') AND COALESCE(t.book_date, t.date) >= ?
+        ORDER BY t.amount_cents, t.id""", (since,))
+    count: dict[str, int] = {}
+    for r in rows:
+        count[r["merchant_key"] or ""] = count.get(r["merchant_key"] or "", 0) + 1
+    out, seen = [], set()
+    for r in rows:
+        key = r["merchant_key"] or f"tx:{r['id']}"
+        if r["id"] in taken or key in seen or (r["merchant_key"] and count[r["merchant_key"]] >= 3):
+            continue
+        seen.add(key)
+        out.append({k: r[k] for k in ("id", "date", "amount_cents", "merchant_name", "category_id")})
+    return out[:15]
+
+
 def out(conn: sqlite3.Connection, it: Item, today: str, names: dict[str, str]) -> dict:
+    if it.plan is not None:
+        return possession_out(conn, it, today)
     a, ents = it.a, it.ents
     value = it.value(today)
     last = ents[-1] if ents else None
@@ -136,8 +224,12 @@ def summary(conn: sqlite3.Connection, lg) -> dict:
     today = lg.today.isoformat()
     cands = candidates(conn)
     names = {c["merchant_key"]: c["merchant_name"] for c in cands}
-    return {"items": [out(conn, it, today, names) for it in estimators(conn, lg)],
-            "candidates": cands[:12]}
+    items_out = [out(conn, it, today, names) for it in estimators(conn, lg)]
+    for x in items_out:
+        if x["kind"] == "possession" and not x["sale"]:
+            x["sale_candidates"] = sale_candidates(conn, {"start_date": x["start_date"]})
+    return {"items": items_out, "candidates": cands[:12],
+            "purchase_candidates": purchase_candidates(conn, lg.today)}
 
 
 def networth_part(conn: sqlite3.Connection, lg) -> tuple[list[dict], list[Item]]:
@@ -147,7 +239,11 @@ def networth_part(conn: sqlite3.Connection, lg) -> tuple[list[dict], list[Item]]
     listed = [{"id": it.a["id"], "kind": it.a["kind"], "name": it.a["name"],
                "debt_kind": it.a["debt_kind"], "include": bool(it.a["include"]),
                "value_cents": it.value(today), "signed_cents": it.signed(today),
-               "as_of": it.ents[-1]["date"] if it.ents else None} for it in ests]
+               "as_of": (today if it.plan is not None else it.ents[-1]["date"] if it.ents else None),
+               "emoji": it.a["emoji"],
+               **({"monthly_cents": spread.amounts(it.plan.total or 0, it.plan.months, it.plan.keep)[0],
+                   "sold": bool(it.plan.sale_date), "sale_date": it.plan.sale_date}
+                  if it.plan is not None else {})} for it in ests]
     return listed, [it for it in ests if it.a["include"]]
 
 

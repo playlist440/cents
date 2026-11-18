@@ -16,7 +16,7 @@ from ..classify.reasons import reason_label
 from ..errors import ApiError, bad_request, not_found
 from ..importers.normalize import clean_merchant, tidy_name
 from ..schemas import MONEY_LIMIT, TxBulk, TxCreate, TxPatch, iso_date
-from ..services import learning, periods, txquery
+from ..services import learning, periods, spread, txquery
 from .deps import get_conn
 
 router = APIRouter()
@@ -119,6 +119,7 @@ def get_transaction(tx_id: int, conn: sqlite3.Connection = Depends(get_conn)) ->
     out["category_reason"] = tx.get("category_reason") or tx["category_source"]
     out["category_reason_label"] = reason_label(tx.get("category_reason"), tx, get_library())
     out["merchant"] = merchant_summary(conn, tx["merchant_key"])
+    out["spread"] = spread.describe(conn, tx)
     return out
 
 
@@ -167,6 +168,11 @@ def patch_transaction(tx_id: int, body: TxPatch, conn: sqlite3.Connection = Depe
         if book and abs((date.fromisoformat(book) - date.fromisoformat(tx["date"])).days) > 62:
             raise bad_request("Een boekdatum ligt hooguit twee maanden van de echte datum.", "book_date_range")
         updates["book_date"] = None if book == tx["date"] else book
+    if "spread_months" in sent:
+        months = body.spread_months if body.spread_months and body.spread_months > 1 else None
+        if months is not None:
+            spread.check_spreadable(conn, tx)
+        updates["spread_months"] = months
     if "goal_id" in sent:
         if body.goal_id is not None and not db.value(conn, "SELECT 1 FROM goals WHERE id = ?", (body.goal_id,)):
             raise bad_request("Dit potje bestaat niet.", "unknown_goal")

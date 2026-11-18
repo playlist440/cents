@@ -12,7 +12,7 @@ import statistics
 from datetime import date, timedelta
 
 from .. import db
-from . import cache, ledger as ledger_mod, networth, outlook, recurring, txquery
+from . import cache, ledger as ledger_mod, networth, outlook, recurring, spread as spread_mod, txquery
 from .imports import unsorted_merchant_count
 from .ledger import DAILY, FIXED, INCOME, SAVING, Flows, Ledger
 from .periods import Period, is_year_id, period_json, started_year_periods
@@ -240,12 +240,12 @@ def build_year_overview(conn: sqlite3.Connection, lg: Ledger, year: int) -> dict
     current = lg.current()
     # "Normaal" for a year: the same months one year earlier, when the data covers all of them.
     prev_ids = [lg.shift(p, -12) for p in plist]
-    covered = all(q.id in lg.flows and q.start < current.start for q in prev_ids)
+    covered = all(lg.has_data(q.id) and q.start < current.start for q in prev_ids)
     prev_tot = _sum_flows([lg.flows_for(q) for q in prev_ids]) if covered else None
 
     # Per month over the months the data covers (a year whose imports start in June is not
     # averaged over twelve).
-    n = max(1, sum(1 for p in plist if p.id in lg.flows))
+    n = max(1, sum(1 for p in plist if lg.has_data(p.id)))
     cats = []
     for cid in _spending_cats(lg):
         spent = tot["spent"].get(cid, 0)
@@ -375,16 +375,20 @@ def category_summary(conn: sqlite3.Connection, category: dict, period_id: str | 
     for r in f.rows:
         if r["bucket"][1] != cid:
             continue
-        key = r["merchant_key"] or ""
-        m = merchants.setdefault(key, {"merchant_key": r["merchant_key"],
+        key = r["merchant_key"] or (f"asset:{r['part']['asset_id']}" if r.get("part") else "")
+        m = merchants.setdefault(key, {"merchant_key": key or None,
                                        "merchant_name": r["merchant_name"], "cents": 0, "count": 0})
         m["cents"] += r["bucket"][2]
         m["count"] += 1
-    ids = {r["id"] for r in f.rows if r["bucket"][1] == cid}
+    # spread payments and possessions show as this month's part, not with their full amount
+    parts = [spread_mod.part_json(r) for r in f.rows if r.get("part") and r["bucket"][1] == cid]
+    skip = set(spread_mod.links(conn)) | {r["id"] for r in lg.rows if r.get("spread")}
+    ids = {r["id"] for r in f.rows if r["bucket"][1] == cid and not r.get("part")}
     ids |= {r["id"] for r in txquery.period_rows(conn, p.start, p.end,
                                                  "t.category_id = ? AND a.hidden = 0 AND "
                                                  + txquery.CASHFLOW_WHERE,
                                                  (cid,))}
+    ids -= skip
     tx_rows = []
     if ids:
         id_list = sorted(ids)
@@ -393,8 +397,9 @@ def category_summary(conn: sqlite3.Connection, category: dict, period_id: str | 
     return {
         "spent_cents": category_value(f, category),
         "avg_cents": _mean([category_value(lg.flows_for(h), category) for h in history]),
-        "count": len(tx_rows),
+        "count": len(tx_rows) + len(parts),
         "series": series,
+        "parts": parts,
         "merchants": sorted(merchants.values(), key=lambda m: -m["cents"])[:10],
         "transactions": txquery.tx_list_json(conn, tx_rows),
         "period": _period_json(lg, p),

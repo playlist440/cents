@@ -11,6 +11,15 @@ import { categoryById, tagById } from '../store.js';
 import { money, shortDate } from '../format.js';
 import { colorVar } from '../colors.js';
 
+/** Regel 2 van een betaling die verdeeld is of bij een bezitting hoort (SPEC 7.4). */
+function costTag(tx) {
+  const p = tx.possession;
+  if (p) return p.role === 'purchase' ? `bezitting ${p.name}` : `verkoop ${p.name}`;
+  const m = tx.spread_months;
+  if (m > 1) return `verdeeld over ${m % 12 === 0 ? (m === 12 ? '1 jaar' : `${m / 12} jaar`) : `${m} mnd`}`;
+  return null;
+}
+
 export function TxRow({ tx, onClick, sub, hideCategory = false, date = false, selected = false, selectable = false }) {
   const cat = categoryById(tx.category_id);
   const unsorted = !cat || cat.key === 'unsorted';
@@ -19,7 +28,7 @@ export function TxRow({ tx, onClick, sub, hideCategory = false, date = false, se
   const line2 = sub ?? [
     date ? shortDate(tx.date) : null,
     hideCategory ? null : unsorted ? 'Nog geen bakje' : cat.name,
-    tx.city,
+    costTag(tx) || tx.city,
   ].filter(Boolean).join(' · ');
   const inner = html`
     ${selectable && html`<span class=${'row-select' + (selected ? ' is-on' : '')} aria-hidden="true"></span>`}

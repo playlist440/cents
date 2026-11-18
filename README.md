@@ -12,6 +12,9 @@ en hoe je potjes ervoor staan.
   betaalkalender en de kosten per jaar.
 - Potjes met een doelbedrag en een advies per maand.
 - Een terugblik per maand en per jaar, ook om af te drukken.
+- Een grote aankoop die je jaren gebruikt kun je over maanden verdelen. Iets dat je later weer
+  verkoopt, zoals een auto, wordt een bezitting: de waarde staat bij Vermogen en elke maand
+  telt het waardeverlies, niet de aankoop.
 - Elke aanname van de app is zichtbaar en aan te passen onder Instellingen → Slimme aannames.
 - Beleggingen bij DEGIRO: importeer de Transacties-, Rekeningoverzicht- of Portefeuille-CSV en
   Cents toont de echte waarde van je fondsen, wat je inlegde en je resultaat.

@@ -29,6 +29,7 @@ import { useLayout } from '../hooks.js';
 import { HoldingsPart, TradeSheet, resultText } from './_holdings.js';
 import { colorVar } from '../colors.js';
 import { Icon } from '../icons.js';
+import { PossessionSheet } from './_costs.js';
 
 export const TYPES = [
   { type: 'checking', label: 'Betaalrekening', group: 'Betaalrekeningen', icon: 'wallet', color: 'blue' },
@@ -737,6 +738,8 @@ function HomeValue({ m, onChange }) {
 /* ---------- Pensioen, schulden, overig bezit (SPEC §7.3) ---------- */
 
 const ASSET_KINDS = [
+  { kind: 'possession', group: 'Bezittingen', add: 'Bezitting toevoegen', icon: 'key', emoji: '🚗', color: 'green',
+    placeholder: 'Auto', valueLabel: 'Waarde', hint: null },
   { kind: 'pension', group: 'Pensioen', add: 'Pensioen toevoegen', icon: 'clock', emoji: '🧓', color: 'purple',
     placeholder: 'Pensioenfonds werkgever', valueLabel: 'Opgebouwd', hint: 'Het opgebouwde bedrag staat op mijnpensioenoverzicht.nl of je UPO.' },
   { kind: 'debt', group: 'Schulden', add: 'Schuld toevoegen', icon: 'creditcard', emoji: '🧾', color: 'orange',
@@ -749,6 +752,13 @@ const DEBT_KINDS = [['studieschuld', 'Studieschuld'], ['lening', 'Lening'], ['ov
 
 function AssetRow({ a }) {
   const k = kindInfo(a.kind);
+  if (a.kind === 'possession') {
+    const value = money(a.value_cents ?? 0, { negative: true });
+    const sub = a.sold ? `verkocht ${shortDate(a.sale_date)}` : `− ${money(a.monthly_cents)} per maand waardeverlies`;
+    return html`<${ListRow} emoji=${a.emoji || k.emoji} color=${k.color} title=${a.name} subtitle=${html`<span class="num">${sub}</span>`}
+      value=${html`<span class="num vm-balance">${value}</span>`} chevron
+      onClick=${() => openSheet(PossessionSheet, { id: a.id })} label=${`${a.name}, ${value}`} />`;
+  }
   const value = a.value_cents == null ? '—' : money(a.signed_cents, { negative: true });
   const sub = !a.as_of ? 'nog geen bedrag' : !a.include ? 'niet meegeteld' : `bijgewerkt ${shortDate(a.as_of)}`;
   return html`<${ListRow} emoji=${k.emoji} color=${k.color} title=${a.name} subtitle=${html`<span class="num">${sub}</span>`}
@@ -757,6 +767,11 @@ function AssetRow({ a }) {
 }
 
 export function AssetSheet({ close, kind, id = null }) {
+  if (kind === 'possession') return html`<${PossessionSheet} close=${close} id=${id} />`;
+  return html`<${OtherAssetSheet} close=${close} kind=${kind} id=${id} />`;
+}
+
+function OtherAssetSheet({ close, kind, id = null }) {
   const [itemId, setItemId] = useState(id);
   const { data, reload } = useQuery('assets', () => api.assets());
   const k = kindInfo(kind);

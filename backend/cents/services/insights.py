@@ -249,7 +249,8 @@ def large(lg: Ledger, p: Period, ov: dict, by_tx: dict[int, dict]) -> list[dict]
     best = None
     for r in f.rows:
         grp, cid, value = r["bucket"]
-        if grp not in (FIXED, DAILY) or r["amount_cents"] >= 0 or value <= 15000 or r["id"] in by_tx:
+        if grp not in (FIXED, DAILY) or r["amount_cents"] >= 0 or value <= 15000 or r["id"] in by_tx \
+                or r.get("part"):
             continue
         others = [abs(o["amount_cents"]) for o in by_merchant.get(r["merchant_key"] or "", [])
                   if o["id"] != r["id"]]

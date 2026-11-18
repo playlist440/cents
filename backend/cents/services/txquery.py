@@ -17,7 +17,7 @@ from .. import db
 TX_FIELDS = ["id", "account_id", "date", "amount_cents", "merchant_name", "merchant_key",
              "counterparty_iban", "description", "method", "city", "category_id",
              "category_source", "kind", "transfer_account_id", "goal_id", "note", "manual",
-             "balance_after_cents", "book_date"]
+             "balance_after_cents", "book_date", "spread_months"]
 
 # Cash flow counts checking accounts and manual credit-card purchases only (SPEC 7).
 CASHFLOW_WHERE = "(a.type = 'checking' OR (a.type = 'credit' AND t.manual = 1))"
@@ -42,16 +42,21 @@ def tag_map(conn: sqlite3.Connection, ids: Iterable[int]) -> dict[int, list[int]
     return out
 
 
-def tx_json(row: dict, tag_ids: list[int] | None = None) -> dict:
+def tx_json(row: dict, tag_ids: list[int] | None = None, possession: dict | None = None) -> dict:
     out = {f: row.get(f) for f in TX_FIELDS}
     out["manual"] = bool(row.get("manual"))
     out["tag_ids"] = tag_ids or []
+    out["possession"] = possession          # {asset_id, name, role: purchase|sale} or None
+    if possession and possession["role"] == "purchase":
+        out["spread_months"] = None
     return out
 
 
 def tx_list_json(conn: sqlite3.Connection, rows: list[dict]) -> list[dict]:
+    from . import spread
     tags = tag_map(conn, [r["id"] for r in rows])
-    return [tx_json(r, tags.get(r["id"])) for r in rows]
+    links = spread.links(conn) if rows else {}
+    return [tx_json(r, tags.get(r["id"]), links.get(r["id"])) for r in rows]
 
 
 def get_tx(conn: sqlite3.Connection, tx_id: int) -> dict | None:

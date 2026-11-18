@@ -137,7 +137,8 @@ def monthly_fixed(lg: Ledger, items: list[dict]) -> float:
     """Average monthly fixed costs: previous up to six complete periods, else recurring items."""
     history = lg.complete_before(lg.current(), 6)
     if history:
-        return sum(lg.flows_for(p).fixed + lg.flows_for(p).repaid for p in history) / len(history)
+        return sum(lg.flows_for(p).fixed - lg.flows_for(p).spread_fixed + lg.flows_for(p).repaid
+                   for p in history) / len(history)
     return -sum(i["per_month_cents"] for i in items if i["direction"] == "out"
                 and i["status"] != "ended" and _group(lg, i) == FIXED)
 
@@ -181,7 +182,7 @@ def daily_rate(lg: Ledger) -> float:
     rates = []
     for p in lg.complete_before(lg.current(), TYPICAL_MONTHS):
         f = lg.flows_for(p)
-        rates.append((f.daily - sum(_card_lump(r) for r in f.rows)) / p.days_total)
+        rates.append((f.daily - f.spread_daily - sum(_card_lump(r) for r in f.rows)) / p.days_total)
     return float(statistics.median(rates)) if rates else 0.0
 
 

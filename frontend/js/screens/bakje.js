@@ -10,6 +10,7 @@ import { EmojiTile } from '../components/EmojiTile.js';
 import { Card } from '../components/Card.js';
 import { Section, List, ListRow } from '../components/List.js';
 import { TxRow } from '../components/TxRow.js';
+import { PartRow } from './_costs.js';
 import { Skeleton } from '../components/Feedback.js';
 import { Sheet, SheetButton } from '../components/Sheet.js';
 import { TextField } from '../components/Fields.js';
@@ -69,12 +70,20 @@ export function Bakje({ params, query }) {
     </${Section}>`}
 
     ${data && html`<${Section} title=${isCurrent ? 'Deze maand' : monthSmart(period)[0].toUpperCase() + monthSmart(period).slice(1)}>
-      ${data.transactions.length
-        ? html`<ul class="inset">${data.transactions.map((tx) => html`<${TxRow} key=${tx.id} tx=${tx} hideCategory date
-            onClick=${() => openTransaction(tx)} />`)}</ul>`
+      ${data.transactions.length || data.parts?.length
+        ? html`<ul class="inset">${monthRows(data).map((x) => (x.part
+            ? html`<${PartRow} key=${'p' + x.part.tx_id + ':' + x.part.asset_id + ':' + x.part.index} p=${x.part} />`
+            : html`<${TxRow} key=${x.tx.id} tx=${x.tx} hideCategory date onClick=${() => openTransaction(x.tx)} />`))}</ul>`
         : html`<p class="quiet">Geen betalingen</p>`}
     </${Section}>`}
   </${Screen}>`;
+}
+
+/** Betalingen en maanddelen (verdeelde uitgaven, waardeverlies) samen, nieuwste eerst. */
+function monthRows(data) {
+  const rows = [...data.transactions.map((tx) => ({ date: tx.book_date || tx.date, tx })),
+    ...(data.parts || []).map((part) => ({ date: part.date, part }))];
+  return rows.sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
 }
 
 function EditBakjeSheet({ cat, close }) {

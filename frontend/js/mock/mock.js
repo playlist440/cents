@@ -66,6 +66,8 @@ function serializeTx(tx) {
     category_source: tx.category_source, kind: tx.kind, transfer_account_id: tx.transfer_account_id,
     tag_ids: tagIdsOf(tx.id), goal_id: tx.goal_id, note: tx.note, manual: tx.manual,
     balance_after_cents: tx.balance_after_cents, book_date: tx.book_date ?? null,
+    spread_months: possessionLinks().get(tx.id)?.role === 'purchase' ? null : tx.spread_months ?? null,
+    possession: possessionLinks().get(tx.id) || null,
   };
 }
 
@@ -156,6 +158,90 @@ function settlementUnexplained() {
   });
 }
 
+/* Costs over time (SPEC §7.4; services/spread.py): spread payments and possessions */
+const pIndex = (pid) => { const [y, m] = pid.split('-').map(Number); return y * 12 + m - 1; };
+function spreadAmounts(total, months, keep = 0) {
+  const base = Math.max(0, total - Math.max(0, Math.min(keep || 0, total)));
+  const q = Math.floor(base / months); const r = base % months;
+  return Array.from({ length: months }, (_, i) => q + (i < r ? 1 : 0));
+}
+function possessionLinks() {
+  return cached('poss:links', () => {
+    const m = new Map();
+    for (const a of db.assets) if (a.kind === 'possession') {
+      if (a.tx_id) m.set(a.tx_id, { asset_id: a.id, name: a.name, role: 'purchase' });
+      if (a.sale_tx_id) m.set(a.sale_tx_id, { asset_id: a.id, name: a.name, role: 'sale' });
+    }
+    return m;
+  });
+}
+function possessionPlan(a) {
+  const sale = a.sale_tx_id ? db.transactions.find((t) => t.id === a.sale_tx_id) : null;
+  return { months: a.life_months || 96, total: a.price_cents || 0, keep: a.residual_cents || 0, start: a.start_date,
+    sale_date: sale ? sale.date : a.sale_date || null, sale_cents: sale ? sale.amount_cents : a.sale_cents ?? null };
+}
+function spreadSchedule(plan, startPid) {
+  const parts = spreadAmounts(plan.total, plan.months, plan.keep);
+  const saleK = plan.sale_date && plan.sale_cents != null ? Math.max(0, pIndex(periodOf(plan.sale_date)) - pIndex(startPid)) : null;
+  const upto = saleK == null ? parts.length : Math.min(saleK, parts.length);
+  const out = [];
+  for (let k = 0; k < upto; k++) out.push({ pid: shiftPeriod(startPid, k), k, cents: parts[k], role: 'part' });
+  if (saleK != null) out.push({ pid: shiftPeriod(startPid, saleK), k: saleK, role: 'sale', cents: plan.total - parts.slice(0, upto).reduce((s, v) => s + v, 0) - plan.sale_cents });
+  return out;
+}
+const isSpread = (t) => t.spread_months > 1 && t.amount_cents < 0 && !possessionLinks().has(t.id);
+function periodParts(pid) {
+  return cached('parts:' + pid, () => {
+    const out = [];
+    for (const t of db.transactions) {
+      if (!isSpread(t) || !isCashflow(t) || !['fixed', 'daily'].includes(catById(t.category_id)?.grp)) continue;
+      for (const s of spreadSchedule({ months: t.spread_months, total: -t.amount_cents, keep: 0 }, periodOf(t.date))) {
+        if (s.pid === pid) out.push({ kind: 'spread', index: s.k + 1, months: t.spread_months, role: s.role, cents: s.cents, total_cents: -t.amount_cents,
+          name: t.merchant_name, asset_id: null, tx_id: t.id, date: s.k === 0 ? t.date : periodBounds(pid).from, period: pid, category_id: t.category_id });
+      }
+    }
+    for (const a of db.assets) {
+      if (a.kind !== 'possession') continue;
+      const plan = possessionPlan(a);
+      if (!plan.start || !plan.total) continue;
+      const cat = catById(a.category_id) && ['fixed', 'daily'].includes(catById(a.category_id).grp) ? a.category_id : catByKey('unsorted').id;
+      for (const s of spreadSchedule(plan, periodOf(plan.start))) {
+        if (s.pid === pid) out.push({ kind: 'possession', index: s.k + 1, months: plan.months, role: s.role, cents: s.cents, total_cents: plan.total,
+          name: a.name, asset_id: a.id, tx_id: a.tx_id || -a.id, date: s.role === 'sale' ? plan.sale_date : s.k === 0 ? plan.start : periodBounds(pid).from,
+          period: pid, category_id: cat });
+      }
+    }
+    return out;
+  });
+}
+function possessionValue(a, day) {
+  const plan = possessionPlan(a);
+  if (!plan.start || day < plan.start) return null;
+  if (plan.sale_date && day >= plan.sale_date) return 0;
+  const parts = spreadAmounts(plan.total, plan.months, plan.keep);
+  const p = periodOf(day);
+  const k = pIndex(p) - pIndex(periodOf(plan.start));
+  if (k >= parts.length) return plan.total - parts.reduce((s, v) => s + v, 0);
+  const { from, to } = periodBounds(p);
+  const begin = k === 0 ? plan.start : from;
+  const frac = daysBetween(begin, day) / Math.max(1, daysBetween(begin, addDays(to, 1)));
+  return plan.total - parts.slice(0, k).reduce((s, v) => s + v, 0) - Math.round(parts[k] * frac);
+}
+function spreadInfo(t) {
+  const link = possessionLinks().get(t.id);
+  if (link) {
+    const a = db.assets.find((x) => x.id === link.asset_id);
+    const plan = possessionPlan(a);
+    const first = periodOf(plan.start);
+    return { kind: 'possession', role: link.role, asset_id: a.id, name: a.name, emoji: a.emoji, months: plan.months, residual_cents: plan.keep,
+      price_cents: plan.total, monthly_cents: spreadAmounts(plan.total, plan.months, plan.keep)[0], value_cents: possessionValue(a, db.today),
+      from: first, to: shiftPeriod(first, plan.months - 1), sold: !!plan.sale_date, sale_date: plan.sale_date, sale_cents: plan.sale_cents, category_id: a.category_id };
+  }
+  if (!isSpread(t)) return null;
+  const first = periodOf(t.date);
+  return { kind: 'spread', months: t.spread_months, monthly_cents: spreadAmounts(-t.amount_cents, t.spread_months)[0], from: first, to: shiftPeriod(first, t.spread_months - 1) };
+}
+
 function flows(pid) {
   return cached('flows:' + pid, () => {
     const { from, to } = periodBounds(pid);
@@ -167,8 +253,15 @@ function flows(pid) {
       const e = map.get(id) || { cents: 0, count: 0 };
       e.cents += cents; e.count += 1; map.set(id, e);
     };
+    const links = possessionLinks();
+    for (const p of periodParts(pid)) {
+      const c = catById(p.category_id);
+      if (c.grp === 'fixed') res.fixed += p.cents; else { res.daily += p.cents; res.dailyByDay.set(p.date, (res.dailyByDay.get(p.date) || 0) + p.cents); }
+      addCat(res.cats, c.id, p.cents);
+    }
     for (const t of db.transactions) {
       if (t.date < from || t.date > to || !isCashflow(t)) continue;
+      if (links.has(t.id) || isSpread(t)) continue;
       const amt = t.amount_cents;
       if (t.kind === 'settlement') {
         const u = unexplained.get(t.id) || 0;
@@ -989,7 +1082,7 @@ function mortgageSplit() {
   return key && share ? { key, share } : null;
 }
 /* Pension, debt, other possessions (SPEC §7.3; services/assets.py) */
-const ASSET_INCLUDE = { pension: false, debt: true, other: true };
+const ASSET_INCLUDE = { pension: false, debt: true, other: true, possession: true };
 function assetEntries(id) { return db.asset_entries.filter((e) => e.asset_id === id).sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : a.id - b.id)); }
 function assetRatio(es) {
   for (const e of [...es].reverse()) { const r = e.repaid_cents || 0; const i = e.interest_cents || 0; if (r + i > 0) return r / (r + i); }
@@ -1024,6 +1117,7 @@ function assetEvents(a, share) {
     .map((t) => [t.date, Math.round(-t.amount_cents * allSplits().get(a.merchant_key))]);
 }
 function assetValue(a, day) {
+  if (a.kind === 'possession') return possessionValue(a, day);
   const es = assetEntries(a.id);
   if (!es.length) return null;
   const known = es.filter((e) => e.date <= day);
@@ -1036,13 +1130,17 @@ const assetSigned = (a, day) => (a.kind === 'debt' ? -1 : 1) * (assetValue(a, da
 function assetsNetworth() {
   return db.assets.map((a) => {
     const es = assetEntries(a.id);
-    return { id: a.id, kind: a.kind, name: a.name, debt_kind: a.debt_kind, include: a.include, value_cents: assetValue(a, db.today), signed_cents: assetSigned(a, db.today), as_of: es.at(-1)?.date || null };
+    const base = { id: a.id, kind: a.kind, name: a.name, debt_kind: a.debt_kind, include: a.include, value_cents: assetValue(a, db.today), signed_cents: assetSigned(a, db.today), as_of: es.at(-1)?.date || null, emoji: a.emoji || null };
+    if (a.kind !== 'possession') return base;
+    const plan = possessionPlan(a);
+    return { ...base, as_of: db.today, monthly_cents: spreadAmounts(plan.total, plan.months, plan.keep)[0], sold: !!plan.sale_date, sale_date: plan.sale_date };
   });
 }
 function assetsOut() {
   const cands = assetCandidates();
   return {
     items: db.assets.map((a) => {
+      if (a.kind === 'possession') return possessionOut(a);
       const es = assetEntries(a.id);
       const share = a.kind === 'debt' ? assetRatio(es) : null;
       const last = es.at(-1);
@@ -1053,7 +1151,38 @@ function assetsOut() {
         entries: [...es].reverse().map(({ asset_id, ...e }) => e) };
     }),
     candidates: cands.slice(0, 12),
+    purchase_candidates: purchaseCandidates(),
   };
+}
+const txBrief = (id) => { const t = id && db.transactions.find((x) => x.id === id); return t ? { id: t.id, date: t.date, amount_cents: t.amount_cents, merchant_name: t.merchant_name, category_id: t.category_id } : null; };
+function possessionOut(a) {
+  const plan = possessionPlan(a);
+  const first = periodOf(plan.start);
+  const value = possessionValue(a, db.today);
+  const sale = plan.sale_date ? spreadSchedule(plan, first).find((s) => s.role === 'sale') : null;
+  const taken = new Set(db.assets.map((x) => x.sale_tx_id).filter(Boolean));
+  return { id: a.id, kind: 'possession', name: a.name, emoji: a.emoji, include: a.include, value_cents: value, signed_cents: value || 0,
+    as_of: db.today, estimated: false, repaid_since_cents: 0, repaid_share: null, payment: null, debt_kind: null, entries: [],
+    price_cents: plan.total, start_date: plan.start, life_months: plan.months, residual_cents: plan.keep, category_id: a.category_id,
+    monthly_cents: spreadAmounts(plan.total, plan.months, plan.keep)[0], lost_cents: value != null && !plan.sale_date ? plan.total - value : null,
+    end_period: shiftPeriod(first, plan.months - 1), purchase: txBrief(a.tx_id),
+    sale: plan.sale_date ? { date: plan.sale_date, cents: plan.sale_cents, tx: txBrief(a.sale_tx_id), result_cents: sale?.cents ?? null } : null,
+    sale_candidates: plan.sale_date ? undefined : db.transactions.filter((t) => t.amount_cents >= 10000 && t.kind === 'normal' && t.date >= plan.start && !taken.has(t.id)
+        && db.transactions.filter((x) => x.merchant_key === t.merchant_key && x.amount_cents > 0).length < 3)
+      .sort((x, y) => (x.date < y.date ? 1 : -1)).slice(0, 15).map((t) => ({ id: t.id, date: t.date, amount_cents: t.amount_cents, merchant_name: t.merchant_name })) };
+}
+function purchaseCandidates() {
+  const since = shiftPeriod(db.today.slice(0, 7), -36) + '-01';
+  const taken = new Set(db.assets.map((x) => x.tx_id).filter(Boolean));
+  const big = db.transactions.filter((t) => t.amount_cents <= -50000 && t.kind === 'normal' && t.date >= since && ['fixed', 'daily'].includes(catById(t.category_id)?.grp || 'daily'))
+    .sort((x, y) => x.amount_cents - y.amount_cents);
+  const count = new Map();
+  big.forEach((t) => count.set(t.merchant_key, (count.get(t.merchant_key) || 0) + 1));
+  const seen = new Set();
+  return big.filter((t) => {
+    if (taken.has(t.id) || seen.has(t.merchant_key) || count.get(t.merchant_key) >= 3) return false;
+    seen.add(t.merchant_key); return true;
+  }).slice(0, 15).map((t) => ({ id: t.id, date: t.date, amount_cents: t.amount_cents, merchant_name: t.merchant_name, category_id: t.category_id }));
 }
 function checkAssetMerchant(key, id) {
   if (!db.transactions.some((t) => t.merchant_key === key)) fail(422, 'unknown_merchant', 'Deze betaling ken ik niet.');
@@ -1422,6 +1551,7 @@ function txDetail(t) {
     bank_code: t.bank_code, mcc: t.mcc, mcc_label: t.mcc ? mccLabels[t.mcc] || null : null, wallet: t.wallet,
     bank_category: t.bank_category, mandate_id: t.mandate_id,
     category_reason: categoryReason(t)[0], category_reason_label: categoryReason(t)[1],
+    spread: spreadInfo(t),
     merchant: {
       count: same.length,
       total_12m_cents: same.filter((x) => x.date >= yearAgo).reduce((s, x) => s + x.amount_cents, 0),
@@ -1558,6 +1688,13 @@ const ROUTES = [
   ['PATCH', /^\/transactions\/(\d+)$/, ({ params: [id], body }) => {
     const t = need(db.transactions.find((x) => x.id === id));
     if (body.book_date !== undefined) t.book_date = body.book_date && body.book_date !== t.date ? body.book_date : null;
+    if (body.spread_months !== undefined) {
+      const m = body.spread_months > 1 ? body.spread_months : null;
+      if (m && (t.amount_cents >= 0 || !['fixed', 'daily'].includes(catById(t.category_id)?.grp))) fail(400, 'spread_not_spending', 'Alleen een uitgave kun je over maanden verdelen.');
+      if (m && possessionLinks().has(t.id)) fail(400, 'spread_possession', 'Deze betaling hoort bij een bezitting.');
+      t.spread_months = m;
+      touch();
+    }
     let updated = 1;
     const scope = body.apply_scope || (body.apply_to_merchant === false ? 'one' : 'merchant');
     if (body.category_id !== undefined && scope === 'merchant_below' && !t.manual) {
@@ -1673,8 +1810,10 @@ const ROUTES = [
     const series = [];
     for (let i = 11; i >= 0; i--) { const p = shiftPeriod(pid, -i); series.push({ period: p, cents: flows(p).cats.get(id)?.cents || 0 }); }
     const { from, to } = periodBounds(pid);
-    const txs = db.transactions.filter((t) => t.category_id === id && t.date >= from && t.date <= to && isCashflow(t))
+    const txs = db.transactions.filter((t) => t.category_id === id && t.date >= from && t.date <= to && isCashflow(t)
+        && !isSpread(t) && !possessionLinks().has(t.id))
       .sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : b.id - a.id));
+    const parts = periodParts(pid).filter((p) => p.category_id === id);
     const m = new Map();
     for (const t of txs) {
       const e = m.get(t.merchant_key) || { merchant_key: t.merchant_key, merchant_name: t.merchant_name, cents: 0, count: 0 };
@@ -1684,7 +1823,7 @@ const ROUTES = [
     const income = c.grp === 'income';
     return ok({
       spent_cents: income ? (f.incomeCats.get(id)?.cents || 0) : (f.cats.get(id)?.cents || 0),
-      avg_cents: categoryAvg(id, pid), count: txs.length,
+      avg_cents: categoryAvg(id, pid), count: txs.length + parts.length, parts,
       series: income ? series.map((s) => ({ period: s.period, cents: flows(s.period).incomeCats.get(id)?.cents || 0 })) : series,
       merchants: [...m.values()].map((x) => (income ? { ...x, cents: -x.cents } : x)).sort((a, b) => b.cents - a.cents).slice(0, 8),
       transactions: txs.map(serializeTx),
@@ -1850,9 +1989,26 @@ const ROUTES = [
   ['GET', /^\/networth$/, () => ok(networth())],
   ['GET', /^\/assets$/, () => ok(assetsOut())],
   ['POST', /^\/assets$/, ({ body }) => {
-    if (!['pension', 'debt', 'other'].includes(body.kind)) fail(422, 'invalid', 'Onbekende soort.');
+    if (!['pension', 'debt', 'other', 'possession'].includes(body.kind)) fail(422, 'invalid', 'Onbekende soort.');
     const name = String(body.name || '').trim();
     if (!name) fail(422, 'invalid', 'Geef een naam.');
+    if (body.kind === 'possession') {
+      const tx = body.tx_id ? need(db.transactions.find((t) => t.id === body.tx_id && t.amount_cents < 0), 'Kies de betaling waarmee je het kocht.') : null;
+      const price = body.price_cents || (tx ? -tx.amount_cents : null);
+      const start = body.start_date || tx?.date;
+      if (!price || !start) fail(422, 'invalid', 'Vul de aankoopprijs en de datum in.');
+      if ((body.residual_cents || 0) > price) fail(422, 'residual_too_high', 'De verwachte verkoopprijs is hoger dan de aankoopprijs.');
+      const txCat = tx && catById(tx.category_id);
+      const emoji = [['motor', '🏍️'], ['camper', '🚐'], ['caravan', '🚐'], ['boot', '⛵'], ['fiets', '🚲']].find(([w]) => name.toLowerCase().includes(w))?.[1] || '🚗';
+      db.seq.asset = (db.seq.asset || 0) + 1;
+      db.assets.push({ id: db.seq.asset, kind: 'possession', name, include: true, merchant_key: null, debt_kind: null, tx_id: tx?.id || null,
+        price_cents: price, start_date: start, life_months: body.life_months || 96, residual_cents: body.residual_cents || 0,
+        category_id: body.category_id ?? (txCat && ['fixed', 'daily'].includes(txCat.grp) && txCat.key !== 'unsorted' ? txCat.id : catByKey('vervoer')?.id),
+        emoji, sale_tx_id: null, sale_date: null, sale_cents: null });
+      if (tx) tx.spread_months = null;
+      touch();
+      return ok({ ...assetsOut(), id: db.seq.asset });
+    }
     let key = null;
     if (body.kind === 'debt') {
       if ('merchant_key' in body) { key = body.merchant_key || null; if (key) checkAssetMerchant(key, 0); }
@@ -1871,6 +2027,15 @@ const ROUTES = [
     const a = need(db.assets.find((x) => x.id === id), 'Dit onderdeel bestaat niet (meer).');
     if (body.name) a.name = String(body.name).trim();
     if (body.include != null) a.include = !!body.include;
+    if (a.kind === 'possession') {
+      for (const f of ['price_cents', 'life_months', 'residual_cents', 'category_id', 'emoji', 'start_date']) if (body[f] != null) a[f] = body[f];
+      if ((a.residual_cents || 0) > a.price_cents) fail(422, 'residual_too_high', 'De verwachte verkoopprijs is hoger dan de aankoopprijs.');
+      if ('sale_tx_id' in body || 'sale_date' in body) {
+        if (body.sale_tx_id) { a.sale_tx_id = body.sale_tx_id; a.sale_date = null; a.sale_cents = null; }
+        else if (body.sale_date && body.sale_cents != null) { a.sale_tx_id = null; a.sale_date = body.sale_date; a.sale_cents = body.sale_cents; }
+        else { a.sale_tx_id = null; a.sale_date = null; a.sale_cents = null; }
+      }
+    }
     if (a.kind === 'debt') {
       if (body.debt_kind) a.debt_kind = body.debt_kind;
       if ('merchant_key' in body) { if (body.merchant_key) checkAssetMerchant(body.merchant_key, id); a.merchant_key = body.merchant_key || null; }

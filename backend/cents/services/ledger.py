@@ -15,6 +15,10 @@ Rules (SPEC 4.1 and 7):
   stays a fixed cost in its bakje; the repaid part (`row["repaid"]`) counts as saved
   ("Afgelost", `Flows.repaid`), so the result improves while cash projections keep the full
   payment. Linked debts (services/assets.py) are split the same way; `repaid` sums both.
+- Costs over time (services/spread.py): a spread payment counts in equal parts in the periods
+  it covers; a possession's waardeverlies counts per period in its bakje, its purchase and
+  sale payments do not count. Parts are rows with `part`; `Flows.real` counts the other rows,
+  so a period with only parts is no imported month (`has_data`).
 
 All totals in `Flows` are positive magnitudes: `fixed` = money spent on fixed costs, `saved` =
 money put aside (negative when more was withdrawn than saved).
@@ -48,6 +52,9 @@ class Flows:
     saved_by_cat: dict[int, int] = field(default_factory=dict)
     daily_by_day: list[int] = field(default_factory=list)
     rows: list[dict] = field(default_factory=list)
+    real: int = 0                                              # rows that are no spread part
+    spread_fixed: int = 0                                      # parts of spread costs / waardeverlies
+    spread_daily: int = 0
 
     @property
     def net(self) -> int:
@@ -91,6 +98,11 @@ class Ledger:
     def shift(self, p: Period, n: int) -> Period:
         return periods.shift(p, n, self.start_day)
 
+    def has_data(self, period_id: str) -> bool:
+        """A period with imported transactions (not only parts of spread costs)."""
+        f = self.flows.get(period_id)
+        return f is not None and f.real > 0
+
     def flows_for(self, p: Period) -> Flows:
         found = self.flows.get(p.id)
         if found is not None:
@@ -117,7 +129,7 @@ class Ledger:
         out = []
         q = self.shift(p, -1)
         while len(out) < n and q.start >= fc.start:
-            if q.start < current.start and q.id in self.flows:
+            if q.start < current.start and self.has_data(q.id):
                 out.append(q)
             q = self.shift(q, -1)
         return out
@@ -253,8 +265,17 @@ def build(conn: sqlite3.Connection) -> Ledger:
                     r["repaid"] = repaid
                     r["bucket"] = (FIXED, b[1], b[2] - repaid)
 
-    flows: dict[str, Flows] = {}
+    from . import spread as spread_mod
+    spreads = spread_mod.spread_plans(conn)
+    owned = spread_mod.possessions(conn)
+    linked = spread_mod.links(conn)
+    entries: list[tuple[dict, Period]] = []
     for r in rows:
+        link = linked.get(r["id"])
+        if link:                                  # buying or selling a possession is no spending/income
+            r["possession"] = link
+            r["bucket"] = None
+            r.pop("repaid", None)
         b = r["bucket"]
         if b is None:
             continue
@@ -262,11 +283,43 @@ def build(conn: sqlite3.Connection) -> Ledger:
         if r["id"] in early:
             p = periods.shift(p, 1, sd)
             r["period"] = p.id
+        plan = spreads.get(r["id"])
+        if plan and b[0] in SPENDING and b[2] > 0:
+            r["spread"] = {"months": plan.months}
+            for q, k, v, role in spread_mod.schedule(plan, b[2], p, sd):
+                entries.append((_part(r, q, k, v, role, plan, b[2], b[0], b[1]), q))
+            continue
+        entries.append((r, p))
+    for a, plan in owned:
+        if not plan.start or not plan.total:
+            continue
+        cat = plan.category_id if plan.category_id in categories else unsorted_cat
+        grp = categories[cat]["grp"] if categories[cat]["grp"] in SPENDING else DAILY
+        base = {"id": plan.tx_id if plan.tx_id else -a["id"], "date": plan.start, "amount_cents": 0,
+                "category_id": cat, "merchant_key": None, "merchant_name": plan.name, "method": None,
+                "kind": "normal", "account_id": None, "transfer_account_id": None, "manual": 0,
+                "description": None, "account_type": "checking",
+                "category_key": categories[cat]["key"], "grp": categories[cat]["grp"]}
+        start = periods.period_for(date.fromisoformat(plan.start), sd)
+        for q, k, v, role in spread_mod.schedule(plan, plan.total, start, sd):
+            entries.append((_part(base, q, k, v, role, plan, plan.total, grp, cat), q))
+
+    flows: dict[str, Flows] = {}
+    for r, p in entries:
+        b = r["bucket"]
         f = flows.get(p.id)
         if f is None:
             f = flows[p.id] = Flows(p, daily_by_day=[0] * p.days_total)
         grp, cat, value = b
         f.rows.append(r)
+        part = r.get("part")
+        if part is None or (part["kind"] == "spread" and part["index"] == 1):
+            f.real += 1
+        if part is not None:
+            if grp == FIXED:
+                f.spread_fixed += value
+            elif grp == DAILY:
+                f.spread_daily += value
         f.counts[cat] = f.counts.get(cat, 0) + 1
         if grp == INCOME:
             f.income += value
@@ -289,6 +342,22 @@ def build(conn: sqlite3.Connection) -> Ledger:
                   unsorted_cat, periods.last_imported(conn, today),
                   date.fromisoformat(last_import[:10]) if last_import else None,
                   {r["id"]: r["period"] for r in rows if r["id"] in early})
+
+
+def _part(r: dict, q: Period, k: int, value: int, role: str, plan, total: int, grp: str,
+          cat: int) -> dict:
+    """One period's share of a spread payment or of a possession's waardeverlies."""
+    x = dict(r)
+    x.pop("repaid", None)
+    if role == "sale" and plan.sale_date:
+        day = plan.sale_date
+    else:
+        day = r["date"] if k == 0 else q.start.isoformat()
+    x.update(bucket=(grp, cat, value), period=q.id, amount_cents=-value, date=day,
+             part={"kind": plan.kind, "index": k + 1, "months": plan.months, "role": role,
+                   "total_cents": total, "name": plan.name or r.get("merchant_name"),
+                   "asset_id": plan.asset_id})
+    return x
 
 
 def get(conn: sqlite3.Connection) -> Ledger:

@@ -280,7 +280,7 @@ CREATE TABLE home_values (
 SCHEMA_V6 = """
 CREATE TABLE assets (
     id INTEGER PRIMARY KEY,
-    kind TEXT NOT NULL,                         -- pension|debt|other
+    kind TEXT NOT NULL,                         -- pension|debt|other|possession (v10)
     name TEXT NOT NULL,
     debt_kind TEXT,                             -- debt: studieschuld|lening|overig
     include INTEGER NOT NULL,                   -- counted in net worth
@@ -319,9 +319,26 @@ SCHEMA_V9 = """
 ALTER TABLE transactions ADD COLUMN book_date TEXT;
 """
 
+# v10: costs over time (services/spread.py). A payment can be spread over months (uitsmeren),
+# and a possession (bezitting, kind 'possession') counts its waardeverlies per month instead of
+# the purchase: price, purchase day, life, expected resale value, bakje, and a sale.
+SCHEMA_V10 = """
+ALTER TABLE transactions ADD COLUMN spread_months INTEGER;      -- NULL = counts at once
+ALTER TABLE assets ADD COLUMN tx_id INTEGER REFERENCES transactions(id) ON DELETE SET NULL;
+ALTER TABLE assets ADD COLUMN price_cents INTEGER;               -- possession: aankoopprijs
+ALTER TABLE assets ADD COLUMN start_date TEXT;                   -- possession: aankoopdatum
+ALTER TABLE assets ADD COLUMN life_months INTEGER;               -- possession: gebruiksduur
+ALTER TABLE assets ADD COLUMN residual_cents INTEGER;            -- possession: verwachte verkoopprijs
+ALTER TABLE assets ADD COLUMN category_id INTEGER REFERENCES categories(id) ON DELETE SET NULL;
+ALTER TABLE assets ADD COLUMN emoji TEXT;
+ALTER TABLE assets ADD COLUMN sale_tx_id INTEGER REFERENCES transactions(id) ON DELETE SET NULL;
+ALTER TABLE assets ADD COLUMN sale_date TEXT;                    -- sale without a payment (inruil)
+ALTER TABLE assets ADD COLUMN sale_cents INTEGER;
+"""
+
 # Forward-only. Append new migrations; never edit an old one.
 MIGRATIONS: list[str] = [SCHEMA_V1, SCHEMA_V2, SCHEMA_V3, SCHEMA_V4, SCHEMA_V5, SCHEMA_V6, SCHEMA_V7, SCHEMA_V8,
-                         SCHEMA_V9]
+                         SCHEMA_V9, SCHEMA_V10]
 SCHEMA_VERSION = len(MIGRATIONS)
 
 DEFAULT_SETTINGS: dict[str, Any] = {"month_start_day": 1, "household_name": ""}

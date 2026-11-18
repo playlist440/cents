@@ -27,7 +27,7 @@ class Range:
         self.start, self.end = plist[0].start, plist[-1].end
         complete = {q.id for q in lg.complete_before(lg.current(), 10000)}
         self.complete = all(q.id in complete for q in plist)
-        self.has_data = any(q.id in lg.flows for q in plist)
+        self.has_data = any(lg.has_data(q.id) for q in plist)
 
     def flows(self) -> list[Flows]:
         return [self.lg.flows_for(q) for q in self.periods]
@@ -61,14 +61,16 @@ def _year_range(lg: Ledger, year: int) -> Range:
 
 
 def _spending_rows(r: Range) -> list[dict]:
-    return [x for x in r.rows() if x["bucket"][0] in (FIXED, DAILY) and x["amount_cents"] < 0]
+    return [x for x in r.rows() if x["bucket"][0] in (FIXED, DAILY) and x["amount_cents"] < 0
+            and not x.get("part")]
 
 
 def _days_without_spending(r: Range) -> int:
     last = min(r.end - timedelta(days=1), r.lg.data_today)
     if r.lg.first is None or last < r.start:
         return 0
-    spent_days = {x["date"] for x in r.rows() if x["bucket"][0] == DAILY and x["amount_cents"] < 0}
+    spent_days = {x["date"] for x in r.rows() if x["bucket"][0] == DAILY and x["amount_cents"] < 0
+                  and not x.get("part")}
     first = max(r.start, r.lg.first or r.start)
     days = (last - first).days + 1
     return max(0, sum(1 for i in range(days)
@@ -303,7 +305,7 @@ def year_recap(conn: sqlite3.Connection, year: int) -> dict:
 def index(conn: sqlite3.Connection) -> dict:
     lg = ledger_mod.get(conn)
     complete = lg.complete_before(lg.current(), 10000)
-    years = sorted({int(pid[:4]) for pid in lg.flows if lg.period(pid).start <= lg.current().start},
+    years = sorted({int(pid[:4]) for pid in lg.flows if lg.has_data(pid) and lg.period(pid).start <= lg.current().start},
                    reverse=True)
     return {"periods": [{"id": q.id, "label": q.label} for q in complete], "years": years}
 

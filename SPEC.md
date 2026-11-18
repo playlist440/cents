@@ -371,6 +371,42 @@ changes (source `user`). Tags work the same way with `tag_always=true`.
   `pension:<jaar>`, dismissable) when a pension item exists whose last entry is more than 11
   months old (or that has none).
 
+### 7.4 Costs over time: uitsmeren and bezittingen (added later; additive)
+
+A big purchase you use for years should not distort the month you paid it (services/spread.py).
+
+- **Uitsmeren.** `transactions.spread_months` (2..240, null = at once), set in the transaction
+  sheet under "Kosten" (In één keer · Verdelen · Bezitting; open from € 250, smaller amounts
+  via Details → "Kosten verdelen over maanden…"). Only spending: money out of a checking or
+  manual credit-card account in a fixed/daily bakje (400 `spread_not_spending`), not a
+  possession's purchase (400 `spread_possession`). The payment counts in `spread_months` equal
+  parts (the first parts take leftover cents) from its own period (boekdatum respected).
+- **Bezitting** (`assets` kind `possession`): something you sell again later, like a car.
+  Fields: `tx_id` (purchase, optional), `price_cents`, `start_date`, `life_months` (6..360,
+  default 96), `residual_cents` (expected resale value, ≤ price), `category_id` (bakje of the
+  waardeverlies: the purchase's spending bakje, else Auto & vervoer), `emoji` (from the name),
+  and a sale: `sale_tx_id` (money in, after the purchase) or `sale_date` + `sale_cents`
+  (inruil). The purchase and sale payments do not count as spending or income. `price −
+  residual` counts in equal parts over `life_months` from the purchase period in its bakje; on a
+  sale the parts stop and in the sale's period `book value − sale price` counts once (negative
+  = gain). Possessions also work without a payment in Cents (bought earlier). Value on a day:
+  from the price down to the residual value, linear per day within each period; 0 from the sale
+  date; counted in net worth when `include` (default on). Vermogen shows them under
+  "Bezittingen".
+- **Ledger.** Parts are rows with `part` = {kind, index, months, role part|sale, total_cents,
+  name, asset_id}; `Flows.spread_fixed/spread_daily` sum them and `Flows.real` counts the other
+  rows, so a period with only parts is no imported month (`Ledger.has_data`; complete periods,
+  averages and the year list ignore it). GET /categories/{id}/summary returns `parts` and leaves
+  spread and possession payments out of `transactions`.
+- **Cash.** Saldo, buffer, Nog te besteden and the checking projection follow the real money;
+  `outlook` leaves parts out of typical daily spending and monthly fixed costs.
+- **API.** Tx adds `spread_months` and `possession` ({asset_id, name, role purchase|sale});
+  GET /transactions/{id} adds `spread` (kind spread: months, monthly_cents, from, to; kind
+  possession: value, monthly, sale). GET /assets adds per possession its plan, `monthly_cents`,
+  `lost_cents`, `end_period`, `purchase`, `sale` (with `result_cents`), `sale_candidates`, and
+  `purchase_candidates` (payments ≥ € 500 of the last three years, one per merchant, no
+  merchant paid that much three times).
+
 ## 8. Periods
 
 Setting `month_start_day` (1–28, default 1). A period is `[start, next start)`. Its id is

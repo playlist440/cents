@@ -50,6 +50,8 @@ class TxPatch(BaseModel):
     goal_id: int | None = None
     # boekdatum: the day the overviews count this payment on ("" or null = its own date)
     book_date: str | None = None
+    # uitsmeren: count this payment in equal parts over this many months (null or 1 = at once)
+    spread_months: int | None = Field(default=None, ge=1, le=240)
     # manual transactions only
     account_id: int | None = None
     date: str | None = None
@@ -245,11 +247,19 @@ class HomeValueBody(BaseModel):
 
 
 class AssetCreate(BaseModel):
-    kind: Literal["pension", "debt", "other"]
+    kind: Literal["pension", "debt", "other", "possession"]
     name: str = Field(min_length=1, max_length=60)
     debt_kind: Literal["studieschuld", "lening", "overig"] | None = None
-    include: bool | None = None                 # default: pension off, debt and other on
+    include: bool | None = None                 # default: pension off, the others on
     merchant_key: str | None = None             # debt only; absent on a studieschuld = DUO if found
+    # possession (bezitting): the purchase payment, or price + date when it is not in Cents
+    tx_id: int | None = None
+    price_cents: Annotated[int, Field(gt=0, le=MONEY_LIMIT)] | None = None
+    start_date: str | None = None
+    life_months: Annotated[int, Field(ge=6, le=360)] | None = None
+    residual_cents: Annotated[int, Field(ge=0, le=MONEY_LIMIT)] | None = None
+    category_id: int | None = None
+    emoji: str | None = Field(default=None, max_length=16)
 
 
 class AssetPatch(BaseModel):
@@ -257,6 +267,17 @@ class AssetPatch(BaseModel):
     debt_kind: Literal["studieschuld", "lening", "overig"] | None = None
     include: bool | None = None
     merchant_key: str | None = None             # debt only; null or "" = no link
+    # possession
+    price_cents: Annotated[int, Field(gt=0, le=MONEY_LIMIT)] | None = None
+    start_date: str | None = None
+    life_months: Annotated[int, Field(ge=6, le=360)] | None = None
+    residual_cents: Annotated[int, Field(ge=0, le=MONEY_LIMIT)] | None = None
+    category_id: int | None = None
+    emoji: str | None = Field(default=None, max_length=16)
+    # sale: the payment that brought the money in, or a date and price (inruil); both null = not sold
+    sale_tx_id: int | None = None
+    sale_date: str | None = None
+    sale_cents: Annotated[int, Field(ge=0, le=MONEY_LIMIT)] | None = None
 
 
 class AssetEntryBody(BaseModel):
