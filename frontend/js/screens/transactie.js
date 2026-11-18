@@ -9,7 +9,7 @@
 
 import { html, useEffect, useRef, useState } from '../vendor/preact-htm.js';
 import { api } from '../api.js';
-import { useQuery, useStore, categoryById, accountById, invalidate } from '../store.js';
+import { useQuery, useStore, categoryById, accountById, invalidate, getState } from '../store.js';
 import { freqLabel, money, euros, plural, longDate, dayLabel, addDays, todayISO, shiftPeriod } from '../format.js';
 import { Sheet } from '../components/Sheet.js';
 import { EmojiTile } from '../components/EmojiTile.js';
@@ -379,13 +379,27 @@ function Details({ t, account }) {
     ['Betaalwijze', [METHOD_LABEL[t.method], t.wallet].filter(Boolean).join(' · ') || null],
     ['Plaats', t.city],
     ['Soort winkel', t.mcc_label],
-    ['Tegenrekening', [t.counterparty_name, t.counterparty_iban ? maskIban(t.counterparty_iban) : null].filter(Boolean).join(' · ') || null],
+    ['Tegenrekening', [t.counterparty_name, t.counterparty_iban ? t.counterparty_iban.replace(/(.{4})/g, '$1 ').trim() : null].filter(Boolean).join(' · ') || null],
     ['Datum', longDate(t.date)],
     ['Saldo na', t.balance_after_cents != null ? money(t.balance_after_cents, { negative: true }) : null],
   ].filter(([, v]) => v);
+  // Overboeking naar een eigen rekening zonder eigen afschriften (DEGIRO, spaarrekening): koppel
+  // het rekeningnummer van deze betaling met één tik, zonder het over te typen.
+  const own = getState().boot?.accounts || [];
+  const known = own.some((a) => a.iban && a.iban === t.counterparty_iban);
+  const free = own.filter((a) => !a.iban && a.type !== 'credit' && a.id !== t.account_id);
+  const link = (e) => openMenu(e.currentTarget, free.map((a) => ({
+    label: a.name, onSelect: async () => {
+      try {
+        await api.updateAccount(a.id, { iban: t.counterparty_iban });
+        invalidate();
+        toast(`Rekeningnummer gekoppeld aan ${a.name}`);
+      } catch (err) { toast({ text: err.message, icon: 'warning' }); }
+    } })));
   return html`<dl class="td-details inset">
     ${rows.map(([k, v]) => html`<div class=${'td-dl-row' + (String(v).length > 34 ? ' is-long' : '')} key=${k}><dt>${k}</dt><dd class="selectable">${v}</dd></div>`)}
-  </dl>`;
+  </dl>
+  ${t.counterparty_iban && !known && free.length > 0 && !t.manual && html`<button class="section-link td-own-link" onClick=${link}>Dit is mijn eigen rekening…</button>`}`;
 }
 
 function DetailSkeleton() {

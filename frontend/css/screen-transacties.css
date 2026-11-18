@@ -453,3 +453,4 @@ button.td-scope-row { transition: background-color 250ms linear; }
 @media (hover: hover) and (pointer: fine) { .td-bakje-row:hover { background: var(--fill-4); } }
 .td.is-inline .td-scope-seg .td-scope-label, .td-scope-seg .td-scope-label { flex-basis: 100%; color: var(--label-2); font-size: var(--fs-footnote); }
 .td-scope-seg .segmented { flex-basis: 100%; }
+.td-own-link { display: block; margin: 8px 16px 0 auto; }
