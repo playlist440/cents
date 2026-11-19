@@ -137,6 +137,13 @@ def _spend_items(lg: Ledger, items: list[dict], start: date, end: date,
     return out
 
 
+def _own_moves(items: list[dict], start: date, end: date) -> list[tuple[dict, date]]:
+    """Transfers to and from your own accounts (potjes, terugstorten), both ways: together they
+    are "sparen min opnemen", never income or a fixed cost."""
+    return [(i, d) for i in items if i.get("own_account") and not i.get("via_card")
+            for d in recurring.occurrences(i, start, end)]
+
+
 def monthly_fixed(lg: Ledger, items: list[dict]) -> float:
     """The one "vaste lasten per maand" (SPEC 9): the live recurring fixed costs per month, as
     on the Vaste lasten screen (the full mortgage payment, no one-off purchases); without any,
@@ -282,7 +289,10 @@ def free(conn: sqlite3.Connection, lg: Ledger, items: list[dict], buf: dict | No
     fixed = -sum(i["amount_cents"] for i, _ in _spend_items(lg, items, start, pay, (FIXED,)))
     overdue = _overdue_fixed(lg, items, start)
     overdue_cents = sum(x["cents"] for x in overdue)
-    to_savings = -sum(i["amount_cents"] for i, _ in _spend_items(lg, items, start, pay, (SAVING,)))
+    # sparen min opnemen: what goes to savings before payday, minus what comes back (a weekly
+    # transfer back from a boodschappen potje); may be negative
+    to_savings = -sum(i["amount_cents"] for i, _ in _spend_items(lg, items, start, pay, (SAVING,))
+                      + _own_moves(items, start, pay))
     # other money that comes in every month before payday (toeslagen, kinderbijslag)
     incoming = [{"name": i["name"], "date": d.isoformat(), "cents": i["amount_cents"]}
                 for i, d in _spend_items(lg, items, start, pay, (INCOME,), direction="in")]
@@ -291,7 +301,7 @@ def free(conn: sqlite3.Connection, lg: Ledger, items: list[dict], buf: dict | No
     rate = daily_rate(lg)
     days = max(0, (pay - start).days)
     daily = int(round(rate * days))
-    total = (balances + income_cents - fixed - overdue_cents - max(0, to_savings) - credit
+    total = (balances + income_cents - fixed - overdue_cents - to_savings - credit
              - (card["cents"] if card else 0) - daily)
     days_left = (pay - lg.today).days
 
@@ -313,7 +323,7 @@ def free(conn: sqlite3.Connection, lg: Ledger, items: list[dict], buf: dict | No
                        "accounts": [acc_json(a) for a in saving_accounts]}
     return {"total_cents": total, "balances_cents": balances,
             "fixed_until_payday_cents": fixed, "fixed_overdue_cents": overdue_cents,
-            "fixed_overdue": overdue, "saving_until_payday_cents": max(0, to_savings),
+            "fixed_overdue": overdue, "saving_until_payday_cents": to_savings,
             "income_until_payday_cents": income_cents, "income_until_payday": incoming,
             "credit_cents": credit, "card_settlement": card,
             "daily_until_payday_cents": daily,
@@ -376,7 +386,8 @@ def checking_warning(conn: sqlite3.Connection, lg: Ledger, items: list[dict], pa
         return None
     due: dict[date, int] = {}
     moves = (_spend_items(lg, items, start, pay, (FIXED, SAVING))
-             + _spend_items(lg, items, start, pay, (INCOME,), direction="in"))
+             + _spend_items(lg, items, start, pay, (INCOME,), direction="in")
+             + _own_moves(items, start, pay))
     for i, d in moves:
         due[d] = due.get(d, 0) + i["amount_cents"]
     if f:

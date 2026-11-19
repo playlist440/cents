@@ -408,3 +408,15 @@ def test_own_account_return_is_never_income():
         d += timedelta(days=7)
     found = rec.detect_full(rows, date(2026, 10, 20))
     assert found and all(i["own_account"] for i in found)
+
+
+def test_outlook_saves_minus_withdrawals():
+    """Sparen min opnemen: a monthly top-up out and weekly returns in net out in Nog te besteden."""
+    from datetime import date
+    from cents.services import outlook
+    out = {"own_account": True, "direction": "out", "amount_cents": -40000, "frequency": "monthly",
+           "next_date": "2026-11-25", "status": "active", "day_of_month": 25, "interval_days": 30}
+    back = {"own_account": True, "direction": "in", "amount_cents": 10000, "frequency": "weekly",
+            "next_date": "2026-11-20", "status": "active", "interval_days": 7}
+    moves = outlook._own_moves([out, back], date(2026, 11, 19), date(2026, 11, 30))
+    assert -sum(i["amount_cents"] for i, _ in moves) == 40000 - 2 * 10000

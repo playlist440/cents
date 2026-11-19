@@ -9,7 +9,7 @@
 import { generate } from './data.js';
 import { addDays, daysBetween, parseISO, shiftPeriod, monthLabel, todayISO, MONTHS, money, euros } from '../format.js';
 
-const VERSION = '1.0.2-mock';
+const VERSION = '1.0.3-mock';
 const PASSWORD = 'demo1234';
 
 let db;
@@ -653,8 +653,10 @@ function outlook() {
   const rec = recurringItems();
   const a = assumptionsOut();
   const grp = (it) => catById(it.category_id)?.grp;
-  const due = (from, to, groups, dir = 'out') => rec.filter((it) => it.direction === dir && groups.includes(grp(it)))
+  const due = (from, to, groups, dir = 'out') => rec.filter((it) => it.direction === dir && !it.own_account && groups.includes(grp(it)))
     .flatMap((it) => occurrences(it, from, to).map((d) => [it, d]));
+  // sparen min opnemen (services/outlook.py _own_moves): own-account transfers, both ways
+  const ownMoves = (from, to) => rec.filter((it) => it.own_account).flatMap((it) => occurrences(it, from, to).map((d) => [it, d]));
   const accs = db.accounts.filter((x) => !x.hidden && (x.type === 'checking' || x.type === 'savings'))
     .map((x) => ({ ...x, ...accountBalance(x) })).filter((x) => x.balance_cents != null);
   const hist = previousComplete(currentPeriod(), 12);
@@ -705,7 +707,7 @@ function outlook() {
     const overdue = rec.filter((it) => it.direction === 'out' && it.status !== 'ended' && grp(it) === 'fixed' && it.next_date >= periodStart && it.next_date < start && !paidSince(it))
       .map((it) => ({ name: it.name, date: it.next_date, cents: -it.amount_cents })).sort((x, y) => (x.date < y.date ? -1 : 1));
     const overdueCents = overdue.reduce((s, x) => s + x.cents, 0);
-    const toSavings = Math.max(0, due(start, pay, ['saving']).reduce((s, [it]) => s - it.amount_cents, 0));
+    const toSavings = [...due(start, pay, ['saving']), ...ownMoves(start, pay)].reduce((s, [it]) => s - it.amount_cents, 0);
     const incoming = due(start, pay, ['income'], 'in').map(([it, d]) => ({ name: it.name, date: d, cents: it.amount_cents }));
     const incomeCents = incoming.reduce((s, x) => s + x.cents, 0);
     // next credit-card settlement: median unexplained part of the last three, one month on
@@ -757,7 +759,7 @@ function outlook() {
     const floor = a.checking_floor_cents.cents;
     const start = chk.as_of ? addDays(chk.as_of, 1) : db.today;
     const dueBy = new Map();
-    for (const [it, d] of [...due(start, pay, ['fixed', 'saving']), ...due(start, pay, ['income'], 'in')]) dueBy.set(d, (dueBy.get(d) || 0) + it.amount_cents);
+    for (const [it, d] of [...due(start, pay, ['fixed', 'saving']), ...due(start, pay, ['income'], 'in'), ...ownMoves(start, pay)]) dueBy.set(d, (dueBy.get(d) || 0) + it.amount_cents);
     if (free) {
       // the same items as Nog te besteden (services/outlook.py checking_warning)
       dueBy.set(start, (dueBy.get(start) || 0) - free.fixed_overdue_cents);

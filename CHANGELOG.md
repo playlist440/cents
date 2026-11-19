@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.3 — 2026-11-19
+
+- Nog te besteden rekent met sparen min opnemen: wat tot je salaris nog naar je spaarrekening gaat, min wat terugkomt (zoals het wekelijks terugstorten uit een boodschappen-potje). Het blijft geen inkomen, maar het geld dat terugkomt telt wel mee.
+
 ## 1.0.2 — 2026-11-19
 
 - Geld van en naar je eigen rekeningen (spaarrekening, potjes, wekelijks terugstorten) telt nooit als vast inkomen of als vaste last. In Vaste lasten staat het samen onder één kopje: "Sparen en potjes".
