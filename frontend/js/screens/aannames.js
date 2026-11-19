@@ -20,6 +20,7 @@ import { Icon } from '../icons.js';
 import { useLayout } from '../hooks.js';
 import { commitLater, usePending } from './_kit.js';
 import { InstSplit } from './instellingen.js';
+import { Iban } from '../components/Iban.js';
 
 const TYPE_LABEL = { checking: 'Betaalrekening', savings: 'Spaarrekening', investment: 'Beleggingen', credit: 'Creditcard' };
 const FLOOR_STEPS = [0, 5000, 10000, 25000, 50000, 100000, 150000, 200000];
@@ -135,7 +136,7 @@ function Content({ a, settings, pending }) {
 
     ${(a.accounts || []).length > 0 && html`<${List} header="Rekeningen">
       ${a.accounts.map((acc) => html`<${ListRow} key=${acc.id} icon="wallet" iconColor="blue" title=${acc.name}
-        subtitle=${acc.type_source === 'import' ? 'Uit het bankbestand' : 'Zelf gekozen'}
+        subtitle=${acc.iban ? html`<${Iban} iban=${acc.iban} /> · ${acc.type_source === 'import' ? 'uit het bankbestand' : 'zelf gekozen'}` : acc.type_source === 'import' ? 'Uit het bankbestand' : 'Zelf gekozen'}
         value=${html`<span class="sa-pop">${TYPE_LABEL[acc.type] || acc.type}<${Icon} name="chevron-up-down" size=${12} stroke=${2.4} /></span>`}
         onClick=${(e) => openMenu(e.currentTarget, Object.entries(TYPE_LABEL).map(([t, label]) => ({ label, checked: t === acc.type, onSelect: setType(acc, t) })))}
         label=${`${acc.name}: ${TYPE_LABEL[acc.type] || acc.type}. Wijzig soort`} />`)}

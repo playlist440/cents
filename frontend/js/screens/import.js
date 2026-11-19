@@ -19,6 +19,7 @@ import { toast } from '../components/Toast.js';
 import { Icon } from '../icons.js';
 import { maskIban, ACCOUNT_TYPE_LABEL } from './_tx.js';
 import { downloadFrom } from './_kit.js';
+import { Iban } from '../components/Iban.js';
 
 let seq = 0;
 let live = null; // add() of the open Import sheet
@@ -225,7 +226,7 @@ function AccountRow({ account }) {
         onInput=${(e) => setName(e.currentTarget.value)}
         onKeyDown=${(e) => { if (e.key === 'Enter') e.currentTarget.blur(); }}
         onBlur=${() => { const n = name.trim(); if (!n) { setName(saved.current.name); return; } if (n !== saved.current.name) save({ name: n }); }} />
-      ${account.iban && html`<span class="im-iban num">${maskIban(account.iban)}</span>`}
+      ${account.iban && html`<span class="im-iban"><${Iban} iban=${account.iban} /></span>`}
     </div>
     <button class="im-account-type" aria-haspopup="menu" onClick=${(e) => openMenu(e.currentTarget, Object.entries(ACCOUNT_TYPE_LABEL).map(([t, label]) => ({ label, checked: t === type, onSelect: () => setT(t) })))}>
       <span>Soort</span>

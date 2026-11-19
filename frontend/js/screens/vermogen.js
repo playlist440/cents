@@ -30,6 +30,7 @@ import { HoldingsPart, TradeSheet, resultText } from './_holdings.js';
 import { colorVar } from '../colors.js';
 import { Icon } from '../icons.js';
 import { PossessionSheet } from './_costs.js';
+import { Iban } from '../components/Iban.js';
 
 export const TYPES = [
   { type: 'checking', label: 'Betaalrekening', group: 'Betaalrekeningen', icon: 'wallet', color: 'blue' },
@@ -38,19 +39,6 @@ export const TYPES = [
   { type: 'credit', label: 'Creditcard', group: 'Creditcard', icon: 'creditcard', color: 'orange' },
 ];
 const typeInfo = (t) => TYPES.find((x) => x.type === t) || TYPES[0];
-// navigator.clipboard bestaat alleen op https of localhost. Via http op je eigen netwerk werkt
-// alleen de oude kopieermethode, dus die eerst; de nieuwe is de terugval.
-function copyText(text) {
-  const done = () => toast('Rekeningnummer gekopieerd');
-  const ta = document.createElement('textarea');
-  ta.value = text; ta.setAttribute('readonly', ''); ta.style.cssText = 'position:fixed;top:0;opacity:0';
-  document.body.appendChild(ta); ta.select();
-  let ok = false;
-  try { ok = document.execCommand('copy'); } catch { /* terugval hieronder */ }
-  ta.remove();
-  if (ok) return done();
-  navigator.clipboard?.writeText(text).then(done, () => toast('Kopiëren lukte niet. Selecteer het nummer met de hand.'));
-}
 
 export const maskIban = (iban) => (iban ? `${iban.slice(0, 2)}•• ${iban.slice(-4)}` : '');
 
@@ -320,7 +308,7 @@ function deltaText(d, span) {
 function Suggestion({ s }) {
   const [busy, setBusy] = useState(false);
   const question = s.type === 'savings'
-    ? `Is ${maskIban(s.iban)} je spaarrekening?`
+    ? html`Is <${Iban} iban=${s.iban} /> je spaarrekening?`
     : `Beleg je bij ${s.name || s.counterparty_name}?`;
   const yes = async () => {
     setBusy(true);
@@ -364,7 +352,7 @@ function subtitleFor(a) {
     return `inleg ${euros(a.invested_cents)}${stale}`;
   }
   if (a.type === 'credit') return a.outstanding_cents > 0 ? 'open' : 'niets open';
-  if (a.iban) return maskIban(a.iban);
+  if (a.iban) return html`<${Iban} iban=${a.iban} />`;
   return a.as_of ? `bijgewerkt ${shortDate(a.as_of)}` : 'handmatig';
 }
 
@@ -441,15 +429,13 @@ export function AccountSheet({ close, account = null }) {
     <div class="sheet-pad">
       ${!isNew && html`<div class="vm-sheet-head">
         <div class="vm-sheet-amount rounded num">${account.type === 'credit' ? money(account.outstanding_cents || 0) : account.balance_cents == null ? '—' : money(account.balance_cents, { negative: true })}</div>
-        <div class="vm-sheet-sub">${account.type === 'credit' ? 'open' : account.as_of ? `op ${longDate(account.as_of)}` : account.iban ? maskIban(account.iban) : ''}</div>
+        <div class="vm-sheet-sub">${account.type === 'credit' ? 'open' : account.as_of ? `op ${longDate(account.as_of)}` : ''}</div>
+        ${account.iban && html`<div class="vm-sheet-sub"><${Iban} iban=${account.iban} open /></div>`}
       </div>`}
       ${canIban && html`<${List} footer=${type === 'investment' ? 'Het rekeningnummer waar je naar overmaakt, bij DEGIRO je persoonlijke stortingsrekening. Zo herkent Cents elke inleg, ook als die op dezelfde naam staat als je andere overboekingen.' : 'Optioneel. Betalingen naar dit nummer telt Cents als overboeking naar deze rekening.'}>
         <${TextField} label="Rekeningnummer" value=${iban} onInput=${setIban} placeholder="NL00 BANK 0000 0000 00" maxLength=${40} />
       </${List}>`}
-      ${!isNew && !canIban && account.iban && html`<${List} footer="Tik om te kopiëren.">
-        <${ListRow} title="Rekeningnummer" value=${html`<span class="num" style=${{ userSelect: 'text' }}>${account.iban.replace(/(.{4})/g, '$1 ').trim()}</span>`}
-          onClick=${() => copyText(account.iban)} />
-      </${List}>`}
+
       <${List}>
         <${TextField} label="Naam" value=${name} onInput=${setName} placeholder="Spaarrekening" maxLength=${60} enterkeyhint="done" />
       </${List}>

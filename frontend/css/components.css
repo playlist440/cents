@@ -968,3 +968,10 @@
   max-width: 55%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .st-sortbtn span { overflow: hidden; text-overflow: ellipsis; }
 .st-none { padding: 10px 4px; }
+
+/* Account numbers (components/Iban.js) */
+.iban { display: inline-flex; align-items: center; gap: 6px; max-width: 100%; font-variant-numeric: tabular-nums; }
+.iban.is-masked { cursor: pointer; text-decoration: underline dotted; text-underline-offset: 3px; text-decoration-color: var(--label-3); }
+.iban-text { user-select: text; -webkit-user-select: text; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: .02em; }
+.iban-copy { display: inline-grid; place-items: center; width: 24px; height: 24px; border-radius: 6px; color: var(--tint-text, var(--tint)); cursor: pointer; flex: none; }
+.iban-copy:hover { background: var(--fill-3); }

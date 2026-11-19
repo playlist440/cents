@@ -48,10 +48,10 @@ def suggested_start_day(conn: sqlite3.Connection) -> int | None:
 
 def assumptions(conn: sqlite3.Connection) -> dict:
     accounts = []
-    for a in db.rows(conn, """SELECT a.id, a.name, a.type,
+    for a in db.rows(conn, """SELECT a.id, a.name, a.type, a.iban,
                                      (SELECT COUNT(*) FROM imports i WHERE i.account_id = a.id) AS imports
                               FROM accounts a ORDER BY a.sort, a.id"""):
-        accounts.append({"id": a["id"], "name": a["name"], "type": a["type"],
+        accounts.append({"id": a["id"], "name": a["name"], "type": a["type"], "iban": a["iban"],
                          "type_source": "import" if a["imports"] else "user"})
     ignored = [r["key"] for r in db.rows(conn, "SELECT key FROM recurring_ignored ORDER BY key")]
     names = _names(conn, ignored)

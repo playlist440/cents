@@ -15,6 +15,7 @@ import { Button } from '../components/Controls.js';
 import { useLayout } from '../hooks.js';
 import { InstSplit } from './instellingen.js';
 import { openImport } from '../shell/actions.js';
+import { Iban } from '../components/Iban.js';
 
 const UNKNOWN = {
   unsorted: { text: 'Nog niet gesorteerd', to: () => '/sorteren' },
@@ -71,7 +72,7 @@ function Content({ c, balances }) {
         const value = b?.balance_cents != null ? html`<span class="num">${money(b.balance_cents, { negative: true })}</span>` : null;
         return html`
           <${ListRow} key=${'a' + a.id} icon=${a.type === 'credit' ? 'creditcard' : a.type === 'savings' ? 'piggy' : 'wallet'} iconColor=${a.type === 'savings' ? 'teal' : 'blue'}
-            title=${a.name} subtitle=${a.name === TYPE[a.type] ? sub : `${TYPE[a.type] || ''} · ${sub}`} value=${value} />
+            title=${a.iban ? html`${a.name} <${Iban} iban=${a.iban} class="ctl-iban" />` : a.name} subtitle=${a.name === TYPE[a.type] ? sub : `${TYPE[a.type] || ''} · ${sub}`} value=${value} />
           ${a.missing_months.length > 0 && html`<${ListRow} key=${'m' + a.id} class="ctl-issue" icon="warning" iconColor="orange"
             title=${`Geen betalingen in ${a.missing_months.slice(0, 3).map((m) => monthLabel(m)).join(', ')}${a.missing_months.length > 3 ? ` en ${a.missing_months.length - 3} meer` : ''}`}
             subtitle="Importeer die maanden voor deze rekening" chevron onClick=${() => openImport()} />`}

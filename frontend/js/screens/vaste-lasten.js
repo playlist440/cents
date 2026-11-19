@@ -10,6 +10,7 @@
 //             agenda. Paid ✓ muted, expected normal, missed orange "niet gezien", income green.
 // Item details (history bars, payments, "Geen vaste last") in the inspector or a sheet.
 
+import { Iban } from '../components/Iban.js';
 import { useTable, SortHead, TableTools } from '../components/SortableTable.js';
 import { html, useEffect, useRef, useState } from '../vendor/preact-htm.js';
 import { api } from '../api.js';
@@ -449,6 +450,7 @@ function ItemDetail({ close, it, cal = null, inline = false }) {
         <div class=${'vl-sheet-amount rounded num' + (it.direction === 'in' ? ' is-income' : '')}>${it.variable ? 'ca. ' : ''}${money(typ, { signed: it.direction === 'in' })}</div>
         <div class="vl-sheet-sub">${capitalize(freqLabel(it.frequency, 'every') || 'terugkerend')}${when}</div>
         ${it.per_year_cents != null && html`<div class="vl-sheet-sub num">${euros(it.per_year_cents)} per jaar</div>`}
+        ${it.iban && html`<div class="vl-sheet-sub">Naar <${Iban} iban=${it.iban} /></div>`}
         ${it.repaid_per_month_cents > 0 && html`<div class="vl-sheet-sub num">${money(Math.abs(it.per_month_cents) - it.repaid_per_month_cents, { whole: true })} rente en kosten · ${euros(it.repaid_per_month_cents)} aflossing per maand. De aflossing telt als gespaard, niet in het bakje.</div>`}
         ${it.change && html`<div class="vl-sheet-change num">was ${money(Math.abs(it.change.from_cents))} tot ${shortDate(it.change.date)}</div>`}
       </div>

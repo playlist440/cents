@@ -23,6 +23,7 @@ import { Icon } from '../icons.js';
 import { navigate } from '../router.js';
 import { useId, useLayout } from '../hooks.js';
 import { openBakjePopover } from './_txdesk.js';
+import { Iban } from '../components/Iban.js';
 import { BakjeGrid, TagEditor, METHOD_LABEL, maskIban, emitTxChange, isUnsorted } from './_tx.js';
 import { CostSection, canSpread, canPossess, COSTS_FROM } from './_costs.js';
 
@@ -392,11 +393,11 @@ function MerchantLine({ t, m }) {
 function Details({ t, account, onCosts }) {
   const rows = [
     ['Omschrijving', t.raw_description || t.description],
-    ['Rekening', account ? `${account.name}${account.iban ? ' · ' + maskIban(account.iban) : ''}` : null],
+    ['Rekening', account ? (account.iban ? html`${account.name} · <${Iban} iban=${account.iban} />` : account.name) : null],
     ['Betaalwijze', [METHOD_LABEL[t.method], t.wallet].filter(Boolean).join(' · ') || null],
     ['Plaats', t.city],
     ['Soort winkel', t.mcc_label],
-    ['Tegenrekening', [t.counterparty_name, t.counterparty_iban ? t.counterparty_iban.replace(/(.{4})/g, '$1 ').trim() : null].filter(Boolean).join(' · ') || null],
+    ['Tegenrekening', t.counterparty_iban ? html`${t.counterparty_name ? t.counterparty_name + ' · ' : ''}<${Iban} iban=${t.counterparty_iban} open />` : (t.counterparty_name || null)],
     ['Datum', longDate(t.date)],
     t.book_date && ['Boekdatum', `${longDate(t.book_date)} (telt mee in de overzichten)`],
     ['Saldo na', t.balance_after_cents != null ? money(t.balance_after_cents, { negative: true }) : null],
@@ -415,7 +416,7 @@ function Details({ t, account, onCosts }) {
       } catch (err) { toast({ text: err.message, icon: 'warning' }); }
     } })));
   return html`<dl class="td-details inset">
-    ${rows.map(([k, v]) => html`<div class=${'td-dl-row' + (String(v).length > 34 ? ' is-long' : '')} key=${k}><dt>${k}</dt><dd class="selectable">${v}</dd></div>`)}
+    ${rows.map(([k, v]) => html`<div class=${'td-dl-row' + (typeof v !== 'string' || v.length > 34 ? ' is-long' : '')} key=${k}><dt>${k}</dt><dd class="selectable">${v}</dd></div>`)}
   </dl>
   <${BookDate} t=${t} />
   ${onCosts && html`<button class="section-link td-own-link" onClick=${onCosts}>Kosten verdelen over maanden…</button>`}

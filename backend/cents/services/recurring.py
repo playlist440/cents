@@ -333,6 +333,7 @@ def detect_full(rows: list[dict], data_today: date, ignored: set[str] = frozense
                 continue    # a shop or restaurant you also visit at other times: no subscription
             if item:
                 dest = _destination(flat[-1])
+                item["iban"] = flat[-1].get("counterparty_iban")
                 if dest and len(split.get((flat[-1]["merchant_key"], flat[-1]["amount_cents"] < 0), ())) > 1:
                     label = flat[-1].get("transfer_account_name") or f"rekening ••{dest[-4:]}"
                     item["name"] = f"{item['name']} · {label}"

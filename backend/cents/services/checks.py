@@ -94,14 +94,14 @@ def _balance_breaks(rows: list[dict]) -> list[dict]:
 
 def accounts(conn: sqlite3.Connection, today: date) -> list[dict]:
     out = []
-    for a in db.rows(conn, "SELECT id, name, type FROM accounts WHERE hidden = 0 "
+    for a in db.rows(conn, "SELECT id, name, type, iban FROM accounts WHERE hidden = 0 "
                            "AND type IN ('checking', 'savings', 'credit') ORDER BY sort, id"):
         rows = db.rows(conn, "SELECT id, date, amount_cents, balance_after_cents, seq FROM transactions "
                              "WHERE account_id = ? ORDER BY date, seq, id", (a["id"],))
         imported = db.value(conn, """SELECT MAX(substr(i.imported_at, 1, 10)) FROM imports i
                                      WHERE i.account_id = ? OR EXISTS (SELECT 1 FROM transactions t
                                      WHERE t.import_id = i.id AND t.account_id = ?)""", (a["id"], a["id"]))
-        item = {"id": a["id"], "name": a["name"], "type": a["type"], "count": len(rows),
+        item = {"id": a["id"], "name": a["name"], "type": a["type"], "iban": a["iban"], "count": len(rows),
                 "first_date": rows[0]["date"] if rows else None,
                 "last_date": rows[-1]["date"] if rows else None, "last_import": imported,
                 "days_since": (today - date.fromisoformat(rows[-1]["date"])).days if rows else None,

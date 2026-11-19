@@ -47,3 +47,4 @@
 /* Besparen (.bsp-) */
 .bsp-intro { margin: 0 4px 16px; font: 400 var(--fs-subhead)/1.4 var(--font); color: var(--label-2); }
 .bsp .row-sub { white-space: normal; }
+.ctl-iban { margin-left: 6px; font-size: var(--fs-footnote); color: var(--label-2); font-weight: 400; }

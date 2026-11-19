@@ -421,7 +421,7 @@ function recurringItems() {
         if (db.recurring_ignored.includes(key)) continue;
         recTx.set(key, txs);
         items.push({
-          key, name: last.merchant_name, merchant_key: last.merchant_key, category_id: last.category_id,
+          key, name: last.merchant_name, merchant_key: last.merchant_key, category_id: last.category_id, iban: last.counterparty_iban || null,
           direction: last.amount_cents < 0 ? 'out' : 'in', amount_cents: last.amount_cents, frequency: win[0],
           per_month_cents: Math.round(Math.abs(variable ? typical : last.amount_cents) * win[3]) * Math.sign(last.amount_cents),
           per_year_cents: Math.abs(variable ? typical : last.amount_cents) * PER_YEAR[win[0]],
@@ -853,7 +853,7 @@ function checksData() {
   const accounts = db.accounts.filter((a) => !a.hidden && ['checking', 'savings', 'credit'].includes(a.type)).map((a) => {
     const rows = db.transactions.filter((t) => t.account_id === a.id).sort((x, y) => (x.date < y.date ? -1 : x.date > y.date ? 1 : (x.seq ?? 0) - (y.seq ?? 0) || x.id - y.id));
     const imp = db.imports.filter((i) => i.account_id === a.id).map((i) => i.imported_at.slice(0, 10)).sort().at(-1) || null;
-    const item = { id: a.id, name: a.name, type: a.type, count: rows.length, first_date: rows[0]?.date || null, last_date: rows.at(-1)?.date || null,
+    const item = { id: a.id, name: a.name, type: a.type, iban: a.iban || null, count: rows.length, first_date: rows[0]?.date || null, last_date: rows.at(-1)?.date || null,
       last_import: imp, days_since: rows.length ? daysBetween(rows.at(-1).date, db.today) : null, missing_months: [], breaks: [], breaks_count: 0 };
     if (rows.length && a.type === 'checking') {
       const seen = new Set(rows.map((r) => r.date.slice(0, 7)));
@@ -2598,7 +2598,7 @@ function assumptionsList() {
       .map((i) => ({ merchant_key: i.merchant_key, name: i.name, amount_cents: i.amount_cents, frequency: i.frequency })),
     accounts: db.accounts.filter((a) => !a.hidden).map((a) => ({
       id: a.id, name: a.name, type: a.type,
-      type_source: a.iban && db.transactions.some((t) => t.account_id === a.id && !t.manual) ? 'import' : 'user',
+      iban: a.iban || null, type_source: a.iban && db.transactions.some((t) => t.account_id === a.id && !t.manual) ? 'import' : 'user',
     })),
     recurring_ignored: db.recurring_ignored.map((key) => ({ key, name: nameOf(key) })),
     recurring_count: rec.filter((i) => i.status !== 'ended').length,
