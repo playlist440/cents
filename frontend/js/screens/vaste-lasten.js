@@ -440,6 +440,7 @@ function ItemDetail({ close, it, cal = null, inline = false }) {
     : Math.sign(t.amount_cents) === sign && Math.abs(t.amount_cents) >= typ * 0.6 && Math.abs(t.amount_cents) <= typ * 1.6));
   const bars = payments.slice(0, 12).reverse().map((t) => ({ label: shortDate(t.date), short: shortDate(t.date).split(' ')[1] || '', value: Math.abs(t.amount_cents) }));
   const [sel, setSel] = useState(null);
+  const [all, setAll] = useState(false);
   const known = it.frequency != null;
   const ignore = () => {
     const undo = commitLater('rec:' + it.key, () => api.ignoreRecurring(it.key));
@@ -465,8 +466,12 @@ function ItemDetail({ close, it, cal = null, inline = false }) {
         <${BarChart} data=${bars} height=${120} color=${colorVar(cat.color)} selected=${sel} onSelect=${setSel} highlight=${bars.length - 1}
           valueFormat=${(v) => money(v)} label=${`Betalingen aan ${it.name}`} />
       </div>`}
-      ${payments.length > 0 && html`<${List} header=${payments.length > 12 ? `Laatste 12 van ${payments.length} betalingen` : 'Betalingen'}>
-        ${payments.slice(0, 12).map((t) => html`<${TxRow} key=${t.id} tx=${t} date hideCategory onClick=${() => openTransaction(t)} />`)}
+      ${payments.length > 0 && html`<${List} header=${payments.length > 12 && !all ? `Laatste 12 van ${payments.length} betalingen` : `${payments.length} betalingen`}
+          footer="Met de omschrijving uit je bankbestand: zo zie je wat Cents bij deze vaste last telt.">
+        ${(all ? payments : payments.slice(0, 12)).map((t) => html`<${TxRow} key=${t.id} tx=${t} hideCategory
+          sub=${[shortDate(t.date), t.description && t.description !== t.merchant_name ? t.description : null].filter(Boolean).join(' · ')}
+          onClick=${() => openTransaction(t)} />`)}
+        ${payments.length > 12 && !all && html`<li class="row-li"><button class="row is-button" onClick=${() => setAll(true)}><span class="row-main"><span class="row-title" style="color: var(--tint)">Toon alle ${payments.length} betalingen</span></span></button></li>`}
       </${List}>`}
       ${!data && html`<${Skeleton} h=${150} r=${16} />`}
       ${known && html`<div class="vl-sheet-ignore"><${Button} variant="gray" block onClick=${ignore}>Geen vaste last</${Button}></div>`}

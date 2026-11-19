@@ -318,7 +318,9 @@ def _destination(r: dict) -> str | None:
                  or r.get("kind") == "transfer"):
         # the description too (a standing order "Zakgeld" next to one-off transfers to the same
         # person); a description that changes every time falls back to the IBAN (detect_full)
-        return f"{iban}|{_potje(r.get('description'))}" if (r.get("merchant_key") or "").startswith("p:") else iban
+        # outgoing: by description too (a standing order "Zakgeld" next to one-off transfers to
+        # the same IBAN). Incoming (a salary whose text changes every month) by IBAN only.
+        return f"{iban}|{_potje(r.get('description'))}" if r["amount_cents"] < 0 else iban
     return None
 
 

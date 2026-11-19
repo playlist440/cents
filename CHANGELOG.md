@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.1.4 — 2026-11-19
+
+- Vaste lasten: elke uitgaande overboeking met een rekeningnummer wordt herkend aan rekeningnummer én omschrijving, niet alleen wat Cents als persoon herkende. Inkomende overboekingen (salaris) blijven op rekeningnummer.
+- Detailscherm van een vaste last: bij elke betaling staat de omschrijving uit je bankbestand, en "Toon alle betalingen" laat de hele lijst zien. Zo zie je wat Cents bij die vaste last telt.
+
 ## 1.1.3 — 2026-11-19
 
 - Vaste lasten: de omschrijving van een overboeking aan een persoon hoeft niet precies gelijk te zijn. "Zakgeld", "Zakgeld Tim", "zakgeld tim nov 2025" en een typefout als "Zakgeldd" horen bij dezelfde vaste opdracht. Duidelijk andere omschrijvingen ("Bioscoop") blijven apart. Potjes op je eigen spaarrekening worden niet zo samengevoegd.
