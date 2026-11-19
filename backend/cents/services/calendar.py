@@ -147,6 +147,22 @@ def build(conn: sqlite3.Connection, lg: ledger_mod.Ledger, p: Period) -> dict:
             entries.append((pay["day"], {**base, "amount_cents": pay["amount"], "status": "paid",
                                          "transaction_id": pay["id"]}))
 
+    # subscriptions entered by hand: on their expected days, marked `manual`; not in the totals
+    # (paid from a private account or already in the credit-card file)
+    from . import manual_subs
+    for m in manual_subs.items(conn, lg.today):
+        if m["status"] == "ended":
+            continue
+        for day in recurring.occurrences({**m, "next_date": m["next_date"]}, p.start, p.last + timedelta(days=1)):
+            entries.append((day, {"key": m["key"], "name": m["name"], "merchant_key": None, "category_id": m["category_id"],
+                                  "direction": "out", "amount_cents": m["amount_cents"], "status": "expected",
+                                  "transaction_id": None, "manual": True}))
+        # past days of this period, before next_date
+        d = date.fromisoformat(m["start_date"])
+        for day in recurring.occurrences({**m, "next_date": m["start_date"]}, max(p.start, d), min(lg.today, p.last + timedelta(days=1))):
+            entries.append((day, {"key": m["key"], "name": m["name"], "merchant_key": None, "category_id": m["category_id"],
+                                  "direction": "out", "amount_cents": m["amount_cents"], "status": "expected",
+                                  "transaction_id": None, "manual": True}))
     entries.sort(key=lambda e: (e[0], e[1]["direction"] != "in", e[1]["name"]))
     days: list[dict] = []
     for day, item in entries:
@@ -156,6 +172,8 @@ def build(conn: sqlite3.Connection, lg: ledger_mod.Ledger, p: Period) -> dict:
     out_tot = {"paid_cents": 0, "expected_cents": 0, "missed_cents": 0}
     in_tot = {"paid_cents": 0, "expected_cents": 0}
     for _, item in entries:
+        if item.get("manual"):
+            continue
         amount = abs(item["amount_cents"])
         if item["direction"] == "out":
             out_tot[f"{item['status']}_cents"] += amount

@@ -7,6 +7,7 @@ import { html } from '../vendor/preact-htm.js';
 import { api } from '../api.js';
 import { useQuery, categoryById } from '../store.js';
 import { navigate } from '../router.js';
+import { openSubscription } from './_subs.js';
 import { euros, money, shortDate, monthLabel, plural } from '../format.js';
 import { Screen } from '../components/Screen.js';
 import { List, ListRow } from '../components/List.js';
@@ -16,7 +17,7 @@ import { useLayout } from '../hooks.js';
 const perYear = (c) => html`<span class="num">${euros(c)} p/j</span>`;
 const emojiOf = (id) => categoryById(id)?.emoji || '📦';
 const colorOf = (id) => categoryById(id)?.color || 'gray';
-const recurring = (it) => navigate('/transacties', { query: { merchant_key: it.merchant_key } });
+const recurring = (it) => (it.manual ? openSubscription(it) : navigate('/transacties', { query: { merchant_key: it.merchant_key } }));
 
 export function Besparen() {
   const { data, error, reload } = useQuery('besparen', () => api.besparen());

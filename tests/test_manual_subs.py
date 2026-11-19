@@ -37,3 +37,21 @@ def test_manual_subscription_listed_not_counted(client, book, today):
     assert client.delete(f"/api/subscriptions/{s['id']}").status_code == 404
     bad = client.post("/api/subscriptions", json={"name": "X", "amount_cents": 0, "frequency": "monthly", "start_date": "2026-01-01"})
     assert bad.status_code == 422
+
+
+def test_manual_subscription_in_calendar_and_besparen(client, book, today):
+    today("2026-11-19")
+    chk = book.account("Betaal", "checking", "NL01TEST0000000001")
+    book.monthly(chk, "2026-01-20", 10, 300000, "salaris", "Werkgever")
+    book.monthly(chk, "2026-01-01", 10, -100000, "wonen", "Verhuurder", method="debit")
+    book.commit()
+    cal0 = client.get("/api/calendar", params={"period": "2026-11"}).json()
+    s = client.post("/api/subscriptions", json={"name": "Krant", "amount_cents": 400, "frequency": "weekly",
+                                                "start_date": "2026-10-05"}).json()
+    cal = client.get("/api/calendar", params={"period": "2026-11"}).json()
+    days = [d["date"] for d in cal["days"] for i in d["items"] if i.get("manual")]
+    assert days == ["2026-11-02", "2026-11-09", "2026-11-16", "2026-11-23", "2026-11-30"]
+    assert cal["out"] == cal0["out"]                      # not in the totals
+    b = client.get("/api/besparen").json()
+    assert any(i.get("manual") and i["name"] == "Krant" for i in b["subscriptions"]["items"])
+    client.delete(f"/api/subscriptions/{s['id']}")

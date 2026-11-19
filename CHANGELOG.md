@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.2.1 — 2026-11-19
+
+- Abonnementen die je met de hand toevoegt staan ook in de kalender (op hun verwachte dagen, niet in de totalen) en bij Besparen onder Abonnementen. Tik erop om ze te wijzigen.
+
 ## 1.2.0 — 2026-11-19
 
 - Abonnementen met de hand: in Vaste lasten (+ → Abonnement toevoegen) voeg je abonnementen toe die Cents niet in je bankbestand ziet, zoals op de creditcard of een privérekening. Naam, bedrag, per week, 4 weken, maand of jaar, betaaldag, bakje en "betaald met". Ze staan onder een eigen kopje en tellen mee in het abonnementenoverzicht, maar niet in je vaste lasten of Nog te besteden (dat geld is al ergens anders geteld). Wijzigen, opzeggen en verwijderen met een tik. (Database-schema v13.)

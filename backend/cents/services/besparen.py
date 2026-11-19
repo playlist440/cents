@@ -92,6 +92,8 @@ def _compute(conn: sqlite3.Connection) -> dict:
 
     subs = [{**pub(i), "per_year_cents": abs(i["per_year_cents"]), "new": i["status"] == "new"}
             for i in live if keys.get(i["category_id"]) in recurring.SUBSCRIPTION_BAKJES]
+    from . import manual_subs        # entered by hand (credit card, private account)
+    subs += [{**m, "new": False} for m in manual_subs.items(conn, lg.today) if m["status"] != "ended"]
     subs.sort(key=lambda i: -i["per_year_cents"])
 
     rises = []

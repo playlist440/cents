@@ -9,7 +9,7 @@
 import { generate } from './data.js';
 import { addDays, daysBetween, parseISO, shiftPeriod, monthLabel, todayISO, MONTHS, money, euros } from '../format.js';
 
-const VERSION = '1.2.0-mock';
+const VERSION = '1.2.1-mock';
 const PASSWORD = 'demo1234';
 
 let db;
@@ -930,7 +930,8 @@ function besparenData() {
   const keyOf = (i) => catById(i.category_id)?.key;
   const yearAgo = addDays(db.today, -365);
   const subs = live.filter((i) => ['abonnementen', 'telecom'].includes(keyOf(i)))
-    .map((i) => ({ ...i, per_year_cents: Math.abs(i.per_year_cents), new: i.status === 'new' })).sort((a, b) => b.per_year_cents - a.per_year_cents);
+    .map((i) => ({ ...i, per_year_cents: Math.abs(i.per_year_cents), new: i.status === 'new' }))
+    .concat(manualSubItems().filter((m) => m.status !== 'ended').map((m) => ({ ...m, new: false }))).sort((a, b) => b.per_year_cents - a.per_year_cents);
   const rises = live.filter((i) => i.change && Math.abs(i.change.to_cents) > Math.abs(i.change.from_cents) && i.change.date >= yearAgo)
     .map((i) => ({ ...i, from_cents: Math.abs(i.change.from_cents), to_cents: Math.abs(i.change.to_cents), since: i.change.date,
       extra_per_year_cents: (Math.abs(i.change.to_cents) - Math.abs(i.change.from_cents)) * PER_YEAR[i.frequency] }))
