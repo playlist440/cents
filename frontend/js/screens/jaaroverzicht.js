@@ -27,6 +27,7 @@ const SERIES = [
 const INCOME = { name: 'Inkomen', color: 'var(--green)' };
 
 export function Jaaroverzicht() {
+  // 24 months for "zelfde maand vorig jaar"; the chart, the bakjes and top winkels show 12
   const { data, error, reload } = useQuery('trends:24', () => api.trends(24));
   const [sel, setSel] = useState(null);
   const desk = useLayout() === 'wide';
@@ -50,7 +51,7 @@ export function Jaaroverzicht() {
         <div class="dk-col-7"><${BakjesTable} cats=${data.categories || []} offset=${offset} n=${periods.length} periods=${periods} /></div>
         <div class="dk-col-5 dk-stack">
           <${LastYear} periods=${periods} byId=${byId} sel=${sel} desk />
-          <${TopMerchants} items=${data.top_merchants || []} desk />
+          <${TopMerchants} items=${data.top_merchants || []} months=${data.top_merchants_months} desk />
         </div>
       </div>
     </${Screen}>`;
@@ -60,7 +61,7 @@ export function Jaaroverzicht() {
     <${ChartCard} periods=${periods} sel=${sel} setSel=${setSel} />
     <${LastYear} periods=${periods} byId=${byId} sel=${sel} />
     <${Bakjes} cats=${data.categories || []} offset=${offset} n=${periods.length} />
-    <${TopMerchants} items=${data.top_merchants || []} />
+    <${TopMerchants} items=${data.top_merchants || []} months=${data.top_merchants_months} />
   </${Screen}>`;
 }
 
@@ -74,6 +75,8 @@ function ChartCard({ periods, sel, setSel, desk = false }) {
     ? { income: p.income_cents, spent: p.fixed_cents + p.daily_cents, fixed: p.fixed_cents, daily: p.daily_cents, saved: p.saved_cents }
     : { income: sum('income_cents'), spent: sum('fixed_cents') + sum('daily_cents'), fixed: sum('fixed_cents'), daily: sum('daily_cents'), saved: sum('saved_cents') };
   const title = p ? capitalize(monthSmart(p.period)) : periods.length >= 12 ? 'Afgelopen 12 maanden' : `Afgelopen ${plural(periods.length, 'maand', 'maanden')}`;
+  // over / tekort: the same result as the Overzicht and the Terugblik (saving is not spending)
+  const result = v.income - v.spent;
   const data = periods.map((x) => ({
     label: monthLabel(x.period),
     short: narrow ? monthLabel(x.period, { year: false }).slice(0, 1) : monthLabel(x.period, { short: true, year: false }),
@@ -82,7 +85,10 @@ function ChartCard({ periods, sel, setSel, desk = false }) {
   }));
   return html`<${Card} class="jo-chart">
     <div class="jo-chart-head">
-      <div class="jo-title">${title}</div>
+      <div class="jo-title-wrap">
+        <div class="jo-title">${title}</div>
+        <div class=${'jo-result num' + (result < 0 ? ' is-short' : '')}>${euros(Math.abs(result))} ${result < 0 ? 'tekort' : 'over'}</div>
+      </div>
       ${p && html`<button class="jo-open" onClick=${() => navigate('/overzicht', { query: { period: p.period } })}>
         Open<${Icon} name="chevron-right" size=${13} stroke=${2.6} /></button>`}
     </div>
@@ -175,11 +181,12 @@ function Bakjes({ cats, offset, n }) {
 
 /* ---------- Top winkels ---------- */
 
-function TopMerchants({ items, desk = false }) {
+function TopMerchants({ items, months, desk = false }) {
   if (!items.length) return null;
   const Wrap = desk ? DeskCard : Section;
+  const n = months || 12;
   return html`<${Wrap} title="Top winkels">
-    <${List}>
+    <${List} footer=${`Afgelopen ${plural(n, 'maand', 'maanden')}`}>
       ${items.slice(0, 8).map((m, i) => {
         const cat = categoryById(m.category_id);
         return html`<${ListRow} key=${m.merchant_key}

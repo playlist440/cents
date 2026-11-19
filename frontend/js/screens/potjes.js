@@ -93,9 +93,19 @@ function Summary({ data, goals }) {
         ${room && (room.fits
           ? html`<span class="pj-advice-state is-fits"><${Icon} name="check" size=${14} stroke=${2.8} /> past</span>`
           : html`<span class="pj-advice-state is-tight">${euros(-room.difference_cents)} meer dan je meestal overhoudt</span>`)}
+        ${room && html`<span class="pj-advice-note num">${roomNote(room)}</span>`}
       </span>
     </div>`}
   </section>`;
+}
+
+/** What "meestal over" is made of, in one line: real money, the full mortgage payment, without
+ *  one-off purchases spread over months, after investing that is set up to repeat. */
+function roomNote(room) {
+  const parts = [`Jullie houden meestal ${room.avg_over_cents >= 0 ? `${euros(room.avg_over_cents)} per maand over` : `niets over (${euros(-room.avg_over_cents)} tekort)`}`];
+  const after = [room.repaid_cents > 0 && 'aflossing', room.investing_cents > 0 && `${euros(room.investing_cents)} beleggen`].filter(Boolean);
+  if (after.length) parts.push(`na ${after.join(' en ')}`);
+  return parts.join(', ') + '.';
 }
 
 /* ---------- Cards ---------- */

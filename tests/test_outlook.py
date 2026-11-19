@@ -44,63 +44,81 @@ def set_assumption(client, key, value):
 def test_free_breakdown_and_payday(client, book):
     household(book)
     f = overview(client)["free"]
-    assert f["balances_cents"] == 700000
+    assert f["balances_cents"] == 200000                   # the checking account only
     assert f["payday"] == "2026-03-25" and f["payday_source"] == "salary"
     assert f["salary_pending"] is False
     assert f["fixed_until_payday_cents"] == 10000          # insurance on the 20th, not April rent
-    assert f["goals_cents"] == 0 and f["card_settlement"] is None
+    assert f["fixed_overdue_cents"] == 0 and f["saving_until_payday_cents"] == 0
+    assert f["card_settlement"] is None
     assert f["daily_days"] == 10                           # 15 … 24 March
     assert f["daily_until_payday_cents"] == round(10 * RATE)
-    assert f["total_cents"] == 700000 - f["buffer_reserved_cents"] - 10000 - round(10 * RATE)
+    assert f["total_cents"] == 200000 - 10000 - round(10 * RATE)
     assert f["per_day_cents"] == int(f["total_cents"] / 10)
+    # the day budget is the whole amount per day for daily spending: normal pace + the extra
+    assert f["day_budget_cents"] == round(RATE + f["total_cents"] / 10)
     assert f["as_of"] == "2026-03-14" and f["stale"] is False
-    assert "buffer_cents" not in f                         # the buffer is not subtracted
+    # savings are next to it: € 5.000 minus the buffer (3 months of € 1.100 fixed costs)
+    assert f["savings"]["balance_cents"] == 500000 and f["savings"]["goals_cents"] == 0
+    assert f["savings"]["buffer_cents"] == 330000 and f["savings"]["free_cents"] == 170000
 
 
-def test_transfer_between_own_accounts_leaves_free_unchanged(client, book):
+def test_transfer_between_own_accounts_moves_between_free_and_savings(client, book):
     chk, sav = household(book)
-    before = overview(client)["free"]["total_cents"]
+    f = overview(client)["free"]
+    before, before_free_savings = f["total_cents"], f["savings"]["free_cents"]
     book.tx(chk, "2026-03-14", -50000, "sparen", "Spaar", kind="transfer", to=sav,
             method="internal", balance=150000)
     book.tx(sav, "2026-03-14", 50000, "intern", "Betaal", kind="transfer", to=chk,
             method="internal", balance=550000)
     book.commit()
     after = overview(client)["free"]
-    assert after["balances_cents"] == 700000
-    assert after["total_cents"] == before
+    assert after["balances_cents"] == 150000
+    assert after["total_cents"] == before - 50000
+    assert after["savings"]["free_cents"] == before_free_savings + 50000
     # and back again
     book.tx(chk, "2026-03-14", 20000, "sparen", "Spaar", kind="transfer", to=sav,
             method="internal", balance=170000)
     book.tx(sav, "2026-03-14", -20000, "intern", "Betaal", kind="transfer", to=chk,
             method="internal", balance=530000)
     book.commit()
-    assert overview(client)["free"]["total_cents"] == before
+    assert overview(client)["free"]["total_cents"] == before - 50000 + 20000
 
 
-def test_potjes_subtracted_buffer_not(client, book):
+def test_potjes_and_buffer_are_savings_not_free(client, book):
     household(book)
     set_assumption(client, "buffer", {"amount_cents": 0})
-    base = 700000 - 10000 - round(10 * RATE)
+    base = 200000 - 10000 - round(10 * RATE)
     assert overview(client)["free"]["total_cents"] == base
     g = client.post("/api/goals", json={"name": "Vakantie", "target_cents": 300000}).json()
     client.post(f"/api/goals/{g['id']}/saldo", json={"saldo_cents": 120000})
     set_assumption(client, "buffer", {"amount_cents": 200000})
     o = overview(client)
-    assert o["free"]["goals_cents"] == 120000
+    assert o["free"]["total_cents"] == base                # potjes live on the savings account
+    s = o["free"]["savings"]
+    assert s["goals_cents"] == 120000
     # only savings that form the buffer are set aside, never the unfilled part of the target
-    assert o["free"]["buffer_reserved_cents"] == 200000
-    assert o["free"]["total_cents"] == base - 120000 - 200000
+    assert s["buffer_cents"] == 200000 and s["free_cents"] == 500000 - 120000 - 200000
     # buffer bar: savings outside potjes (€ 3.800), capped at the target
-    assert o["buffer"] == {"saved_cents": 200000, "target_cents": 200000, "source": "savings",
-                           "months": round(200000 / 110000, 1), "target_months": 1.8}
-    # a potje named "Buffer" is the buffer
-    b = client.post("/api/goals", json={"name": "Buffer", "target_cents": 500000}).json()
-    client.post(f"/api/goals/{b['id']}/saldo", json={"saldo_cents": 50000})
+    b = o["buffer"]
+    assert (b["saved_cents"], b["target_cents"], b["source"], b["target_source"]) == (
+        200000, 200000, "savings", "assumption")
+    assert b["months"] == round(200000 / 110000, 1) and b["target_months"] == 1.8
+    # a potje named "Buffer" is the buffer, and its target is the one buffer target
+    pot = client.post("/api/goals", json={"name": "Buffer", "target_cents": 500000}).json()
+    client.post(f"/api/goals/{pot['id']}/saldo", json={"saldo_cents": 50000})
     o = overview(client)
-    assert o["free"]["goals_cents"] == 170000 and o["free"]["total_cents"] == base - 170000
-    assert o["buffer"]["saved_cents"] == 50000 and o["buffer"]["source"] == "potje"
+    assert o["free"]["total_cents"] == base and o["free"]["savings"]["goals_cents"] == 170000
+    assert o["free"]["savings"]["buffer_cents"] == 0       # already in the potje
+    b = o["buffer"]
+    assert (b["saved_cents"], b["source"], b["target_cents"], b["target_source"], b["goal_id"]) == (
+        50000, "potje", 500000, "potje", pot["id"])
     set_assumption(client, "buffer", {"months": 3, "amount_cents": None})
-    assert overview(client)["buffer"]["target_cents"] == 3 * 110000
+    assert overview(client)["buffer"]["target_cents"] == 500000
+    # a buffer potje without a target follows the assumption
+    book.conn.execute("UPDATE goals SET target_cents = 0 WHERE id = ?", (pot["id"],))
+    book.commit()
+    b = overview(client)["buffer"]
+    assert b["target_cents"] == 3 * 110000 and b["target_source"] == "assumption"
 
 
 def test_buffer_insight_uses_the_buffer_definition(client, book):
@@ -126,6 +144,8 @@ def test_negative_is_not_clamped(client, book):
     total = 200000 - 10000 - round(10 * 900000 / 31)
     assert total < 0 and f["total_cents"] == total
     assert f["per_day_cents"] == int(total / 10) < 0
+    # € 290 a day is normal; with the shortfall € 190 a day is what reaches payday
+    assert f["day_budget_cents"] == round(900000 / 31 + total / 10) == 19000
 
 
 def test_payday_is_after_the_balance_date_not_today(client, book, today):
@@ -143,23 +163,30 @@ def test_payday_is_after_the_balance_date_not_today(client, book, today):
     assert client.get("/api/assumptions").json()["payday"]["date"] == "2026-03-20"
 
 
-def test_stale_uses_the_oldest_account(client, book):
+def test_stale_uses_the_checking_account(client, book):
     chk, sav = household(book)
     book.conn.execute("UPDATE transactions SET date = '2026-03-01' WHERE account_id = ? "
                       "AND date = '2026-03-14'", (sav,))
     book.commit()
     f = overview(client)["free"]
-    assert f["as_of"] == "2026-03-01" and f["stale"] is True
-    assert [(a["name"], a["stale"]) for a in f["accounts"]] == [("Betaal", False), ("Spaar", True)]
-    assert f["payday"] == "2026-03-25"                     # from the checking account's date
-    assert f["fixed_until_payday_cents"] == 10000          # 2 … 24 March: insurance (rent was paid)
-    assert f["daily_days"] == 23
+    # an older savings balance does not move the window (no daily spending counted twice)
+    assert f["as_of"] == "2026-03-14" and f["stale"] is False and f["daily_days"] == 10
+    assert [(a["name"], a["stale"]) for a in f["accounts"]] == [("Betaal", False)]
+    assert [(a["name"], a["stale"]) for a in f["savings"]["accounts"]] == [("Spaar", True)]
     # an import that covered the savings account up to 14 March makes it fresh again
     book.conn.execute("INSERT INTO imports (filename, format, imported_at, account_id, date_to) "
                       "VALUES ('x.csv', 'asn_csv', '2026-03-14T10:00:00+00:00', ?, '2026-03-14')", (sav,))
     book.commit()
+    assert overview(client)["free"]["savings"]["accounts"][0]["stale"] is False
+    book.conn.execute("DELETE FROM imports")
+    book.conn.execute("UPDATE transactions SET date = '2026-03-01' WHERE account_id = ? "
+                      "AND date = '2026-03-14'", (chk,))
+    book.commit()
     f = overview(client)["free"]
-    assert f["as_of"] == "2026-03-14" and f["stale"] is False
+    assert f["as_of"] == "2026-03-01" and f["stale"] is True
+    assert f["payday"] == "2026-03-25"                     # from the checking account's date
+    assert f["fixed_until_payday_cents"] == 10000          # 2 … 24 March: insurance (rent was paid)
+    assert f["daily_days"] == 23
 
 
 def test_expected_card_settlement(client, book):
@@ -171,7 +198,7 @@ def test_expected_card_settlement(client, book):
     assert f["card_settlement"] == {"date": "2026-03-18", "cents": 25000}   # median of last 3
     # the settlements are not part of the daily rate
     assert f["daily_until_payday_cents"] == round(10 * RATE)
-    assert f["total_cents"] == 700000 - f["buffer_reserved_cents"] - 10000 - 25000 - round(10 * RATE)
+    assert f["total_cents"] == 200000 - 10000 - 25000 - round(10 * RATE)
 
 
 def test_payday_override_changes_fixed_window(client, book, today):
@@ -307,6 +334,63 @@ def test_unfilled_buffer_never_makes_it_negative(client, book):
     base = overview(client)["free"]["total_cents"]
     set_assumption(client, "buffer", {"amount_cents": 100_000_000})   # far more than saved
     f = overview(client)["free"]
-    assert f["buffer_reserved_cents"] <= f["balances_cents"]
-    assert f["total_cents"] == base - f["buffer_reserved_cents"]
-    assert f["total_cents"] >= base - (f["balances_cents"] - 0)
+    assert f["total_cents"] == base                        # the buffer is savings
+    assert f["savings"]["buffer_cents"] == 500000 and f["savings"]["free_cents"] == 0
+
+
+def test_overdue_fixed_cost_is_kept_aside(client, book, today):
+    chk, _ = household(book)
+    # the insurance of the 20th did not show up; the balance is from the 22nd
+    book.tx(chk, "2026-03-22", -1000, "boodschappen", "Supermarkt", method="card", balance=199000)
+    book.commit()
+    today("2026-03-23")
+    f = overview(client)["free"]
+    assert f["fixed_until_payday_cents"] == 0
+    assert f["fixed_overdue"] == [{"name": "Verzekeraar", "date": "2026-03-20", "cents": 10000}]
+    assert f["total_cents"] == 199000 - 10000 - round(2 * RATE)
+
+
+def test_savings_transfer_before_payday_leaves_checking(client, book):
+    chk, sav = household(book)
+    for m in MONTHS:
+        book.tx(chk, f"{m}-18", -20000, "beleggen", "Broker", kind="transfer", method="debit")
+    book.commit()
+    f = overview(client)["free"]
+    assert f["saving_until_payday_cents"] == 20000
+    assert f["total_cents"] == 200000 - 10000 - 20000 - round(10 * RATE)
+
+
+def test_health_card(client, book):
+    household(book)
+    h = overview(client)["health"]
+    assert h["months"] == 5 and h["income_cents"] == 300000
+    assert h["housing"] == {"cents": 100000, "share": 0.333}            # rent
+    assert h["fixed"] == {"cents": 110000, "share": 0.367, "rest_cents": 190000}
+    assert h["saving"] == {"cents": 50000, "share": 0.167, "repaid_cents": 0}
+    assert h["debts"] == {"known": False, "total_cents": 0, "items": []}
+    b = overview(client)["buffer"]
+    assert h["buffer"]["months"] == b["months"] and h["buffer"]["target_months"] == b["target_months"]
+    assert client.get("/api/overview?period=2026-01").json()["health"] is None
+
+
+def test_room_leaves_out_investing_and_spread_parts(client, book):
+    chk, sav = household(book)
+    before = client.get("/api/goals").json()["room"]["avg_over_cents"]
+    assert before == 300000 - 110000 - 60000
+    for m in MONTHS:
+        book.tx(chk, f"{m}-27", -20000, "beleggen", "Broker", kind="transfer", method="debit")
+    big = book.tx(chk, "2026-01-12", -240000, "huis-tuin", "Keukenzaak", method="debit")
+    book.commit()
+    client.patch(f"/api/transactions/{big}", json={"spread_months": 24})
+    room = client.get("/api/goals").json()["room"]
+    assert room["investing_cents"] == 20000
+    assert room["avg_over_cents"] == before - 20000      # the kitchen is no monthly pattern
+
+
+def test_top_merchants_cover_twelve_months(client, book):
+    chk, _ = household(book)
+    book.tx(chk, "2024-06-10", -900000, "huis-tuin", "Aannemer", method="debit")
+    book.commit()
+    t = client.get("/api/trends?periods=24").json()
+    assert t["top_merchants_months"] == 12
+    assert "aannemer" not in {m["merchant_key"] for m in t["top_merchants"]}

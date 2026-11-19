@@ -101,7 +101,9 @@ def test_advice_status_room(client, book):
     assert buf["projected_date"] is None
     assert g["total_advice_cents"] == 82500 + 16000
     # room: income - fixed - daily over Jan and Feb = 300000
-    assert g["room"] == {"avg_over_cents": 300000, "fits": True, "difference_cents": 300000 - 98500}
+    room = g["room"]
+    assert (room["avg_over_cents"], room["fits"], room["difference_cents"]) == (300000, True, 300000 - 98500)
+    assert (room["income_cents"], room["fixed_cents"], room["investing_cents"], room["months"]) == (300000, 0, 0, 2)
     assert g["savings_balance_cents"] == 1234500
     assert g["unallocated_cents"] == 1234500 - (107000 + 20000)
     assert [s["kind"] for s in g["suggestions"]] == []        # a buffer goal exists
@@ -164,7 +166,9 @@ def test_suggestions(client, book, today):
     book.tx(chk, "2026-03-11", -9450, "vervoer", "ANWB")
     book.commit()
     s = client.get("/api/goals").json()["suggestions"]
-    assert s[0]["kind"] == "buffer" and s[0]["target_cents"] == 370000   # 3 x 123333 -> up to 100
+    # the same buffer as Slimme aannames: 3 months of fixed costs (rent), not of all spending
+    assert s[0]["kind"] == "buffer" and s[0]["target_cents"] == 300000
+    assert s[0]["reason"] == "3 maanden vaste lasten"
     assert s[1]["kind"] == "yearly_bills" and s[1]["target_cents"] == 9450
     assert s[1]["reason"] == "€ 8 per maand"
 

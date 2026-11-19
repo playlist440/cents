@@ -178,7 +178,8 @@ def test_empty_database_every_endpoint(client, today):
     assert o["categories"] == [] and o["insights"] == [] and o["upcoming"] == []
     assert o["unsorted"] == {"merchants": 0, "transactions": 0, "cents": 0}
     assert client.get("/api/overview?period=2020-01").status_code == 200
-    assert client.get("/api/trends").json() == {"periods": [], "categories": [], "top_merchants": []}
+    assert client.get("/api/trends").json() == {"periods": [], "categories": [], "top_merchants": [],
+                                                "top_merchants_months": 0}
     assert client.get("/api/recurring").json() == {"monthly_out_cents": 0, "monthly_in_cents": 0,
                                                    "yearly_out_cents": 0, "items": [],
                                                    "subscriptions": {"per_month_cents": 0,

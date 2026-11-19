@@ -1,14 +1,15 @@
 """The holistic "now" figures of the Overzicht (SPEC 9 "Nog te besteden, tempo, buffer,
 betaalrekening").
 
-- `free` ("Nog te besteden tot <salarisdatum>"): checking + savings balances − savings already forming the buffer (never the unfilled target) − money in active
-  potjes − fixed costs still due before the next salary − outstanding credit-card purchases −
-  the expected next credit-card settlement (when it falls before payday) − typical daily
-  spending for the days until payday. Not clamped: negative means the money does not reach
-  payday at a normal pace. The buffer is NOT subtracted (it is shown separately). Moving money
-  between own accounts never changes it.
+- `free` ("Nog te besteden tot <salarisdatum>"): the checking balance(s) − fixed costs still
+  due before the next salary (and those of this period that are overdue) − recurring savings
+  transfers before payday − outstanding credit-card purchases − the expected next credit-card
+  settlement (when it falls before payday) − typical daily spending for the days until payday.
+  Not clamped: negative means the money on the checking account does not reach payday at a
+  normal pace. Savings are not in it: `free.savings` reports the savings balance minus potjes
+  and the buffer ("vrij spaargeld") next to it.
 - Balance dates: per account `as_of` = the later of its latest balance and the end of the
-  latest import that covered it. The oldest of these (checking/savings) drives `stale` and the
+  latest import that covered it. The oldest of the checking accounts drives `stale` and the
   start of the window for fixed costs and daily spending; payday is the next salary after the
   main checking account's date, so a salary that is expected but not imported yet
   (`salary_pending`) is still the upcoming payday.
@@ -143,11 +144,31 @@ def monthly_fixed(lg: Ledger, items: list[dict]) -> float:
                 and i["status"] != "ended" and _group(lg, i) == FIXED)
 
 
-def buffer_target(conn: sqlite3.Connection, lg: Ledger, items: list[dict]) -> int:
+def is_buffer(name: str | None) -> bool:
+    """A potje whose name contains "buffer" is the buffer."""
+    return "buffer" in (name or "").lower()
+
+
+def assumed_buffer_target(conn: sqlite3.Connection, lg: Ledger, items: list[dict]) -> tuple[int, str]:
+    """The buffer from the `buffer` assumption: a fixed amount, else months × average monthly
+    fixed costs (with the mortgage repayment, without spread parts). Also the reason in words."""
     setting = assumptions_mod.get(conn)["buffer"]
     if setting.get("amount_cents") is not None:
-        return max(0, int(setting["amount_cents"]))
-    return max(0, int(round(monthly_fixed(lg, items) * float(setting.get("months") or 0))))
+        return max(0, int(setting["amount_cents"])), "je eigen bedrag"
+    months = float(setting.get("months") or 0)
+    word = f"{months:g} {'maand' if months == 1 else 'maanden'} vaste lasten".replace(".", ",")
+    return max(0, int(round(monthly_fixed(lg, items) * months))), word
+
+
+def buffer_target(conn: sqlite3.Connection, lg: Ledger, items: list[dict],
+                  pots: list[dict] | None = None) -> tuple[int, str]:
+    """The one buffer target (SPEC 9): the target of the buffer potje when it has one, else
+    the assumption. Returns (cents, source) with source `potje` or `assumption`."""
+    pots = pots if pots is not None else [g for g in goals_mod.overview(conn)["goals"] if is_buffer(g["name"])]
+    pot_target = sum(g["target_cents"] or 0 for g in pots)
+    if pot_target > 0:
+        return pot_target, "potje"
+    return assumed_buffer_target(conn, lg, items)[0], "assumption"
 
 
 def buffer_status(conn: sqlite3.Connection, lg: Ledger, items: list[dict]) -> dict | None:
@@ -155,8 +176,8 @@ def buffer_status(conn: sqlite3.Connection, lg: Ledger, items: list[dict]) -> di
     not in potjes (at most the target). `months` = how many months of fixed costs it covers."""
     savings = sum(a["balance_cents"] for a in balance_accounts(conn) if a["type"] == "savings")
     active = goals_mod.overview(conn)["goals"]
-    target = buffer_target(conn, lg, items)
-    pots = [g for g in active if "buffer" in g["name"].lower()]
+    pots = [g for g in active if is_buffer(g["name"])]
+    target, target_source = buffer_target(conn, lg, items, pots)
     if pots:
         saved, source = sum(max(0, g["saldo_cents"]) for g in pots), "potje"
     else:
@@ -166,6 +187,8 @@ def buffer_status(conn: sqlite3.Connection, lg: Ledger, items: list[dict]) -> di
         return None
     monthly = monthly_fixed(lg, items)
     return {"saved_cents": int(saved), "target_cents": target, "source": source,
+            "target_source": target_source, "goal_id": pots[0]["id"] if pots else None,
+            "monthly_fixed_cents": int(round(monthly)),
             "months": round(saved / monthly, 1) if monthly > 0 else None,
             "target_months": round(target / monthly, 1) if monthly > 0 else None}
 
@@ -203,50 +226,82 @@ def expected_settlement(lg: Ledger, after: date, before: date) -> dict | None:
     return {"date": day.isoformat(), "cents": cents}
 
 
+def _overdue_fixed(lg: Ledger, items: list[dict], start: date) -> list[dict]:
+    """Fixed costs of this period that were expected before the balance date but have not been
+    paid (not ended): they may still come, so Nog te besteden keeps them aside."""
+    lo = lg.current().start
+    out = []
+    for i in items:
+        if i["direction"] != "out" or i["status"] == "ended" or _group(lg, i) != FIXED:
+            continue
+        day = date.fromisoformat(i["next_date"])
+        if lo <= day < start:
+            out.append({"name": i["name"], "date": day.isoformat(), "cents": -i["amount_cents"]})
+    return sorted(out, key=lambda x: x["date"])
+
+
 def free(conn: sqlite3.Connection, lg: Ledger, items: list[dict]) -> dict | None:
+    """Nog te besteden (SPEC 9): the money on the checking account(s) that is not needed for
+    what is still due before payday at a normal pace. Savings are reported next to it
+    (`savings`: the balance minus potjes and the buffer = vrij spaargeld), never in it."""
     accounts = balance_accounts(conn)
-    if not accounts:
+    checking = [a for a in accounts if a["type"] == "checking"]
+    saving_accounts = [a for a in accounts if a["type"] == "savings"]
+    if not checking:
         return None
-    balances = sum(a["balance_cents"] for a in accounts)
-    savings = sum(a["balance_cents"] for a in accounts if a["type"] == "savings")
-    dates = [a["as_of"] for a in accounts if a["as_of"]]
-    as_of = min(dates, default=None)
+    balances = sum(a["balance_cents"] for a in checking)
+    savings = sum(a["balance_cents"] for a in saving_accounts)
+    as_of = min((a["as_of"] for a in checking if a["as_of"]), default=None)
     credit = sum(a.get("outstanding_cents") or 0 for a in networth.get(conn)["accounts"]
                  if a["type"] == "credit")
-
-    active = goals_mod.overview(conn)["goals"]
-    in_goals = sum(max(0, g["saldo_cents"]) for g in active)
-    # potjes live on the savings account(s); never subtract more than is there
-    goals_cents = min(in_goals, max(0, savings)) if savings > 0 else 0
 
     pay, source = payday(conn, lg, items)
     start = (date.fromisoformat(as_of) + timedelta(days=1)) if as_of else lg.today
     fixed = -sum(i["amount_cents"] for i, _ in _spend_items(lg, items, start, pay, (FIXED,)))
+    overdue = _overdue_fixed(lg, items, start)
+    overdue_cents = sum(x["cents"] for x in overdue)
+    to_savings = -sum(i["amount_cents"] for i, _ in _spend_items(lg, items, start, pay, (SAVING,)))
     card = expected_settlement(lg, start - timedelta(days=1), pay)
     rate = daily_rate(lg)
     days = max(0, (pay - start).days)
     daily = int(round(rate * days))
-    # Savings that already form the buffer are not money to spend. Only what is there is set
-    # aside (never the unfilled part of the target), so this can never push the figure negative.
+    total = (balances - fixed - overdue_cents - max(0, to_savings) - credit
+             - (card["cents"] if card else 0) - daily)
+    days_left = (pay - lg.today).days
+
+    # savings: potjes live on the savings account(s), never more than is there; savings that
+    # already form the buffer are set aside too (never the unfilled part of the target)
+    active = goals_mod.overview(conn)["goals"]
+    in_goals = sum(max(0, g["saldo_cents"]) for g in active)
+    goals_cents = min(in_goals, max(0, savings)) if savings > 0 else 0
     buf = buffer_status(conn, lg, items)
     reserved = 0
     if buf and buf["source"] == "savings":
         reserved = min(buf["saved_cents"], buf["target_cents"] or 0, max(0, savings - goals_cents))
-    total = balances - goals_cents - reserved - fixed - credit - (card["cents"] if card else 0) - daily
-    days_left = (pay - lg.today).days
     stale_of = lambda d: bool(d) and (lg.today - date.fromisoformat(d)).days > STALE_DAYS  # noqa: E731
-    return {"total_cents": total, "balances_cents": balances, "goals_cents": goals_cents,
-            "buffer_reserved_cents": reserved,
-            "fixed_until_payday_cents": fixed, "credit_cents": credit,
-            "card_settlement": card, "daily_until_payday_cents": daily,
+    acc_json = lambda a: {"name": a["name"], "type": a["type"], "balance_cents": a["balance_cents"],  # noqa: E731
+                          "as_of": a["as_of"], "stale": stale_of(a["as_of"])}
+    savings_out = None
+    if saving_accounts:
+        savings_out = {"balance_cents": savings, "goals_cents": goals_cents,
+                       "buffer_cents": reserved, "free_cents": max(0, savings - goals_cents - reserved),
+                       "accounts": [acc_json(a) for a in saving_accounts]}
+    return {"total_cents": total, "balances_cents": balances,
+            "fixed_until_payday_cents": fixed, "fixed_overdue_cents": overdue_cents,
+            "fixed_overdue": overdue, "saving_until_payday_cents": max(0, to_savings),
+            "credit_cents": credit, "card_settlement": card,
+            "daily_until_payday_cents": daily,
             "daily_rate_cents": int(round(rate)), "daily_days": days,
             "days_left": max(0, days_left),
+            # what is left on top of normal daily spending, per day …
             "per_day_cents": int(total / days_left) if days_left > 0 else None,
+            # … and the whole day budget for daily spending (normal pace + that extra)
+            "day_budget_cents": max(0, int(round(rate + total / days_left))) if days_left > 0 else None,
             "payday": pay.isoformat(), "payday_source": source,
             "salary_pending": pay <= lg.today,
             "as_of": as_of, "stale": stale_of(as_of),
-            "accounts": [{"name": a["name"], "type": a["type"], "balance_cents": a["balance_cents"],
-                          "as_of": a["as_of"], "stale": stale_of(a["as_of"])} for a in accounts]}
+            "accounts": [acc_json(a) for a in checking],
+            "savings": savings_out}
 
 
 def result(lg: Ledger, p) -> int:
@@ -316,5 +371,8 @@ def compute(conn: sqlite3.Connection, lg: Ledger) -> dict:
     items = recurring.items(conn)
     f = free(conn, lg, items)
     pay = date.fromisoformat(f["payday"]) if f else payday(conn, lg, items)[0]
-    return {"free": f, "tempo": tempo(lg), "buffer": buffer_status(conn, lg, items),
-            "checking_warning": checking_warning(conn, lg, items, pay)}
+    from . import health                     # local import: health reads networth
+    buf = buffer_status(conn, lg, items)
+    return {"free": f, "tempo": tempo(lg), "buffer": buf,
+            "checking_warning": checking_warning(conn, lg, items, pay),
+            "health": health.compute(conn, lg, buf)}

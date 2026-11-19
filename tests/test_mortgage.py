@@ -198,3 +198,21 @@ def test_networth_home_shows_repaid_progress(client, book, today):
     assert home["original_cents"] == 20000000 + 10000000
     assert home["debt_cents"] == 28800000
     assert home["repaid_pct"] == round(1200000 / 30000000, 4)
+
+
+def test_room_and_health_count_the_full_payment(client, book, today):
+    """The repayment improves the result (it is saving), but it is money that leaves: the potjes
+    advice and the woonlasten use the full payment (expert review 2026-11)."""
+    today("2026-11-15")
+    _household(book)
+    _setup(client)
+    room = client.get("/api/goals").json()["room"]
+    assert room["fixed_cents"] == PAY and room["repaid_cents"] == 40000
+    assert room["avg_over_cents"] == 400000 - PAY - 20000
+    h = client.get("/api/overview").json()["health"]
+    assert h["months"] == 12 and h["income_cents"] == 400000
+    assert h["housing"] == {"cents": PAY, "share": round(PAY / 400000, 3)}
+    assert h["fixed"]["cents"] == PAY and h["fixed"]["rest_cents"] == 400000 - PAY
+    assert h["saving"]["cents"] == 0 and h["saving"]["repaid_cents"] == 40000
+    assert h["debts"]["known"] is True
+    assert h["debts"]["items"][0]["kind"] == "mortgage" and h["debts"]["items"][0]["cents"] > 0

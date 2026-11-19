@@ -2,6 +2,9 @@
 .jo-chart { border-radius: var(--r-card); padding: 16px 16px 12px; --surface: var(--bg-grouped-2); }
 .jo-chart-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 32px; }
 .jo-title { font: 600 var(--fs-headline)/1.25 var(--font); letter-spacing: -.02em; }
+.jo-title-wrap { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; min-width: 0; }
+.jo-result { font: 600 var(--fs-subhead)/1.25 var(--font-rounded); color: var(--label-2); }
+.jo-result.is-short { color: var(--warn-text); }
 .jo-open { display: inline-flex; align-items: center; gap: 2px; height: 32px; padding: 0 10px 0 12px; margin-right: -4px; border-radius: 16px; background: var(--tint-soft); color: var(--tint); font: 600 var(--fs-subhead)/1 var(--font); position: relative; }
 .jo-open::after { content: ""; position: absolute; inset: -6px -2px; }
 .jo-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin: 10px 0 16px; }

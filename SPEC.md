@@ -450,31 +450,41 @@ fly and cached until the next write:
   period whose date passed without showing up is `fixed_overdue` (UI "achterstallig?", in
   `upcoming[]` with `overdue: true`). `salary_expected`: next date of the largest recurring
   income in this period (Inkomen tile "salaris verwacht 27 nov" while income is 0).
-- **Nog te besteden** (`free`, current period only; `services/outlook.py`): balances of all
-  visible checking and savings accounts − money in active potjes (sum of positive saldos, at
-  most the savings balance) − recurring `fixed` items expected after the balance date and
-  before payday − outstanding manual credit-card purchases − the expected next credit-card
-  settlement (`card_settlement`: median unexplained part of the last three settlements, one
-  month after the latest; only when it falls before payday) − typical daily spending for the
-  days from the balance date to payday (`daily_rate` = median per-day daily spending of the
-  last six complete periods, without credit-card settlement lumps). The buffer is **not**
-  subtracted (shown separately). Not clamped: negative is shown negative. `per_day` = total ÷
-  days from today to payday (`null` on/after payday). Transfers between own accounts never
-  change it.
+- **Nog te besteden** (`free`, current period only; `services/outlook.py`): the balance of the
+  visible checking account(s) − recurring `fixed` items expected after the balance date and
+  before payday − `fixed` items of this period whose expected date passed before the balance
+  date without a payment (`fixed_overdue`, "nog niet afgeschreven") − recurring savings and
+  investment transfers before payday − outstanding manual credit-card purchases − the expected
+  next credit-card settlement (`card_settlement`: median unexplained part of the last three
+  settlements, one month after the latest; only when it falls before payday) − typical daily
+  spending for the days from the balance date to payday (`daily_rate` = median per-day daily
+  spending of the last six complete periods, without credit-card settlement lumps and spread
+  parts). Savings are **not** in it (expert review 2026-11: spaargeld is not "te besteden"):
+  `free.savings = {balance_cents, goals_cents, buffer_cents, free_cents, accounts}` reports the
+  savings balance − money in active potjes (at most the balance) − savings that form the buffer
+  (never the unfilled target) = **vrij spaargeld**, shown next to it. Not clamped: negative is
+  shown negative. `per_day` = total ÷ days from today to payday (`null` on/after payday);
+  `day_budget` = typical daily rate + `per_day` (at least 0): what can go to daily spending per
+  day until payday; the UI shows it with "normaal € X". Moving money from checking to savings
+  lowers it by that amount and raises vrij spaargeld by the same.
   Balance dates: per account `as_of` = the later of its latest balance and the day a file for
   that account was last imported (at most the latest imported transaction of any account).
-  The oldest `as_of` of the checking/savings accounts is `free.as_of`; it drives `stale` (> 5
-  days) and the start of the fixed-cost and daily-spending window; each account carries its own
-  `stale`. Payday = the first salary after the main checking account's `as_of` (not after
+  The oldest `as_of` of the checking accounts is `free.as_of`; it drives `stale` (> 5 days) and
+  the start of the fixed-cost and daily-spending window (an older savings balance does not move
+  it); each account carries its own `stale`. Payday = the first salary after the main checking account's `as_of` (not after
   today): assumption `payday_day` when set (clamped to month end), else the next expected date
   of the largest live recurring income, else the end of the current period. When that date is
   already today or earlier the salary is due but not imported: `salary_pending` (UI "salaris
   nog niet verwerkt — importeer"); it is still the upcoming payday.
-- **Buffer** (`buffer`, current period): `saved_cents` = the saldo of a potje whose name
-  contains "buffer", else the savings balance outside potjes capped at the target;
-  `target_cents` = assumption `buffer` (`amount_cents`, else `months` × average monthly fixed
-  costs of the previous up to six complete periods, recurring items without history);
-  `months` / `target_months` = in months of fixed costs. The `buffer` insight uses the same.
+- **Buffer** (`buffer`, current period): one definition everywhere (buffer bar, `buffer`
+  insight, vrij spaargeld, the potje suggestion, Hoe staan we ervoor, Slimme aannames).
+  `saved_cents` = the saldo of a potje whose name contains "buffer", else the savings balance
+  outside potjes capped at the target; `target_cents` = the target of that buffer potje when it
+  has one (`target_source: "potje"`, Slimme aannames then shows the potje's target and links to
+  it), else assumption `buffer` (`amount_cents`, else `months` × average monthly fixed costs of
+  the previous up to six complete periods with the mortgage repayment and without spread parts,
+  recurring items without history; `target_source: "assumption"`); `months` / `target_months`
+  = in months of those fixed costs; `goal_id` = the buffer potje.
 - **Tempo** (`tempo`): mean of `income − fixed − daily` over the last three complete periods
   (saving is not spending, money back from savings is not income), plus the series of up to
   twelve complete periods. `null` with fewer than two complete periods. `since` = the first
@@ -504,6 +514,16 @@ equal the sum of the month overviews. `per_month` divides by the months that hav
 (`free`, `tempo`, `checking_warning`, `left`, `per_day_left`, `expected_end`, `pace`,
 `upcoming`, `insights`, `buffer`) are `null` / empty for a year; `result` and per-month
 `result_cents` are included.
+
+**Hoe staan we ervoor** (`health`, current period only; `services/health.py`): five calm
+read-outs for people without a financial background, each with one plain sentence in the UI and
+no traffic lights. Averages over the last up to twelve complete periods (at least two), without
+spread parts: `buffer` (as above, in months of fixed costs), `housing` (bakjes Wonen with the
+full mortgage payment, Energie & water, Belastingen & gemeente; per month and as a share of
+income), `fixed` (all fixed costs with the full mortgage payment, share, and `rest_cents` =
+income − fixed), `saving` (to savings and investments without the repayment, share, and
+`repaid_cents` separately; the UI mentions 10 % as a common rule of thumb), `debts` (the
+mortgage and the debts on Vermogen; `known: false` invites adding a loan or achteraf betalen).
 
 **Insights** (`services/insights.py`): each returns `{id, kind, tone, emoji, title, value_cents?,
 detail?, link}` with one short Dutch sentence as `title`. Compute all, rank, return at most five.
@@ -552,10 +572,16 @@ Tone: `good`, `warn`, `info`. Never moralise.
   reaches the target in time. `status`: `reached`, `on_track` (average contribution of the last three periods ≥
   90 % of the advice), `behind`, `no_date`. A `yearly` goal rolls its date forward one year
   after it passes and keeps the saldo above zero that remains.
-- `room`: average of (`income − fixed − daily`) over the last three complete periods compared
-  with the total advice of all goals → `fits` true/false and the difference.
-- `suggestions`: a buffer goal (3 × average monthly fixed + daily spending) when none exists;
-  a "Jaarlijkse rekeningen" goal summing yearly recurring items ÷ 12.
+- `room`: the real money left over per month in the last three complete periods: income − fixed
+  costs with the full mortgage/debt payment (the repayment is saving for the result, but it is
+  money that leaves) − daily spending, both without spread parts (one-off purchases are no
+  monthly pattern), − recurring transfers in bakje Beleggen (`investing_cents`). Compared with
+  the total advice of all goals → `fits` true/false and the difference; also returns the parts
+  (`income_cents`, `fixed_cents`, `daily_cents`, `repaid_cents`, `investing_cents`, `months`)
+  so the UI can say what "meestal over" is.
+- `suggestions`: a buffer goal (the assumed buffer target above, rounded up to € 100, reason
+  e.g. "3 maanden vaste lasten") when no potje's name contains "buffer"; a "Jaarlijkse
+  rekeningen" goal summing yearly recurring items ÷ 12.
 - Goal codes: random 5 digits, unique, first digit not 0.
 
 ## 10. API
@@ -624,16 +650,23 @@ Overview: `GET /overview?period` →
   left_cents: number|null, per_day_left_cents: number|null,   // legacy, not shown in the UI
   net_cents, result_cents /* income − fixed − daily */,
   fixed_overdue_cents, salary_expected: string|null,
-  free: { total_cents /* may be negative */, balances_cents, goals_cents,
-          fixed_until_payday_cents, credit_cents,
+  free: { total_cents /* may be negative */, balances_cents /* checking */,
+          fixed_until_payday_cents, fixed_overdue_cents,
+          fixed_overdue: [{ name, date, cents }], saving_until_payday_cents, credit_cents,
           card_settlement: { date, cents } | null,
           daily_until_payday_cents, daily_rate_cents, daily_days, days_left,
-          per_day_cents: number|null,
+          per_day_cents: number|null, day_budget_cents: number|null,
           payday: string, payday_source: "setting"|"salary"|"period", salary_pending: boolean,
-          as_of: string|null /* oldest */, stale: boolean,
-          accounts: [{ name, type, balance_cents, as_of, stale }] } | null,  // current only
-  buffer: { saved_cents, target_cents, source: "potje"|"savings", months: number|null,
-            target_months: number|null } | null,                 // current period only
+          as_of: string|null /* oldest checking */, stale: boolean,
+          accounts: [{ name, type, balance_cents, as_of, stale }],          // checking
+          savings: { balance_cents, goals_cents, buffer_cents, free_cents,
+                     accounts: [...] } | null } | null,                    // current only
+  buffer: { saved_cents, target_cents, source: "potje"|"savings",
+            target_source: "potje"|"assumption", goal_id: number|null, monthly_fixed_cents,
+            months: number|null, target_months: number|null } | null,  // current period only
+  health: { months, income_cents, buffer: {...} | null, housing: { cents, share },
+            fixed: { cents, share, rest_cents }, saving: { cents, share, repaid_cents },
+            debts: { known, total_cents, items: [{ kind, name, cents }] } } | null,
   tempo: { avg_net_cents, periods, since: string /* period id */,
            months: [{ period, net_cents }] /* oldest first, ≤ 12 */ } | null,
   checking_warning: { date, low_cents, floor_cents, suggest_cents: number|null,
@@ -656,8 +689,10 @@ amounts 0, plus `per_month: {income_cents, fixed_cents, daily_cents, saved_cents
 null`, `months: [{period, label, income_cents, fixed_cents, daily_cents, saved_cents,
 net_cents, partial}]` and `categories[].per_month_cents`.
 `GET /trends?periods=12` → `{periods:[{period: Period-id, label, income_cents, fixed_cents,
-daily_cents, saved_cents, net_cents}], categories:[{category_id, cents: number[]}],
-top_merchants:[{merchant_key, merchant_name, category_id, cents, count}]}`.
+daily_cents, saved_cents, repaid_cents, net_cents, result_cents, partial}], categories:[{category_id,
+cents: number[]}], top_merchants:[{merchant_key, merchant_name, category_id, cents, count}],
+top_merchants_months}`. Top winkels always cover the last (up to) twelve periods, also when more
+periods are asked for (the Jaaroverzicht asks 24 for "zelfde maand vorig jaar").
 
 Recurring: `GET /recurring` → `{monthly_out_cents, monthly_in_cents, yearly_out_cents,
 items: RecurringItem[]}` with `RecurringItem = {key, name, merchant_key, category_id, direction:
@@ -801,8 +836,9 @@ payments abroad, only when the bank's text makes them identifiable; otherwise ne
 **Recap ("Terugblik").** `GET /api/recap?period=YYYY-MM` and `GET /api/recap?year=YYYY` →
 ```ts
 { kind: "period"|"year", label, from, to, complete: boolean,
-  totals: { income_cents, fixed_cents, daily_cents, saved_cents, net_cents },
-  previous: { label, income_cents, fixed_cents, daily_cents, saved_cents, net_cents } | null,
+  totals: { income_cents, fixed_cents, daily_cents, saved_cents, repaid_cents, result_cents,
+            net_cents },     // result = over / tekort (§9); net (after saving) for compatibility
+  previous: { label, ...the same fields } | null,
   categories: [{ category_id, cents, previous_cents|null, share }],      // spent desc
   movers: { up: [{ category_id, cents, previous_cents }], down: [...] }, // top 3 each
   merchants: [{ merchant_key, merchant_name, category_id, cents, count }],   // top 10
@@ -813,8 +849,7 @@ payments abroad, only when the bank's text makes them identifiable; otherwise ne
   savings: { saved_cents, rate /* 0..1 */, goals: [{ id, name, emoji, added_cents,
              saldo_cents, target_cents, reached: boolean }] },
   networth: { start_cents, end_cents } | null,
-  months: [{ period, label, income_cents, fixed_cents, daily_cents, saved_cents,
-             net_cents }] | null,      // year recap only
+  months: [{ period, label, ...the totals fields }] | null,      // year recap only
   highlights: [{ emoji, title, detail|null }] }   // 3–6 short Dutch sentences
 ```
 A recap exists for every complete period and for every calendar year with data; the current

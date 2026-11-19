@@ -35,8 +35,12 @@ class Range:
     def totals(self) -> dict:
         fs = self.flows()
         t = {"income_cents": sum(f.income for f in fs), "fixed_cents": sum(f.fixed for f in fs),
-             "daily_cents": sum(f.daily for f in fs), "saved_cents": sum(f.saved for f in fs)}
-        t["net_cents"] = t["income_cents"] - t["fixed_cents"] - t["daily_cents"] - t["saved_cents"]
+             "daily_cents": sum(f.daily for f in fs), "saved_cents": sum(f.saved for f in fs),
+             "repaid_cents": sum(f.repaid for f in fs)}
+        # over / tekort (SPEC 9): saving is not spending. `net_cents` (after saving) is kept for
+        # compatibility; the screens use `result_cents`.
+        t["result_cents"] = t["income_cents"] - t["fixed_cents"] - t["daily_cents"]
+        t["net_cents"] = t["result_cents"] - t["saved_cents"]
         return t
 
     def spent(self) -> dict[int, int]:
@@ -137,10 +141,10 @@ def _highlights(lg: Ledger, r: Range, out: dict) -> list[dict]:
     than = "vorige maand" if r.kind == "period" else "vorig jaar"
     when = f"in {r.label.split()[0]}" if r.kind == "period" else f"in {r.label}"
     if t["income_cents"] or t["fixed_cents"] or t["daily_cents"]:
-        if t["net_cents"] >= 0:
-            h.append({"emoji": "🎉", "title": f"{euro(t['net_cents'])} over {when}", "detail": None})
+        if t["result_cents"] >= 0:
+            h.append({"emoji": "🎉", "title": f"{euro(t['result_cents'])} over {when}", "detail": None})
         else:
-            h.append({"emoji": "🧾", "title": f"{euro(-t['net_cents'])} meer uitgegeven dan er binnenkwam",
+            h.append({"emoji": "🧾", "title": f"{euro(-t['result_cents'])} meer uitgegeven dan er binnenkwam",
                       "detail": None})
     cats = out["categories"]
     if cats:

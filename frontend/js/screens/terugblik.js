@@ -169,16 +169,21 @@ const TOTALS = [
   { key: 'income_cents', label: 'Inkomen', color: 'var(--green)', more: 'meer', less: 'minder' },
   { key: 'fixed_cents', label: 'Vaste lasten', color: 'var(--chart-fixed, var(--indigo))', more: 'meer', less: 'minder' },
   { key: 'daily_cents', label: 'Dagelijks', color: 'var(--chart-daily, var(--blue))', more: 'meer', less: 'minder' },
+  { key: 'result_cents', label: 'Over', color: 'var(--label-2)', more: 'meer', less: 'minder' },
   { key: 'saved_cents', label: 'Gespaard', color: 'var(--chart-saved, var(--teal))', more: 'meer', less: 'minder' },
-  { key: 'net_cents', label: 'Over', color: 'var(--label-2)', more: 'meer', less: 'minder' },
 ];
+
+/** Over / tekort is the one result of the Overzicht too: income − fixed − daily. What went to
+ *  savings is not spending (it is part of what was over). */
+const resultOf = (t) => t.result_cents ?? t.income_cents - t.fixed_cents - t.daily_cents;
 
 function Story({ r, q, desk }) {
   const cmp = r.complete && r.previous ? r.previous : null;
   // "dan september" / "dan 2024": the previous label without the year for a period.
   const vs = cmp ? (r.kind === 'year' ? cmp.label : cmp.label.replace(/\s\d{4}$/, '')) : '';
-  const t = r.totals;
-  const over = t.net_cents >= 0;
+  const t = { ...r.totals, result_cents: resultOf(r.totals) };
+  const prevT = cmp && { ...cmp, result_cents: resultOf(cmp) };
+  const over = t.result_cents >= 0;
   const spent = t.fixed_cents + t.daily_cents;
   const c = r.counts || {};
   // The headline already says "€ 250 over"; leave that highlight out here (it stays the index teaser).
@@ -190,8 +195,8 @@ function Story({ r, q, desk }) {
         ${!r.complete && html`<span class="mini-chip tone-info">${r.to >= todayISO() ? 'Nog bezig' : 'Niet compleet'}</span>`}
       </div>
       <h1 class="rb-title">${capitalize(r.label)}</h1>
-      <div class=${'rb-net rounded num' + (over ? '' : ' is-short')}>${euros(Math.abs(t.net_cents))} <span>${over ? 'over' : 'tekort'}</span></div>
-      <p class="rb-sub num">${euros(t.income_cents)} inkomen · ${euros(spent)} uitgegeven · ${euros(t.saved_cents)} gespaard</p>
+      <div class=${'rb-net rounded num' + (over ? '' : ' is-short')}>${euros(Math.abs(t.result_cents))} <span>${over ? 'over' : 'tekort'}</span></div>
+      <p class="rb-sub num">${euros(t.income_cents)} inkomen · ${euros(spent)} uitgegeven${t.saved_cents > 0 ? ` · ${euros(t.saved_cents)} naar sparen` : ''}</p>
       ${c.payments > 0 && html`<p class="rb-sub is-quiet num">${plural(c.payments, 'betaling', 'betalingen')} bij ${plural(c.merchants, 'winkel', 'winkels')}${c.days_without_spending > 0 ? ` · ${plural(c.days_without_spending, 'dag', 'dagen')} zonder uitgaven` : ''} · ${longDate(r.from)} – ${longDate(r.to)}</p>`}
     </header>
 
@@ -205,14 +210,14 @@ function Story({ r, q, desk }) {
     <section class="rb-totals" aria-label="Totalen">
       ${TOTALS.map((x) => {
         const v = t[x.key];
-        const isNet = x.key === 'net_cents';
+        const isNet = x.key === 'result_cents';
         const label = isNet ? (v >= 0 ? 'Over' : 'Tekort') : x.label;
-        const d = cmp ? v - cmp[x.key] : null;
+        const d = prevT ? v - prevT[x.key] : null;
         return html`<div class="rb-card rb-total" key=${x.key}>
           <span class="rb-total-label"><i style=${{ background: x.color }} aria-hidden="true"></i>${label}</span>
           <span class=${'rb-total-value num' + (isNet && v < 0 ? ' is-short' : '')}>${euros(Math.abs(v))}</span>
           ${d != null && html`<span class="rb-total-diff num">${isNet
-            ? `${capitalize(vs)}: ${euros(Math.abs(cmp.net_cents))} ${cmp.net_cents >= 0 ? 'over' : 'tekort'}`
+            ? `${capitalize(vs)}: ${euros(Math.abs(prevT.result_cents))} ${prevT.result_cents >= 0 ? 'over' : 'tekort'}`
             : Math.abs(d) < 100 ? `gelijk aan ${vs}` : `${euros(Math.abs(d))} ${d > 0 ? x.more : x.less} dan ${vs}`}</span>`}
         </div>`;
       })}

@@ -52,6 +52,7 @@ function Content({ a, settings, pending }) {
   const as = settings?.assumptions || boot?.settings?.assumptions || {};
   const payday = as.payday_day || { day: null };
   const buffer = as.buffer || { months: 3, amount_cents: null };
+  const goals = useQuery('goals', () => api.goals());
   const floor = as.checking_floor_cents || { cents: 0 };
   const muted = new Set(settings?.muted_insight_kinds || []);
   const kinds = settings?.insight_kinds || [];
@@ -81,7 +82,9 @@ function Content({ a, settings, pending }) {
   const setAssumption = async (patch) => {
     try { await api.updateSettings({ assumptions: patch }); invalidate(); } catch (err) { fail(err); }
   };
-  const bufferLabel = buffer.amount_cents != null ? euros(buffer.amount_cents)
+  // One buffer (SPEC 9): the target of a potje "Buffer" wins over this assumption.
+  const bufferPot = (goals.data?.goals || []).find((g) => /buffer/i.test(g.name) && g.target_cents > 0);
+  const bufferLabel = bufferPot ? euros(bufferPot.target_cents) : buffer.amount_cents != null ? euros(buffer.amount_cents)
     : buffer.months ? `${buffer.months} ${buffer.months === 1 ? 'maand' : 'maanden'}` : 'Geen';
   const paydayLabel = payday.day ? `De ${payday.day}e` : 'Automatisch';
   const paydaySub = a.payday?.date ? `Volgende: ${shortDate(a.payday.date)}${!payday.day && a.payday.source === 'period' ? ' · einde maand' : ''}` : '';
@@ -146,9 +149,13 @@ function Content({ a, settings, pending }) {
       <${ListRow} icon="calendar" iconColor="green" title="Salarisdag" subtitle=${paydaySub}
         value=${html`<span class="sa-pop">${paydayLabel}<${Icon} name="chevron-up-down" size=${12} stroke=${2.4} /></span>`}
         onClick=${pickPayday} label=${`Salarisdag: ${paydayLabel}. Wijzig`} />
-      <${ListRow} icon="piggy" iconColor="teal" title="Buffer" subtitle=${buffer.amount_cents != null ? 'Vast bedrag apart' : 'Vaste lasten apart'}
-        value=${html`<span class="sa-pop">${bufferLabel}<${Icon} name="chevron-up-down" size=${12} stroke=${2.4} /></span>`}
-        onClick=${pickBuffer} label=${`Buffer: ${bufferLabel}. Wijzig`} />
+      ${bufferPot
+        ? html`<${ListRow} icon="piggy" iconColor="teal" title="Buffer" subtitle=${`Het doel van je potje ${bufferPot.name}`}
+            value=${html`<span class="num">${bufferLabel}</span>`} chevron
+            onClick=${() => navigate(`/potjes/${bufferPot.id}`)} label=${`Buffer: ${bufferLabel}, het doel van je potje ${bufferPot.name}. Open het potje`} />`
+        : html`<${ListRow} icon="piggy" iconColor="teal" title="Buffer" subtitle=${buffer.amount_cents != null ? 'Vast bedrag apart' : 'Vaste lasten apart'}
+            value=${html`<span class="sa-pop">${bufferLabel}<${Icon} name="chevron-up-down" size=${12} stroke=${2.4} /></span>`}
+            onClick=${pickBuffer} label=${`Buffer: ${bufferLabel}. Wijzig`} />`}
       <li class="field-row"><span class="field-label sa-grow">Betaalrekening niet onder</span>
         <span class="td-stepper">
           <button aria-label="Lager" onClick=${() => stepFloor(-1)} disabled=${(floor.cents ?? 0) <= FLOOR_STEPS[0]}><${Icon} name="minus" size=${16} stroke=${2.4} /></button>

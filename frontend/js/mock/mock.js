@@ -246,7 +246,7 @@ function flows(pid) {
   return cached('flows:' + pid, () => {
     const { from, to } = periodBounds(pid);
     const splits = allSplits();
-    const res = { income: 0, fixed: 0, daily: 0, saved: 0, repaid: 0, card: 0, cats: new Map(), incomeCats: new Map(), dailyByDay: new Map() };
+    const res = { income: 0, fixed: 0, daily: 0, saved: 0, repaid: 0, card: 0, spreadFixed: 0, spreadDaily: 0, cats: new Map(), incomeCats: new Map(), dailyByDay: new Map(), repaidCats: new Map() };
     const unexplained = settlementUnexplained().map;
     const ccCat = catByKey('creditcard');
     const addCat = (map, id, cents) => {
@@ -256,7 +256,7 @@ function flows(pid) {
     const links = possessionLinks();
     for (const p of periodParts(pid)) {
       const c = catById(p.category_id);
-      if (c.grp === 'fixed') res.fixed += p.cents; else { res.daily += p.cents; res.dailyByDay.set(p.date, (res.dailyByDay.get(p.date) || 0) + p.cents); }
+      if (c.grp === 'fixed') { res.fixed += p.cents; res.spreadFixed += p.cents; } else { res.daily += p.cents; res.spreadDaily += p.cents; res.dailyByDay.set(p.date, (res.dailyByDay.get(p.date) || 0) + p.cents); }
       addCat(res.cats, c.id, p.cents);
     }
     for (const t of db.transactions) {
@@ -277,7 +277,7 @@ function flows(pid) {
         const share = amt < 0 && accById(t.account_id)?.type === 'checking' ? splits.get(t.merchant_key) : 0;
         const rep = share ? Math.round(-amt * share) : 0;
         res.fixed += -amt - rep; addCat(res.cats, c.id, -amt - rep);
-        if (rep) { res.saved += rep; res.repaid += rep; }
+        if (rep) { res.saved += rep; res.repaid += rep; res.repaidCats.set(c.id, (res.repaidCats.get(c.id) || 0) + rep); }
       }
       else if (c.grp === 'daily') {
         res.daily -= amt; addCat(res.cats, c.id, -amt);
@@ -481,7 +481,7 @@ function overview(pid) {
     left_cents: left, per_day_left_cents: perDay, net_cents: net, result_cents: f.income - f.fixed - f.daily,
     pace, categories, income, upcoming, insights: [], unsorted,
     balance: { checking_cents: checking, expected_end_cents: expectedEnd },
-    free: null, tempo: null, buffer: null, checking_warning: null,
+    free: null, tempo: null, buffer: null, checking_warning: null, health: null,
   };
   if (p.is_current) Object.assign(result, outlook());
   result.insights = insights(result, prev);
@@ -555,7 +555,7 @@ function yearOverview(year) {
     upcoming: [], insights: [],
     unsorted: { merchants: q.length, transactions: q.reduce((s, x) => s + x.count, 0), cents: q.reduce((s, x) => s + x.total_cents, 0) },
     balance: { checking_cents: checking, expected_end_cents: null },
-    free: null, tempo: null, buffer: null, checking_warning: null,
+    free: null, tempo: null, buffer: null, checking_warning: null, health: null,
   };
 }
 
@@ -619,25 +619,46 @@ function outlook() {
     .sort((x, y) => db.transactions.filter((t) => t.account_id === y.id).length - db.transactions.filter((t) => t.account_id === x.id).length)[0];
   // typical daily spending per day: median per-day rate of the last six complete periods,
   // without credit-card settlement lumps (estimated separately)
-  const rates = hist.slice(0, 6).map((x) => (flows(x).daily - flows(x).card) / periodObj(x).days_total);
+  const rates = hist.slice(0, 6).map((x) => (flows(x).daily - flows(x).spreadDaily - flows(x).card) / periodObj(x).days_total);
   const rate = rates.length ? median(rates) : 0;
   const goals = goalsData().goals;
-  const h6 = hist.slice(0, 6);
-  const monthlyFixed = h6.length ? h6.reduce((s, x) => s + flows(x).fixed + flows(x).repaid, 0) / h6.length : 0;
-  const target = a.buffer.amount_cents != null ? a.buffer.amount_cents : Math.round(monthlyFixed * a.buffer.months);
+  const monthlyFixed = monthlyFixedCosts();
+  // one buffer (SPEC 9): the target of the buffer potje when it has one, else the assumption
+  const pots = goals.filter((g) => /buffer/i.test(g.name));
+  const potTarget = pots.reduce((s, g) => s + (g.target_cents || 0), 0);
+  const target = potTarget > 0 ? potTarget : assumedBuffer()[0];
 
+  // buffer: a potje named "buffer", else savings outside potjes (at most the target)
+  let buffer = null;
+  const savingAccs = accs.filter((x) => x.type === 'savings');
+  const savingsTotal = savingAccs.reduce((s, x) => s + x.balance_cents, 0);
+  {
+    const freeSav = Math.max(0, savingsTotal - goals.reduce((s, g) => s + Math.max(0, g.saldo_cents), 0));
+    const saved = pots.length ? pots.reduce((s, g) => s + Math.max(0, g.saldo_cents), 0) : target ? Math.min(freeSav, target) : freeSav;
+    if (target || saved) {
+      buffer = { saved_cents: saved, target_cents: target, source: pots.length ? 'potje' : 'savings',
+        target_source: potTarget > 0 ? 'potje' : 'assumption', goal_id: pots[0]?.id ?? null, monthly_fixed_cents: Math.round(monthlyFixed),
+        months: monthlyFixed > 0 ? Math.round((saved / monthlyFixed) * 10) / 10 : null,
+        target_months: monthlyFixed > 0 ? Math.round((target / monthlyFixed) * 10) / 10 : null };
+    }
+  }
+
+  // Nog te besteden: the checking account(s) only; savings next to it (services/outlook.py free)
   let free = null;
   const base = chk?.as_of || accs.map((x) => x.as_of).filter(Boolean).sort().at(-1) || db.today;
   const [pay, source] = payday(rec, base < db.today ? base : db.today);
-  if (accs.length) {
-    const balances = accs.reduce((s, x) => s + x.balance_cents, 0);
-    const savings = accs.filter((x) => x.type === 'savings').reduce((s, x) => s + x.balance_cents, 0);
-    const as_of = accs.map((x) => x.as_of).filter(Boolean).sort()[0] || null;
+  const checking = accs.filter((x) => x.type === 'checking');
+  if (checking.length) {
+    const balances = checking.reduce((s, x) => s + x.balance_cents, 0);
+    const as_of = checking.map((x) => x.as_of).filter(Boolean).sort()[0] || null;
     const credit = db.accounts.filter((x) => x.type === 'credit' && !x.hidden).reduce((s, x) => s + (accountBalance(x).outstanding_cents || 0), 0);
-    const inGoals = goals.reduce((s, g) => s + Math.max(0, g.saldo_cents), 0);
-    const goals_cents = savings > 0 ? Math.min(inGoals, savings) : 0;
     const start = as_of ? addDays(as_of, 1) : db.today;
     const fixed = due(start, pay, ['fixed']).reduce((s, [it]) => s - it.amount_cents, 0);
+    const periodStart = periodBounds(currentPeriod()).from;
+    const overdue = rec.filter((it) => it.direction === 'out' && it.status !== 'ended' && grp(it) === 'fixed' && it.next_date >= periodStart && it.next_date < start)
+      .map((it) => ({ name: it.name, date: it.next_date, cents: -it.amount_cents })).sort((x, y) => (x.date < y.date ? -1 : 1));
+    const overdueCents = overdue.reduce((s, x) => s + x.cents, 0);
+    const toSavings = Math.max(0, due(start, pay, ['saving']).reduce((s, [it]) => s - it.amount_cents, 0));
     // next credit-card settlement: median unexplained part of the last three, one month on
     const unexpl = settlementUnexplained().map;
     const settles = db.transactions.filter((t) => t.kind === 'settlement' && (unexpl.get(t.id) || 0) > 0).sort((x, y) => (x.date < y.date ? -1 : 1));
@@ -651,29 +672,22 @@ function outlook() {
     }
     const days = Math.max(0, daysBetween(start, pay));
     const daily = Math.round(rate * days);
-    const total = balances - goals_cents - fixed - credit - (card ? card.cents : 0) - daily;
+    const total = balances - fixed - overdueCents - toSavings - credit - (card ? card.cents : 0) - daily;
     const daysLeft = daysBetween(db.today, pay);
+    const inGoals = goals.reduce((s, g) => s + Math.max(0, g.saldo_cents), 0);
+    const goalsCents = savingsTotal > 0 ? Math.min(inGoals, savingsTotal) : 0;
+    const reserved = buffer && buffer.source === 'savings' ? Math.min(buffer.saved_cents, buffer.target_cents || 0, Math.max(0, savingsTotal - goalsCents)) : 0;
+    const accJson = (x) => ({ name: x.name, type: x.type, balance_cents: x.balance_cents, as_of: x.as_of, stale: stale(x.as_of) });
     free = {
-      total_cents: total, balances_cents: balances, goals_cents, fixed_until_payday_cents: fixed, credit_cents: credit,
+      total_cents: total, balances_cents: balances, fixed_until_payday_cents: fixed, fixed_overdue_cents: overdueCents, fixed_overdue: overdue,
+      saving_until_payday_cents: toSavings, credit_cents: credit,
       card_settlement: card, daily_until_payday_cents: daily, daily_rate_cents: Math.round(rate), daily_days: days,
       days_left: Math.max(0, daysLeft), per_day_cents: daysLeft > 0 ? Math.trunc(total / daysLeft) : null,
+      day_budget_cents: daysLeft > 0 ? Math.max(0, Math.round(rate + total / daysLeft)) : null,
       payday: pay, payday_source: source, salary_pending: pay <= db.today, as_of, stale: stale(as_of),
-      accounts: accs.map((x) => ({ name: x.name, type: x.type, balance_cents: x.balance_cents, as_of: x.as_of, stale: stale(x.as_of) })),
+      accounts: checking.map(accJson),
+      savings: savingAccs.length ? { balance_cents: savingsTotal, goals_cents: goalsCents, buffer_cents: reserved, free_cents: Math.max(0, savingsTotal - goalsCents - reserved), accounts: savingAccs.map(accJson) } : null,
     };
-  }
-
-  // buffer: a potje named "buffer", else savings outside potjes (at most the target)
-  let buffer = null;
-  {
-    const savings = accs.filter((x) => x.type === 'savings').reduce((s, x) => s + x.balance_cents, 0);
-    const pots = goals.filter((g) => /buffer/i.test(g.name));
-    const freeSav = Math.max(0, savings - goals.reduce((s, g) => s + Math.max(0, g.saldo_cents), 0));
-    const saved = pots.length ? pots.reduce((s, g) => s + Math.max(0, g.saldo_cents), 0) : target ? Math.min(freeSav, target) : freeSav;
-    if (target || saved) {
-      buffer = { saved_cents: saved, target_cents: target, source: pots.length ? 'potje' : 'savings',
-        months: monthlyFixed > 0 ? Math.round((saved / monthlyFixed) * 10) / 10 : null,
-        target_months: monthlyFixed > 0 ? Math.round((target / monthlyFixed) * 10) / 10 : null };
-    }
   }
 
   let tempo = null;
@@ -709,7 +723,53 @@ function outlook() {
       checking_warning = { date: lowDay, low_cents: lowC, floor_cents: floor, suggest_cents: sav >= suggest ? suggest : null, account_id: chk.id, payday: pay };
     }
   }
-  return { free, tempo, buffer, checking_warning };
+  return { free, tempo, buffer, checking_warning, health: health(buffer) };
+}
+
+/** Average monthly fixed costs (services/outlook.py monthly_fixed): with the mortgage repayment,
+ *  without spread parts; previous up to six complete periods, else recurring items. */
+function monthlyFixedCosts() {
+  const h6 = previousComplete(currentPeriod(), 6);
+  if (h6.length) return h6.reduce((s, x) => s + flows(x).fixed - flows(x).spreadFixed + flows(x).repaid, 0) / h6.length;
+  return -recurringItems().filter((it) => it.direction === 'out' && it.status !== 'ended' && catById(it.category_id)?.grp === 'fixed').reduce((s, it) => s + it.per_month_cents, 0);
+}
+
+/** [cents, reason] of the `buffer` assumption (services/outlook.py assumed_buffer_target). */
+function assumedBuffer() {
+  const b = assumptionsOut().buffer;
+  if (b.amount_cents != null) return [Math.max(0, b.amount_cents), 'je eigen bedrag'];
+  const m = Number(b.months || 0);
+  return [Math.max(0, Math.round(monthlyFixedCosts() * m)), `${String(m).replace('.', ',')} ${m === 1 ? 'maand' : 'maanden'} vaste lasten`];
+}
+
+/** Hoe staan we ervoor (services/health.py). */
+function health(buffer) {
+  const hist = previousComplete(currentPeriod(), 12);
+  if (hist.length < 2) return null;
+  const n = hist.length;
+  const avg = (fn) => hist.reduce((s, p) => s + fn(flows(p)), 0) / n;
+  const income = avg((f) => f.income);
+  const fixed = avg((f) => f.fixed - f.spreadFixed + f.repaid);
+  const repaid = avg((f) => f.repaid);
+  const saved = avg((f) => f.saved - f.repaid);
+  const housingIds = ['wonen', 'energie', 'belastingen'].map((k) => catByKey(k)?.id).filter(Boolean);
+  // without spread parts: the parts are in f.cats too, so take them out per bakje
+  const housing = avg((f) => housingIds.reduce((s, id) => s + (f.cats.get(id)?.cents || 0) + (f.repaidCats.get(id) || 0), 0))
+    - hist.reduce((s, p) => s + periodParts(p).filter((x) => housingIds.includes(x.category_id)).reduce((a, x) => a + x.cents, 0), 0) / n;
+  const share = (x) => (income > 0 ? Math.round((x / income) * 1000) / 1000 : null);
+  const nw = networth();
+  const debts = [];
+  if (nw.home?.debt_cents) debts.push({ kind: 'mortgage', name: 'Hypotheek', cents: nw.home.debt_cents });
+  for (const x of nw.assets || []) if (x.kind === 'debt' && (x.value_cents || 0) > 0) debts.push({ kind: 'debt', name: x.name, cents: x.value_cents, id: x.id });
+  const r = Math.round;
+  return {
+    months: n, income_cents: r(income),
+    buffer: buffer ? { months: buffer.months, target_months: buffer.target_months, saved_cents: buffer.saved_cents, target_cents: buffer.target_cents, source: buffer.source } : null,
+    housing: { cents: r(housing), share: share(housing) },
+    fixed: { cents: r(fixed), share: share(fixed), rest_cents: r(income - fixed) },
+    saving: { cents: r(saved), share: share(saved), repaid_cents: r(repaid) },
+    debts: { known: debts.length > 0, total_cents: debts.reduce((s, d) => s + d.cents, 0), items: debts },
+  };
 }
 
 // Informational kinds the Overzicht does not show (services/insights.py OVERZICHT_HIDDEN).
@@ -815,13 +875,15 @@ function trends(n) {
     const pid = shiftPeriod(cur, -i);
     if (pid < firstPeriod()) continue;
     const f = flows(pid);
-    periods.push({ period: pid, label: monthLabel(pid), income_cents: f.income, fixed_cents: f.fixed, daily_cents: f.daily, saved_cents: f.saved, net_cents: f.income - f.fixed - f.daily - f.saved, partial: pid === cur || pid === firstPeriod() });
+    periods.push({ period: pid, label: monthLabel(pid), income_cents: f.income, fixed_cents: f.fixed, daily_cents: f.daily, saved_cents: f.saved, repaid_cents: f.repaid, net_cents: f.income - f.fixed - f.daily - f.saved, result_cents: f.income - f.fixed - f.daily, partial: pid === cur || pid === firstPeriod() });
   }
   const catIds = db.categories.filter((c) => ['fixed', 'daily'].includes(c.grp)).map((c) => c.id);
   const categories = catIds
     .map((id) => ({ category_id: id, cents: periods.map((p) => flows(p.period).cats.get(id)?.cents || 0) }))
     .filter((c) => c.cents.some((x) => x));
-  const first = periods[0] ? periodBounds(periods[0].period).from : db.today;
+  // "top winkels" is always about one year (services/summary.py MERCHANT_MONTHS)
+  const year = periods.slice(-12);
+  const first = year[0] ? periodBounds(year[0].period).from : db.today;
   const m = new Map();
   for (const t of db.transactions) {
     if (t.date < first || !isCashflow(t) || t.amount_cents >= 0) continue;
@@ -832,7 +894,7 @@ function trends(n) {
     m.set(t.merchant_key, e);
   }
   const top_merchants = [...m.values()].sort((a, b) => b.cents - a.cents).slice(0, 10);
-  return { periods, categories, top_merchants };
+  return { periods, categories, top_merchants, top_merchants_months: year.length };
 }
 
 /* ======================================================================================
@@ -944,17 +1006,29 @@ function goalsData() {
     const prev = previousComplete(cur, 3);
     const room = prev.length
       ? (() => {
-        const avg_over_cents = Math.round(prev.reduce((s, p) => { const f = flows(p); return s + f.income - f.fixed - f.daily; }, 0) / prev.length);
-        return { avg_over_cents, fits: avg_over_cents >= total_advice_cents, difference_cents: avg_over_cents - total_advice_cents };
+        // real money left over (services/goals.py room_for): the full mortgage payment, no spread
+        // parts, minus investing that is set up to repeat
+        const n = prev.length;
+        const avg = (fn) => prev.reduce((s, p) => s + fn(flows(p)), 0) / n;
+        const income = avg((f) => f.income);
+        const fixed = avg((f) => f.fixed - f.spreadFixed + f.repaid);
+        const daily = avg((f) => f.daily - f.spreadDaily);
+        const repaid = avg((f) => f.repaid);
+        const investing = Math.max(0, recurringItems().filter((it) => it.direction === 'out' && it.status !== 'ended' && catById(it.category_id)?.key === 'beleggen').reduce((s, it) => s - it.per_month_cents, 0));
+        const avg_over_cents = Math.round(income - fixed - daily - investing);
+        return { avg_over_cents, fits: avg_over_cents >= total_advice_cents, difference_cents: avg_over_cents - total_advice_cents,
+          income_cents: Math.round(income), fixed_cents: Math.round(fixed), daily_cents: Math.round(daily), repaid_cents: Math.round(repaid), investing_cents: Math.round(investing), months: n };
       })()
       : null;
     const savings = db.accounts.filter((a) => a.type === 'savings');
     const savings_balance_cents = savings.length ? savings.reduce((s, a) => s + (accountBalance(a).balance_cents || 0), 0) : null;
     const inGoals = goals.reduce((s, g) => s + g.saldo_cents, 0);
     const suggestions = [];
-    if (!goals.some((g) => /buffer/i.test(g.name))) {
-      const avgSpend = prev.length ? prev.reduce((s, p) => s + flows(p).fixed + flows(p).daily, 0) / prev.length : 0;
-      suggestions.push({ kind: 'buffer', name: 'Buffer', emoji: '🛟', target_cents: Math.round(avgSpend * 3 / 10000) * 10000, target_date: null, reason: '3 maanden uitgaven' });
+    if (prev.length && !goals.some((g) => /buffer/i.test(g.name))) {
+      // the same buffer as the buffer bar and Slimme aannames (outlook assumedBuffer)
+      const [cents, reason] = assumedBuffer();
+      const target = Math.ceil(cents / 10000) * 10000;
+      if (target > 0) suggestions.push({ kind: 'buffer', name: 'Buffer', emoji: '🛟', target_cents: target, target_date: null, reason });
     }
     const yearly = recurringItems().filter((it) => it.frequency === 'yearly' && it.direction === 'out');
     if (yearly.length && !goals.some((g) => /jaarlijks/i.test(g.name))) {
@@ -1392,14 +1466,16 @@ function recapRange({ period, year }) {
 }
 
 function rangeTotals(periods) {
-  const t = { income_cents: 0, fixed_cents: 0, daily_cents: 0, saved_cents: 0, net_cents: 0 };
+  const t = { income_cents: 0, fixed_cents: 0, daily_cents: 0, saved_cents: 0, repaid_cents: 0, result_cents: 0, net_cents: 0 };
   const cats = new Map();
   for (const p of periods) {
     const f = flows(p);
-    t.income_cents += f.income; t.fixed_cents += f.fixed; t.daily_cents += f.daily; t.saved_cents += f.saved;
+    t.income_cents += f.income; t.fixed_cents += f.fixed; t.daily_cents += f.daily; t.saved_cents += f.saved; t.repaid_cents += f.repaid;
     for (const [id, e] of f.cats) cats.set(id, (cats.get(id) || 0) + e.cents);
   }
-  t.net_cents = t.income_cents - t.fixed_cents - t.daily_cents - t.saved_cents;
+  // over / tekort is the one result (SPEC 9): saving is not spending
+  t.result_cents = t.income_cents - t.fixed_cents - t.daily_cents;
+  t.net_cents = t.result_cents - t.saved_cents;
   return { t, cats };
 }
 
@@ -1464,12 +1540,12 @@ function recap(q) {
   const startRow = series.find((x) => x.month === shiftPeriod(r.from.slice(0, 7), -1));
   const endRow = series.find((x) => x.month === r.to.slice(0, 7)) || series.at(-1);
   const nw = startRow && endRow ? { start_cents: startRow.total_cents, end_cents: endRow.total_cents } : null;
-  const months = r.kind === 'year' ? r.periods.map((p) => { const f = flows(p); return { period: p, label: monthLabel(p), income_cents: f.income, fixed_cents: f.fixed, daily_cents: f.daily, saved_cents: f.saved, net_cents: f.income - f.fixed - f.daily - f.saved }; }) : null;
+  const months = r.kind === 'year' ? r.periods.map((p) => { const f = flows(p); return { period: p, label: monthLabel(p), income_cents: f.income, fixed_cents: f.fixed, daily_cents: f.daily, saved_cents: f.saved, repaid_cents: f.repaid, result_cents: f.income - f.fixed - f.daily, net_cents: f.income - f.fixed - f.daily - f.saved }; }) : null;
 
   const vs = r.kind === 'period' ? 'vorige maand' : 'vorig jaar';
   const hl = [];
   if (counted.length) {
-    hl.push(totals.net_cents >= 0 ? { emoji: '🎉', title: `${euros(totals.net_cents)} over in ${r.short}`, detail: null } : { emoji: '🧾', title: `${euros(-totals.net_cents)} meer uitgegeven dan er binnenkwam`, detail: null });
+    hl.push(totals.result_cents >= 0 ? { emoji: '🎉', title: `${euros(totals.result_cents)} over in ${r.short}`, detail: null } : { emoji: '🧾', title: `${euros(-totals.result_cents)} meer uitgegeven dan er binnenkwam`, detail: null });
     const top = categories[0] && catById(categories[0].category_id);
     if (top) hl.push({ emoji: top.emoji, title: `${top.name} was het grootste bakje: ${euros(categories[0].cents)} (${pctNl(categories[0].share)})`, detail: null });
     const up = movers.up[0] && catById(movers.up[0].category_id);

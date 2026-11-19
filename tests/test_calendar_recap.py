@@ -200,10 +200,13 @@ def test_recap_period(client, book):
     r = client.get("/api/recap?period=2026-02").json()
     assert (r["kind"], r["label"], r["from"], r["to"], r["complete"]) == (
         "period", "februari 2026", "2026-02-01", "2026-02-28", True)
+    # over / tekort is the one result (SPEC 9): saving is not spending
     assert r["totals"] == {"income_cents": 300000, "fixed_cents": 100000, "daily_cents": 55000,
-                           "saved_cents": 50000, "net_cents": 95000}
+                           "saved_cents": 50000, "repaid_cents": 0, "result_cents": 145000,
+                           "net_cents": 95000}
     assert r["previous"] == {"label": "januari 2026", "income_cents": 300000, "fixed_cents": 100000,
-                             "daily_cents": 35000, "saved_cents": 50000, "net_cents": 115000}
+                             "daily_cents": 35000, "saved_cents": 50000, "repaid_cents": 0,
+                             "result_cents": 165000, "net_cents": 115000}
     c = book.cats
     assert r["categories"] == [
         {"category_id": c["wonen"], "cents": 100000, "previous_cents": 100000, "share": 0.6452},
@@ -219,7 +222,7 @@ def test_recap_period(client, book):
     assert r["savings"] == {"saved_cents": 50000, "rate": 0.1667, "goals": []}
     assert r["networth"] is None and r["months"] is None
     titles = [h["title"] for h in r["highlights"]]
-    assert titles[0] == f"{E}950 over in februari"
+    assert titles[0] == f"{E}1.450 over in februari"       # the same as the Overzicht
     assert titles[1] == f"Wonen was het grootste bakje: {E}1.000 (65 %)"
     assert titles[2].endswith(f"{E}100 meer dan vorige maand")
     assert f"17 % van je inkomen gespaard ({E}500)" in titles
@@ -247,7 +250,7 @@ def test_recap_year_with_partial_months(client, book, today):
     y = client.get("/api/recap?year=2026").json()
     assert y["kind"] == "year" and y["complete"] is False and y["from"] == "2026-01-01"
     assert [m["period"] for m in y["months"]] == ["2026-01", "2026-02", "2026-03"]
-    for key in ("income_cents", "fixed_cents", "daily_cents", "saved_cents", "net_cents"):
+    for key in ("income_cents", "fixed_cents", "daily_cents", "saved_cents", "result_cents", "net_cents"):
         assert y["totals"][key] == sum(m[key] for m in y["months"])
     assert y["previous"] is None                         # 2025 has only December
     y25 = client.get("/api/recap?year=2025").json()
@@ -255,6 +258,9 @@ def test_recap_year_with_partial_months(client, book, today):
     assert y25["totals"]["daily_cents"] == 30000
     t = {p["period"]: p for p in client.get("/api/trends").json()["periods"]}
     assert y["months"][0]["net_cents"] == t["2026-01"]["net_cents"]
+    assert y["months"][0]["result_cents"] == t["2026-01"]["result_cents"]
+    ov = client.get("/api/overview?period=2026-01").json()
+    assert y["months"][0]["result_cents"] == ov["result_cents"]     # Terugblik == Overzicht
     assert client.get("/api/recap/index").json()["years"] == [2026, 2025]
     assert client.get("/api/recap?year=2027").status_code == 400
     assert client.get("/api/recap?year=abc").status_code == 400

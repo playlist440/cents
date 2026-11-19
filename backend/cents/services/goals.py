@@ -343,15 +343,17 @@ def one_goal(conn: sqlite3.Connection, goal_id: int) -> dict:
 
 
 def suggestions(conn: sqlite3.Connection, lg: ledger_mod.Ledger, goals: list[dict]) -> list[dict]:
+    from . import outlook                  # local import: outlook reads the goals
     names = " ".join(norm_text(g["name"]) for g in goals)
     out = []
     history = lg.complete_before(lg.current(), 6)
-    if "buffer" not in names.split() and history:
-        avg = sum(lg.flows_for(p).fixed + lg.flows_for(p).daily for p in history) / len(history)
-        target = int(math.ceil(3 * avg / 10000) * 10000)
+    if history and not any(outlook.is_buffer(g["name"]) for g in goals):
+        # the same buffer as the buffer bar and Slimme aannames (outlook.assumed_buffer_target)
+        cents, reason = outlook.assumed_buffer_target(conn, lg, recurring.items(conn))
+        target = int(math.ceil(cents / 10000) * 10000)
         if target > 0:
             out.append({"kind": "buffer", "name": "Buffer", "emoji": "🛟", "target_cents": target,
-                        "target_date": None, "reason": "3 maanden uitgaven"})
+                        "target_date": None, "reason": reason})
     yearly = [i for i in recurring.items(conn)
               if i["frequency"] == "yearly" and i["direction"] == "out" and i["status"] != "ended"]
     if yearly and "jaarlijkse" not in names.split() and "jaarlijks" not in names.split():
@@ -361,6 +363,34 @@ def suggestions(conn: sqlite3.Connection, lg: ledger_mod.Ledger, goals: list[dic
                         "target_cents": total, "target_date": None,
                         "reason": f"{euro(total / 12)} per maand"})
     return out
+
+
+ROOM_MONTHS = 3
+
+
+def room_for(conn: sqlite3.Connection, lg: ledger_mod.Ledger, advice: int) -> dict | None:
+    """Does the advice for all potjes fit (SPEC 9 Goals)? Compared with the real money left over
+    per month in the last three complete periods: income − fixed costs with the full mortgage
+    payment (the repayment is money that leaves) − daily spending, both without spread parts
+    (one-off purchases are not a monthly pattern), − investing that is set up to repeat."""
+    history = lg.complete_before(lg.current(), ROOM_MONTHS)
+    if not history:
+        return None
+    flows = [lg.flows_for(p) for p in history]
+    n = len(flows)
+    income = sum(f.income for f in flows) / n
+    fixed = sum(f.fixed - f.spread_fixed + f.repaid for f in flows) / n
+    daily = sum(f.daily - f.spread_daily for f in flows) / n
+    repaid = sum(f.repaid for f in flows) / n
+    invest_key = lg.cat_ids.get("beleggen")
+    investing = -sum(i["per_month_cents"] for i in recurring.items(conn)
+                     if i["direction"] == "out" and i["status"] != "ended" and invest_key is not None
+                     and i["category_id"] == invest_key)
+    over = int(round(income - fixed - daily - max(0, investing)))
+    return {"avg_over_cents": over, "fits": over >= advice, "difference_cents": over - advice,
+            "income_cents": int(round(income)), "fixed_cents": int(round(fixed)),
+            "daily_cents": int(round(daily)), "repaid_cents": int(round(repaid)),
+            "investing_cents": max(0, int(round(investing))), "months": n}
 
 
 def overview(conn: sqlite3.Connection) -> dict:
@@ -378,14 +408,7 @@ def overview(conn: sqlite3.Connection) -> dict:
                                              "WHERE e.transaction_id = t.id)", (since,))
         unassigned = sorted(unassigned, key=lambda r: (r["date"], r["id"]), reverse=True)[:UNASSIGNED_MAX]
         total_advice = sum(g["monthly_advice_cents"] for g in active)
-        history = lg.complete_before(lg.current(), 3)
-        room = None
-        if history:
-            over = sum(lg.flows_for(p).income - lg.flows_for(p).fixed - lg.flows_for(p).daily
-                       for p in history) / len(history)
-            avg_over = int(round(over))
-            room = {"avg_over_cents": avg_over, "fits": avg_over >= total_advice,
-                    "difference_cents": avg_over - total_advice}
+        room = room_for(conn, lg, total_advice)
         savings_balance = networth.balance_of_type(conn, "savings")
         in_goals = sum(g["saldo_cents"] for g in active)
         return {

@@ -4,13 +4,17 @@ Inzicht in het huishoudgeld van één gezin. Je importeert af en toe een bestand
 Cents sorteert alles in bakjes en laat zien wat er binnenkomt, wat vast is, wat je uitgeeft
 en hoe je potjes ervoor staan.
 
+- **Hoe staan we ervoor**: buffer, woonlasten, vaste lasten, sparen en schulden in vijf rustige
+  regels, elk met één zin uitleg.
+- **Nog te besteden** tot je salaris komt uit je betaalrekening; vrij spaargeld staat ernaast.
+
 - Import van ASN-exports (CSV) en CAMT.053 (XML). Dubbele transacties worden herkend, ook als
   je dezelfde periode in het andere formaat importeert.
 - Een bibliotheek met Nederlandse winkels, incassanten en winkelcodes zet de meeste betalingen
   vanzelf in het goede bakje. Wat je zelf sorteert, onthoudt de app voor die winkel.
 - Vaste lasten en abonnementen worden herkend, inclusief prijsstijgingen, met een
   betaalkalender en de kosten per jaar.
-- Potjes met een doelbedrag en een advies per maand.
+- Potjes met een doelbedrag en een advies per maand, getoetst aan wat je echt overhoudt.
 - Een terugblik per maand en per jaar, ook om af te drukken.
 - Een grote aankoop die je jaren gebruikt kun je over maanden verdelen. Iets dat je later weer
   verkoopt, zoals een auto, wordt een bezitting: de waarde staat bij Vermogen en elke maand

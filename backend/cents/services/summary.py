@@ -174,6 +174,7 @@ def build_overview(conn: sqlite3.Connection, lg: Ledger, p: Period) -> dict:
     ov["tempo"] = now.get("tempo")
     ov["buffer"] = now.get("buffer")
     ov["checking_warning"] = now.get("checking_warning")
+    ov["health"] = now.get("health")
     ov["insights"] = insights.compute(conn, lg, p, ov, overview=True)
     return ov
 
@@ -305,6 +306,7 @@ def build_year_overview(conn: sqlite3.Connection, lg: Ledger, year: int) -> dict
         "tempo": None,
         "buffer": None,
         "checking_warning": None,
+        "health": None,
     }
 
 
@@ -320,6 +322,9 @@ def overview(conn: sqlite3.Connection, period_id: str | None) -> dict:
 
 # ---------------------------------------------------------------------------- trends
 
+MERCHANT_MONTHS = 12
+
+
 def trends(conn: sqlite3.Connection, n: int = 12) -> dict:
     lg = ledger_mod.get(conn)
 
@@ -331,7 +336,8 @@ def trends(conn: sqlite3.Connection, n: int = 12) -> dict:
         complete = {q.id for q in lg.complete_before(current, 10000)}
         out_periods = [{"period": p.id, "label": p.label, "income_cents": f.income,
                         "fixed_cents": f.fixed, "daily_cents": f.daily, "saved_cents": f.saved,
-                        "repaid_cents": f.repaid, "net_cents": f.net, "partial": p.id not in complete}
+                        "repaid_cents": f.repaid, "net_cents": f.net,
+                        "result_cents": f.income - f.fixed - f.daily, "partial": p.id not in complete}
                        for p, f in zip(plist, flows)]
         categories = []
         for cid, cat in lg.categories.items():
@@ -342,7 +348,7 @@ def trends(conn: sqlite3.Connection, n: int = 12) -> dict:
                 categories.append({"category_id": cid, "cents": cents})
         categories.sort(key=lambda c: -sum(c["cents"]))
         merchants: dict[str, dict] = {}
-        for f in flows:
+        for f in flows[-MERCHANT_MONTHS:]:          # "top winkels" is always about one year
             for r in f.rows:
                 grp, cid, value = r["bucket"]
                 if grp not in (FIXED, DAILY) or not r["merchant_key"]:
@@ -354,7 +360,8 @@ def trends(conn: sqlite3.Connection, n: int = 12) -> dict:
                 m["count"] += 1
                 m["merchant_name"], m["category_id"] = r["merchant_name"] or m["merchant_name"], cid
         top = sorted(merchants.values(), key=lambda m: -m["cents"])[:10]
-        return {"periods": out_periods, "categories": categories, "top_merchants": top}
+        return {"periods": out_periods, "categories": categories, "top_merchants": top,
+                "top_merchants_months": min(len(flows), MERCHANT_MONTHS)}
     return cache.memo(conn, f"trends:{n}", compute)
 
 
