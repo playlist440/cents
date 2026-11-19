@@ -433,7 +433,9 @@ date + 3 days)` so that stale data does not look like a quiet month.
 
 **Recurring** (`services/recurring.py`), separately for money out and money in, computed on the
 fly and cached until the next write:
-- Group by `merchant_key`; within a merchant, cluster by amount (sorted; same cluster while
+- Group by `merchant_key` and, for payments to a person or an own account, by the receiving
+  account (one name with a pocket-money and an investment account gives two items, named
+  "<naam> · <rekening>"); within a group, cluster by amount (sorted; same cluster while
   `amount ≤ previous × 1.15 + €0.50`) so two policies with one insurer become two items.
 - A cluster is recurring when it has ≥ 3 payments, the median gap fits a frequency window
   (weekly 5–9 days, 2-weekly 12–16, monthly 24–38, every gap 26–29 = 4-weekly, quarterly

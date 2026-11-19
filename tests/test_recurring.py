@@ -284,3 +284,19 @@ def test_unsorted_fortnightly_transfers_are_not_fixed_costs(client, book):
                 method="transfer")
     book.commit()
     assert not client.get("/api/recurring").json()["items"]
+
+
+def test_one_name_two_accounts_are_two_items(client, book):
+    """Transfers in your own name to a pocket-money account and an investment account are two
+    fixed items, not one summed one (2026-11)."""
+    chk = book.account("Betaal", "checking")
+    for i in range(6):
+        day = date(2026, 1, 1) + timedelta(days=31 * i)
+        for iban in ("NL11BANK0000000001", "NL22BANK0000000002"):
+            tid = book.tx(chk, day.replace(day=5).isoformat(), -10000, "sparen", "p:test gezin", method="transfer")
+            book.conn.execute("UPDATE transactions SET counterparty_iban = ? WHERE id = ?", (iban, tid))
+    book.commit()
+    items = [i for i in client.get("/api/recurring").json()["items"] if i["merchant_key"] == "p:test gezin"]
+    assert len(items) == 2
+    assert {i["amount_cents"] for i in items} == {-10000}
+    assert len({i["key"] for i in items}) == 2 and all("••" in i["name"] for i in items)

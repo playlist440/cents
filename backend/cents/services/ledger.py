@@ -143,9 +143,11 @@ class Ledger:
 _SELECT = """
     SELECT t.id, COALESCE(t.book_date, t.date) AS date, t.amount_cents, t.category_id, t.merchant_key, t.merchant_name,
            t.method, t.kind, t.account_id, t.transfer_account_id, t.manual, t.description,
+           t.counterparty_iban, ta.name AS transfer_account_name,
            a.type AS account_type, c.key AS category_key, c.grp AS grp
     FROM transactions t
     JOIN accounts a ON a.id = t.account_id
+    LEFT JOIN accounts ta ON ta.id = t.transfer_account_id
     LEFT JOIN categories c ON c.id = t.category_id
     WHERE a.hidden = 0 AND (a.type = 'checking' OR (a.type = 'credit' AND t.manual = 1)
        OR (a.type IN ('savings', 'investment') AND t.method = 'interest'))

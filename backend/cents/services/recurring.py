@@ -287,6 +287,16 @@ def _busy_between(pair: list[dict], txs: list[dict]) -> bool:
     return sum(1 for t in txs if lo < t["date"] < hi and t["id"] not in ids) >= 2
 
 
+def _destination(r: dict) -> str | None:
+    """Which account a transfer goes to, for payments to a person or an own account (a name can
+    have several accounts); None for shops and companies."""
+    if r.get("transfer_account_id"):
+        return f"acc{r['transfer_account_id']}" + (r.get("counterparty_iban") or "")[-4:]
+    if (r.get("merchant_key") or "").startswith("p:") and r.get("counterparty_iban"):
+        return r["counterparty_iban"]
+    return None
+
+
 def public(item: dict) -> dict:
     return {k: v for k, v in item.items() if not k.startswith("_")}
 
@@ -299,11 +309,16 @@ def detect_full(rows: list[dict], data_today: date, ignored: set[str] = frozense
         d = _day(r)
         if acc not in starts or d < starts[acc]:
             starts[acc] = d
-    groups: dict[tuple[str, bool], list[dict]] = {}
+    groups: dict[tuple, list[dict]] = {}
     for r in rows:
         if r["amount_cents"] == 0:
             continue
-        groups.setdefault((r["merchant_key"], r["amount_cents"] < 0), []).append(r)
+        groups.setdefault((r["merchant_key"], r["amount_cents"] < 0, _destination(r)), []).append(r)
+    # one name, several accounts (your own name on a pocket-money and an investment account):
+    # those are separate items, told apart by the account
+    split = {}
+    for mk, out, dest in groups:
+        split.setdefault((mk, out), set()).add(dest)
     items = []
     for txs in groups.values():
         if len(txs) < 2:
@@ -317,6 +332,11 @@ def detect_full(rows: list[dict], data_today: date, ignored: set[str] = frozense
             if item and item["_group"] == "daily" and _busy_between(flat, [t for t in txs if t not in flat]):
                 continue    # a shop or restaurant you also visit at other times: no subscription
             if item:
+                dest = _destination(flat[-1])
+                if dest and len(split.get((flat[-1]["merchant_key"], flat[-1]["amount_cents"] < 0), ())) > 1:
+                    label = flat[-1].get("transfer_account_name") or f"rekening ••{dest[-4:]}"
+                    item["name"] = f"{item['name']} · {label}"
+                    item["key"] = item["key"].replace(item["merchant_key"], f"{item['merchant_key']}@{dest[-4:]}", 1)
                 items.append(item)
     seen: dict[str, int] = {}
     for item in sorted(items, key=lambda i: (i["last_date"], i["name"])):
