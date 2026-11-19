@@ -22,6 +22,7 @@ import ssl
 import threading
 import time
 import os
+import re
 import urllib.error
 import urllib.parse
 import os
@@ -71,6 +72,14 @@ def _ssl_context() -> ssl.SSLContext:
 _SSL: ssl.SSLContext | None = None
 
 
+ISIN = re.compile(r"^[A-Z]{2}[A-Z0-9]{9}[0-9]$")
+MAX_LOOKUPS = 8              # new symbol searches per run (several requests each): no rate limit
+
+
+class RateLimited(Exception):
+    """Yahoo answered 429: stop this run, keep what was fetched."""
+
+
 def http_get(url: str) -> bytes:
     """GET with timeout and retries (1 s, 2 s backoff). Raises OfflineError.
 
@@ -90,6 +99,8 @@ def http_get(url: str) -> bytes:
             last = exc
             if exc.code == 404:
                 break
+            if exc.code == 429:
+                raise RateLimited("Yahoo vraagt om even te wachten (te veel verzoeken)") from exc
         except Exception as exc:          # URLError, timeout, ...
             last = exc
         if attempt < RETRIES - 1:
@@ -135,7 +146,16 @@ class YahooProvider:
         """ISIN search first. Prefer the listing on the DEGIRO exchange (same currency): try
         <base>.<suffix>, then a name search restricted to listings with exactly the same fund
         name as the ISIN hit. Fall back to the ISIN hit itself (other currency, converted)."""
-        quotes = self._search(isin)
+        real_isin = bool(ISIN.match(isin or ""))
+        quotes = self._search(isin) if real_isin else []
+        if not real_isin:
+            # eToro without ISIN ("ETORO-AAPL"): the ticker itself, a crypto pair, then a search
+            # on ticker or name
+            tick = (symbol or isin.removeprefix("ETORO-")).upper()
+            for sym in (tick, f"{tick}-EUR", f"{tick}-USD"):
+                if self._works(sym):
+                    return sym
+            quotes = self._search(tick) or (self._search(name) if name else [])
         suffix = YAHOO_SUFFIX.get((exchange or "").upper())
         if suffix:
             bases = ([symbol] if symbol else []) + [q["symbol"].split(".")[0] for q in quotes]
@@ -324,26 +344,41 @@ def _refresh(db_path: str, force: bool) -> dict:
         conn.close()
 
     fetched: list[tuple[dict, str | None, str, list[tuple[str, float]]]] = []
-    errors = []
+    errors, later = [], 0
+    known = lambda s: s["price_symbol_source"] in ("auto", "user") and s["price_symbol"]  # noqa: E731
+    plan.sort(key=lambda x: not known(x[0]))          # funds with a symbol first, searches last
+    lookups = 0
     for s, start in plan:
         try:
-            sym = s["price_symbol"] if s["price_symbol_source"] in ("auto", "user") and s["price_symbol"] else None
+            sym = s["price_symbol"] if known(s) else None
             if not sym and s["price_symbol_source"] != "none":
+                if lookups >= MAX_LOOKUPS:
+                    later += 1                        # next run: Yahoo limits many searches at once
+                    continue
+                lookups += 1
                 sym = PROVIDER.lookup(s["isin"], s["exchange"], s["currency"], s["symbol"], name=s["name"])
             if not sym:
-                errors.append(f"{s['isin']}: niet gevonden")
+                # eToro without ISIN has its own prices from the export: not an error
+                if not str(s["isin"]).startswith("ETORO-"):
+                    errors.append(f"{s['name'] or s['isin']}: niet gevonden")
                 fetched.append((s, None, "", []))
                 continue
             cur, pts = PROVIDER.history(sym, start)
             fetched.append((s, sym, cur, pts))
+        except RateLimited as exc:
+            errors.append(str(exc))
+            break                                     # keep what we have; the next run continues
         except OfflineError as exc:
-            errors.append(f"{s['isin']}: {exc}")
+            errors.append(f"{s['name'] or s['isin']}: {exc}")
+        except Exception as exc:                      # one odd answer never stops the others
+            log.warning("price fetch %s failed: %s", s["isin"], exc)
+            errors.append(f"{s['name'] or s['isin']}: {exc}")
     needed = {cur.upper() for _, _, cur, pts in fetched if pts and cur and cur.upper() != "EUR"}
     rates: dict = {}
     if needed:
         try:
             rates = FX_SOURCE(min(start for _, start in plan))
-        except OfflineError as exc:
+        except (OfflineError, RateLimited) as exc:
             errors.append(f"wisselkoersen: {exc}")
 
     conn = db.connect(db_path)
@@ -368,7 +403,7 @@ def _refresh(db_path: str, force: bool) -> dict:
         if n:
             cache.bump(conn)
         conn.commit()
-        return {"ok": ok, "updated": n, "errors": errors}
+        return {"ok": ok, "updated": n, "errors": errors, "later": later}
     finally:
         conn.close()
 

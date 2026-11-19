@@ -334,3 +334,41 @@ def test_bonds_are_recognised_by_name():
     assert is_bond("Vanguard Global Aggregate Bond")
     assert not is_bond("VANGUARD FTSE ALL-WORLD UCITS ETF")
     assert not is_bond("ISHARES CORE MSCI WORLD UCITS ETF")
+
+
+def test_one_bad_fund_or_rate_limit_does_not_stop_the_rest(client):
+    """After adding eToro (2026-11): one odd answer for one fund, or Yahoo's rate limit, must
+    not throw away the closes of the other funds."""
+    prices_on(client)
+    upload(client, ("Transacties.csv", fixture("degiro_transacties_nl.csv")))
+
+    class Odd(FakeProvider):
+        def history(self, symbol, start):
+            if symbol == "IWDA.AS":
+                raise ValueError("unexpected answer")
+            return super().history(symbol, start)
+
+    prices.set_provider(Odd())
+    prices.FX_SOURCE = lambda start: {"USD": [("2026-03-05", 1.08), ("2026-11-13", 1.2)]}
+    res = prices.refresh(client.app.state.db_path)
+    assert res["updated"] == 4 and any("unexpected" in e for e in res["errors"])     # VWRL + VTI saved
+
+    class Limited(FakeProvider):
+        def history(self, symbol, start):
+            if symbol == "VTI":
+                raise prices.RateLimited("Yahoo vraagt om even te wachten")
+            return super().history(symbol, start)
+
+    prices.set_provider(Limited())
+    res = prices.refresh(client.app.state.db_path, force=True)
+    assert res["updated"] >= 2 and any("wachten" in e for e in res["errors"])
+
+
+def test_etoro_without_isin_is_looked_up_by_ticker(monkeypatch):
+    """"ETORO-AAPL": no ISIN search (it finds nothing); the ticker itself is tried."""
+    p = prices.YahooProvider()
+    tried = []
+    monkeypatch.setattr(p, "_search", lambda q: tried.append(("search", q)) or [])
+    monkeypatch.setattr(p, "_works", lambda sym: tried.append(("works", sym)) or ("USD" if sym == "AAPL" else None))
+    assert p.lookup("ETORO-AAPL", None, "EUR", "AAPL", name="Apple") == "AAPL"
+    assert ("search", "ETORO-AAPL") not in tried

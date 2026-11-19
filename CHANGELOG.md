@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.3.1 — 2026-11-19
+
+- Koersen bijwerken na het toevoegen van eToro:
+  - Eén fonds met een onverwacht antwoord breekt het bijwerken van de andere fondsen niet meer af.
+  - Vraagt Yahoo om te wachten (te veel verzoeken), dan bewaart Cents wat het al had en gaat de volgende keer verder. Fondsen met een bekend symbool gaan eerst; hooguit 8 nieuwe opzoekacties per keer.
+  - eToro-posities zonder ISIN zoekt Cents op ticker (ook als crypto-paar) of naam, niet op de eigen eToro-code. Vindt Yahoo er een niet, dan houdt Cents de koers uit je eToro-export aan en meldt dat niet als fout.
+
 ## 1.3.0 — 2026-11-19
 
 - Markeer als abonnement: bij een transactie markeer je die betaling als abonnement. Cents volgt daarna precies de betalingen met dezelfde naam, tegenrekening, hetzelfde bedrag en dezelfde omschrijving (datums, maanden en nummers tellen niet mee), ook als het ritme niet helemaal klopt. Voor het bewaren zie je welke betalingen er gekoppeld worden.
