@@ -387,9 +387,15 @@ def stale(lg: Ledger, p: Period, ov: dict) -> list[dict]:
 
 def fixed_share(lg: Ledger, p: Period, ov: dict) -> list[dict]:
     if ov["period"]["is_current"]:
-        plist = lg.complete_before(p, 3)
-        if len(plist) < 2:
+        # the same figure as Hoe staan we ervoor and the Vaste lasten screen
+        h = ov.get("health")
+        if not h or not h["fixed"]["share"] or h["fixed"]["cents"] <= 0:
             return []
+        share = h["fixed"]["share"]
+        warn = share > 0.6
+        return [make("fixed_share", f"fixed_share:{p.id}", "warn" if warn else "info", "🏠",
+                     f"Je vaste lasten zijn {percent(share)} van je inkomen",
+                     "recurring", {}, h["fixed"]["cents"], bonus=0 if warn else -25)]
     else:
         if p.id not in _complete_ids(lg):
             return []

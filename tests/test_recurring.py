@@ -243,3 +243,34 @@ def test_daily_series_must_be_the_merchants_only_activity():
     for r in sitter:
         r["category_key"] = "unsorted"
     assert recurring.detect(sitter, date(2026, 6, 20)) == []      # linked prices are no subscription
+
+
+def test_services_every_two_or_four_weeks_are_recurring(client, book):
+    """A window cleaner every two weeks and a cleaner every four weeks, paid by transfer in a
+    daily bakje, are fixed costs; a weekly-ish card habit is not (mock parity, 2026-11)."""
+    chk = book.account("Betaal", "checking")
+    day = date(2026, 1, 7)
+    for i in range(12):
+        book.tx(chk, (day + timedelta(days=14 * i)).isoformat(), -2250, "huis-tuin", "Glazenwasser",
+                method="transfer")
+    for i in range(6):
+        book.tx(chk, (day + timedelta(days=28 * i)).isoformat(), -8400, "huis-tuin", "Schoonmaakhulp",
+                method="transfer")
+        book.tx(chk, (day + timedelta(days=14 * i)).isoformat(), -450, "uit-eten", "Koffiebar",
+                method="card")
+    book.commit()
+    items = {i["name"]: i for i in client.get("/api/recurring").json()["items"]}
+    assert items["Glazenwasser"]["frequency"] == "2-weekly"
+    assert items["Schoonmaakhulp"]["frequency"] == "4-weekly"
+    assert "Koffiebar" not in items
+
+
+def test_yearly_card_pair_in_a_daily_bakje_is_a_coincidence(client, book):
+    chk = book.account("Betaal", "checking")
+    book.tx(chk, "2025-07-22", -4143, "vakantie", "Tankstation", method="card")
+    book.tx(chk, "2026-07-22", -4102, "vakantie", "Tankstation", method="card")
+    book.tx(chk, "2025-07-02", -124900, "vakantie", "Camping", method="ideal")
+    book.tx(chk, "2026-07-02", -124900, "vakantie", "Camping", method="ideal")
+    book.commit()
+    names = {i["name"] for i in client.get("/api/recurring").json()["items"]}
+    assert "Camping" in names and "Tankstation" not in names

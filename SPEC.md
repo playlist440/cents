@@ -422,10 +422,14 @@ fly and cached until the next write:
 - Group by `merchant_key`; within a merchant, cluster by amount (sorted; same cluster while
   `amount ≤ previous × 1.15 + €0.50`) so two policies with one insurer become two items.
 - A cluster is recurring when it has ≥ 3 payments, the median gap fits a frequency window
-  (weekly 5–9 days, monthly 24–38, quarterly 80–102, half-yearly 165–200, yearly 340–390; yearly
-  needs only 2 payments), ≥ 70 % of gaps lie within ±35 % of the median, and the last six
-  amounts differ ≤ 25 %. Monthly direct debits with ≥ 4 payments also qualify with varying
-  amounts (flag `variable`).
+  (weekly 5–9 days, 2-weekly 12–16, monthly 24–38, every gap 26–29 = 4-weekly, quarterly
+  80–102, half-yearly 165–200, yearly 340–390; yearly needs only 2 payments), ≥ 70 % of gaps lie
+  within ±35 % of the median, and the last six amounts differ ≤ 25 %. Monthly direct debits
+  with ≥ 4 payments also qualify with varying amounts (flag `variable`).
+- In a daily bakje only a stable amount (≤ 5 %) at a subscription rhythm (monthly, quarterly,
+  half-yearly, yearly) counts, plus 2-weekly and 4-weekly when not paid by card (a cleaner, a
+  window cleaner). A yearly pair of card payments in a daily bakje is a coincidence, and so is
+  any pair with two or more other payments to that merchant in between.
 - `status`: `active`; `new` (first payment < 75 days ago); `ended` (overdue by more than
   1.6 × the median gap, relative to "data today"); ended items are listed for 3 more periods.
 - `next_date` = last date + median gap (monthly: same day-of-month as usual).
@@ -481,10 +485,17 @@ fly and cached until the next write:
   `saved_cents` = the saldo of a potje whose name contains "buffer", else the savings balance
   outside potjes capped at the target; `target_cents` = the target of that buffer potje when it
   has one (`target_source: "potje"`, Slimme aannames then shows the potje's target and links to
-  it), else assumption `buffer` (`amount_cents`, else `months` × average monthly fixed costs of
-  the previous up to six complete periods with the mortgage repayment and without spread parts,
-  recurring items without history; `target_source: "assumption"`); `months` / `target_months`
-  = in months of those fixed costs; `goal_id` = the buffer potje.
+  it), else assumption `buffer` (`amount_cents`, else `months` × **vaste lasten per maand**;
+  `target_source: "assumption"`); `months` / `target_months` = in months of vaste lasten per
+  maand; `goal_id` = the buffer potje.
+- **Vaste lasten per maand** (`outlook.monthly_fixed`, `buffer.monthly_fixed_cents`): one
+  figure everywhere (Vaste lasten screen total, Hoe staan we ervoor, buffer months, the
+  `fixed_share` insight): the live recurring fixed-bakje items per month (the full mortgage
+  payment, no one-off purchases); without recurring items the average of the previous up to
+  six complete periods (with the repayment, without spread parts). "x % van je inkomen" always
+  divides by the real income averaged over the last up to twelve complete periods (at least
+  two; holiday pay and a thirteenth month count): `GET /recurring` returns it as
+  `income_cents`, `share_of_income` and the average `repaid_cents` ("waarvan aflossing").
 - **Tempo** (`tempo`): mean of `income − fixed − daily` over the last three complete periods
   (saving is not spending, money back from savings is not income), plus the series of up to
   twelve complete periods. `null` with fewer than two complete periods. `since` = the first
@@ -520,8 +531,7 @@ read-outs for people without a financial background, each with one plain sentenc
 no traffic lights. Averages over the last up to twelve complete periods (at least two), without
 spread parts: `buffer` (as above, in months of fixed costs), `housing` (bakjes Wonen with the
 full mortgage payment, Energie & water, Belastingen & gemeente; per month and as a share of
-income), `fixed` (all fixed costs with the full mortgage payment, share, and `rest_cents` =
-income − fixed), `saving` (to savings and investments without the repayment, share, and
+income), `fixed` (vaste lasten per maand, share, and `rest_cents` = income − fixed), `saving` (to savings and investments without the repayment, share, and
 `repaid_cents` separately; the UI mentions 10 % as a common rule of thumb), `debts` (the
 mortgage and the debts on Vermogen; `known: false` invites adding a loan or achteraf betalen).
 

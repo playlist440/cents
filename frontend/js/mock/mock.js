@@ -260,7 +260,16 @@ function flows(pid) {
       addCat(res.cats, c.id, p.cents);
     }
     for (const t of db.transactions) {
-      if (t.date < from || t.date > to || !isCashflow(t)) continue;
+      if (t.date < from || t.date > to) continue;
+      // interest on a savings or investment account is income (services/ledger.py bucket)
+      const acc = accById(t.account_id);
+      if (acc && (acc.type === 'savings' || acc.type === 'investment') && !acc.hidden && t.method === 'interest' && t.amount_cents > 0) {
+        const c = catById(t.category_id);
+        const ic = c?.grp === 'income' ? c : catByKey('inkomen-overig');
+        res.income += t.amount_cents; addCat(res.incomeCats, ic.id, t.amount_cents);
+        continue;
+      }
+      if (!isCashflow(t)) continue;
       if (links.has(t.id) || isSpread(t)) continue;
       const amt = t.amount_cents;
       if (t.kind === 'settlement') {
@@ -357,6 +366,16 @@ function recurringItems() {
         if (Math.max(...last6) > Math.min(...last6) * 1.25) {
           if (win[0] === 'monthly' && txs.length >= 4) variable = true; else continue;
         }
+        // daily bakjes (services/recurring.py): only a stable amount at a subscription rhythm,
+        // or every two/four weeks when not paid by card; a yearly card pair is a coincidence
+        const grp = catById(txs.at(-1).category_id)?.grp;
+        if (grp === 'daily' || catById(txs.at(-1).category_id)?.key === 'unsorted') {
+          const byCard = txs.every((t) => t.method === 'card');
+          const rhythm = ['monthly', 'quarterly', 'half-year', 'yearly', ...(byCard ? [] : ['2-weekly', '4-weekly'])];
+          const whole6 = txs.slice(-6).map((t) => Math.abs(t.amount_cents));
+          if (!rhythm.includes(win[0]) || variable || Math.max(...whole6) > Math.min(...whole6) * 1.05) continue;
+          if (win[0] === 'yearly' && txs.length === 2 && byCard) continue;
+        }
         const last = txs.at(-1);
         const first = txs[0];
         const sinceLast = daysBetween(last.date, today);
@@ -379,7 +398,9 @@ function recurringItems() {
           if (Math.abs(a - m) > m * 0.02 && Math.abs(a - m) > 50) change = { from_cents: Math.round(m) * Math.sign(last.amount_cents), to_cents: last.amount_cents, date: last.date };
         }
         const typical = Math.round(median(txs.slice(-6).map((t) => t.amount_cents)));
-        const key = `${last.merchant_key}|${Math.round(Math.abs(typical) / 100)}`;
+        // same key as services/recurring.py: merchant|direction|frequency|first amount in euros
+        const firstAmount = Math.round(median(txs.slice(0, 3).map((t) => Math.abs(t.amount_cents))) / 100);
+        const key = `${last.merchant_key}|${last.amount_cents < 0 ? 'out' : 'in'}|${win[0]}${variable ? '' : `|${firstAmount}`}`;
         if (db.recurring_ignored.includes(key)) continue;
         recTx.set(key, txs);
         items.push({
@@ -729,9 +750,19 @@ function outlook() {
 /** Average monthly fixed costs (services/outlook.py monthly_fixed): with the mortgage repayment,
  *  without spread parts; previous up to six complete periods, else recurring items. */
 function monthlyFixedCosts() {
+  const live = -recurringItems().filter((it) => it.direction === 'out' && it.status !== 'ended' && catById(it.category_id)?.grp === 'fixed').reduce((s, it) => s + it.per_month_cents, 0);
+  if (live > 0) return live;
   const h6 = previousComplete(currentPeriod(), 6);
-  if (h6.length) return h6.reduce((s, x) => s + flows(x).fixed - flows(x).spreadFixed + flows(x).repaid, 0) / h6.length;
-  return -recurringItems().filter((it) => it.direction === 'out' && it.status !== 'ended' && catById(it.category_id)?.grp === 'fixed').reduce((s, it) => s + it.per_month_cents, 0);
+  return h6.length ? h6.reduce((s, x) => s + flows(x).fixed - flows(x).spreadFixed + flows(x).repaid, 0) / h6.length : 0;
+}
+
+/** Average real income and repayment per month over the last up to 12 complete periods
+ *  (services/health.py income); null with fewer than two. */
+function incomeAvg() {
+  const hist = previousComplete(currentPeriod(), 12);
+  if (hist.length < 2) return null;
+  return { income_cents: Math.round(hist.reduce((s, p) => s + flows(p).income, 0) / hist.length),
+    repaid_cents: Math.round(hist.reduce((s, p) => s + flows(p).repaid, 0) / hist.length), months: hist.length };
 }
 
 /** [cents, reason] of the `buffer` assumption (services/outlook.py assumed_buffer_target). */
@@ -749,7 +780,7 @@ function health(buffer) {
   const n = hist.length;
   const avg = (fn) => hist.reduce((s, p) => s + fn(flows(p)), 0) / n;
   const income = avg((f) => f.income);
-  const fixed = avg((f) => f.fixed - f.spreadFixed + f.repaid);
+  const fixed = monthlyFixedCosts();
   const repaid = avg((f) => f.repaid);
   const saved = avg((f) => f.saved - f.repaid);
   const housingIds = ['wonen', 'energie', 'belastingen'].map((k) => catByKey(k)?.id).filter(Boolean);
@@ -1985,7 +2016,10 @@ const ROUTES = [
     const monthly_out_cents = out.reduce((s, i) => s - i.per_month_cents, 0);
     const subs = active.filter((i) => i.direction === 'out' && ['abonnementen', 'telecom'].includes(catById(i.category_id)?.key));
     const subscriptions = { per_month_cents: subs.reduce((s, i) => s - i.per_month_cents, 0), per_year_cents: subs.reduce((s, i) => s + i.per_year_cents, 0), count: subs.length };
-    return ok({ monthly_out_cents, monthly_in_cents: active.filter((i) => i.direction === 'in').reduce((s, i) => s + i.per_month_cents, 0), yearly_out_cents: monthly_out_cents * 12, subscriptions, items });
+    const inc = incomeAvg();
+    return ok({ income_cents: inc ? inc.income_cents : null, repaid_cents: inc ? inc.repaid_cents : 0,
+      share_of_income: inc && inc.income_cents > 0 ? Math.round((monthly_out_cents / inc.income_cents) * 1000) / 1000 : null,
+      monthly_out_cents, monthly_in_cents: active.filter((i) => i.direction === 'in' && catById(i.category_id)?.grp === 'income').reduce((s, i) => s + i.per_month_cents, 0), yearly_out_cents: monthly_out_cents * 12, subscriptions, items });
   }],
   ['DELETE', /^\/recurring\/ignore$/, ({ body }) => { db.recurring_ignored = db.recurring_ignored.filter((k) => k !== String(body.key || '').trim()); return ok({ ok: true }); }],
   ['GET', /^\/assumptions$/, () => ok(assumptionsList())],
@@ -2350,6 +2384,16 @@ function assumptionsList() {
 
 // Exposed for the console: window.__centsMock.db
 export const debug = { get db() { return db; }, money };
+
+/** Dev tool (tools/mock_parity.py): the demo data and this mock's answers to GET requests, so the
+ *  backend can compute the same from the same data and both can be compared. */
+export function parityDump(requests) {
+  const outputs = {};
+  for (const [key, path, query] of requests) {
+    try { outputs[key] = handle({ method: 'GET', path, query: query || {} }).data; } catch (e) { outputs[key] = { error: String(e.message || e) }; }
+  }
+  return { db, outputs };
+}
 
 /* ======================================================================================
    Holdings of investment accounts (SPEC §7.1), same rules as services/investments.py

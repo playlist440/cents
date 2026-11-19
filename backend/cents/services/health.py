@@ -1,14 +1,15 @@
 """Hoe staan we ervoor (Overzicht, SPEC 9): five calm read-outs for people without a financial
 background, each with one plain sentence in the UI. No traffic lights.
 
-All shares are of the real income, averaged over the last up to twelve complete periods (at
-least two), without spread parts (one-off purchases are not a monthly pattern):
+Income is the real income averaged over the last up to twelve complete periods (at least two),
+so holiday pay and a thirteenth month count. Without spread parts (one-off purchases are not a
+monthly pattern):
 
 - `buffer`: the buffer bar's figures (outlook.buffer_status) in months of fixed costs.
 - `housing`: wonen (the full mortgage payment, the repayment included) + energie + belastingen
   & gemeente, per month and as a share of income.
-- `fixed`: all fixed costs with the full mortgage payment, per month, as a share, and what is
-  left of the income for the rest.
+- `fixed`: the one "vaste lasten per maand" (outlook.monthly_fixed, as on the Vaste lasten
+  screen), as a share of income, and what is left of the income for the rest.
 - `saving`: what went to savings and investments, without the mortgage repayment (shown
   separately as `repaid_cents`), per month and as a share of income.
 - `debts`: the mortgage and the debts on Vermogen; `known` is false when there are none.
@@ -29,14 +30,37 @@ def _share(cents: float, income: float) -> float | None:
     return round(cents / income, 3) if income > 0 else None
 
 
-def compute(conn: sqlite3.Connection, lg: Ledger, buffer: dict | None) -> dict | None:
+def window(lg: Ledger) -> list:
+    """The complete periods the averages use (None-like empty list with fewer than two)."""
     history = lg.complete_before(lg.current(), MONTHS)
-    if len(history) < 2:
+    return history if len(history) >= 2 else []
+
+
+def income(lg: Ledger) -> dict | None:
+    """Average real income and mortgage/debt repayment per month over `window`, for every
+    "x % van je inkomen" (health, Vaste lasten, the fixed_share insight)."""
+    history = window(lg)
+    if not history:
+        return None
+    flows = [lg.flows_for(p) for p in history]
+    return {"income_cents": int(round(sum(f.income for f in flows) / len(flows))),
+            "repaid_cents": int(round(sum(f.repaid for f in flows) / len(flows))),
+            "months": len(flows)}
+
+
+def fixed_share(lg: Ledger, monthly_fixed: float) -> float | None:
+    inc = income(lg)
+    return _share(monthly_fixed, inc["income_cents"]) if inc else None
+
+
+def compute(conn: sqlite3.Connection, lg: Ledger, buffer: dict | None,
+            monthly_fixed: float) -> dict | None:
+    history = window(lg)
+    if not history:
         return None
     flows = [lg.flows_for(p) for p in history]
     n = len(flows)
-    income = sum(f.income for f in flows) / n
-    fixed = sum(f.fixed - f.spread_fixed + f.repaid for f in flows) / n
+    inc = sum(f.income for f in flows) / n
     repaid = sum(f.repaid for f in flows) / n
     saved = sum(f.saved - f.repaid for f in flows) / n
     housing_ids = {lg.cat_ids[k] for k in HOUSING if k in lg.cat_ids}
@@ -55,15 +79,15 @@ def compute(conn: sqlite3.Connection, lg: Ledger, buffer: dict | None) -> dict |
     rnd = lambda x: int(round(x))  # noqa: E731
     return {
         "months": n,
-        "income_cents": rnd(income),
+        "income_cents": rnd(inc),
         "buffer": None if not buffer else {
             "months": buffer["months"], "target_months": buffer["target_months"],
             "saved_cents": buffer["saved_cents"], "target_cents": buffer["target_cents"],
             "source": buffer["source"]},
-        "housing": {"cents": rnd(housing), "share": _share(housing, income)},
-        "fixed": {"cents": rnd(fixed), "share": _share(fixed, income),
-                  "rest_cents": rnd(income - fixed)},
-        "saving": {"cents": rnd(saved), "share": _share(saved, income), "repaid_cents": rnd(repaid)},
+        "housing": {"cents": rnd(housing), "share": _share(housing, inc)},
+        "fixed": {"cents": rnd(monthly_fixed), "share": _share(monthly_fixed, inc),
+                  "rest_cents": rnd(inc - monthly_fixed)},
+        "saving": {"cents": rnd(saved), "share": _share(saved, inc), "repaid_cents": rnd(repaid)},
         "debts": {"known": bool(debts), "total_cents": sum(d["cents"] for d in debts),
                   "items": debts},
     }

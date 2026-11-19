@@ -135,13 +135,18 @@ def _spend_items(lg: Ledger, items: list[dict], start: date, end: date,
 
 
 def monthly_fixed(lg: Ledger, items: list[dict]) -> float:
-    """Average monthly fixed costs: previous up to six complete periods, else recurring items."""
+    """The one "vaste lasten per maand" (SPEC 9): the live recurring fixed costs per month, as
+    on the Vaste lasten screen (the full mortgage payment, no one-off purchases); without any,
+    the average of the previous up to six complete periods."""
+    live = -sum(i["per_month_cents"] for i in items if i["direction"] == "out"
+                and i["status"] != "ended" and _group(lg, i) == FIXED)
+    if live > 0:
+        return live
     history = lg.complete_before(lg.current(), 6)
     if history:
         return sum(lg.flows_for(p).fixed - lg.flows_for(p).spread_fixed + lg.flows_for(p).repaid
                    for p in history) / len(history)
-    return -sum(i["per_month_cents"] for i in items if i["direction"] == "out"
-                and i["status"] != "ended" and _group(lg, i) == FIXED)
+    return 0.0
 
 
 def is_buffer(name: str | None) -> bool:
@@ -375,4 +380,4 @@ def compute(conn: sqlite3.Connection, lg: Ledger) -> dict:
     buf = buffer_status(conn, lg, items)
     return {"free": f, "tempo": tempo(lg), "buffer": buf,
             "checking_warning": checking_warning(conn, lg, items, pay),
-            "health": health.compute(conn, lg, buf)}
+            "health": health.compute(conn, lg, buf, monthly_fixed(lg, items))}

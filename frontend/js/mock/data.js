@@ -175,7 +175,7 @@ export function generate({ today = todayISO(), empty = false } = {}) {
     prices: [],
     prices_status: { last_ok: null, error: null },
     imports: [],
-    recurring_ignored: empty ? [] : ['kwf|10'],
+    recurring_ignored: empty ? [] : ['kwf|out|monthly|10'],
     mortgage_parts: [],
     mortgage_years: [],
     home_values: [],
@@ -321,7 +321,7 @@ export function generate({ today = todayISO(), empty = false } = {}) {
     if (off >= -11) {
       const prev = shiftPeriod(period, -1);
       const prevSum = txs.filter((t) => t.account_id === ACC.credit && t.date.startsWith(prev)).reduce((s, t) => s + t.amount_cents, 0);
-      add({ date: dateIn(period, 24), amount: prevSum - cents(20, 60), name: 'International Card Services', key: 'international card services', cat: 'creditcard', method: 'debit', kind: 'settlement', description: 'ICS creditcard incasso', source: 'rule' });
+      add({ date: dateIn(period, 24), amount: prevSum - cents(20, 60), name: 'International Card Services', key: 'international card services', cat: 'creditcard', method: 'debit', kind: 'settlement', transfer: ACC.credit, description: 'ICS creditcard incasso', source: 'rule' });
     }
 
     // Unsorted merchants appear in the last three months

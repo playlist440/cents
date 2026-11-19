@@ -164,7 +164,7 @@ function BankPillar({ accounts, total, share }) {
   const savings = of('savings').filter((a) => !a.locked), fixed = of('savings').filter((a) => a.locked);
   const open = credit.reduce((t, a) => t + (a.outstanding_cents || 0), 0);
   return html`<section class="vm-pillar" aria-label="Bank">
-    <${PillarHead} kind="bank" icon="wallet" title="Bank" cents=${total} share=${share} note=${fixed.length ? `waarvan ${euros(total - sum(fixed))} vrij` : 'vrij te besteden of op te nemen'} />
+    <${PillarHead} kind="bank" icon="wallet" title="Bank" cents=${total} share=${share} note=${fixed.length ? `waarvan ${euros(total - sum(fixed))} direct opneembaar` : 'direct opneembaar, potjes en buffer inbegrepen'} />
     <div class="vm-p-facts">
       ${checking.length > 0 && html`<${Fact} label="Betaalrekening${checking.length > 1 ? 'en' : ''}" value=${money(sum(checking), { negative: true })} />`}
       ${savings.length > 0 && html`<${Fact} label="Sparen" value=${money(sum(savings), { negative: true })} />`}
@@ -276,9 +276,9 @@ function Hero({ data, accounts, desk = false }) {
     home != null && data.home?.included && ['home', 'Vastgoed', home]].filter(Boolean).map(([k, l, v]) => [k, l, Math.max(0, v || 0)]);
   const whole = segs.reduce((t, [, , v]) => t + v, 0);
   return html`<section class="vm-hero" aria-label="Vermogen">
-    <div class="vm-hero-label">Vrij vermogen</div>
+    <div class="vm-hero-label">Geld op de bank</div>
     <div class="vm-hero-amount rounded"><${Amount} cents=${free} whole animate negative /></div>
-    <div class="vm-hero-sub">${free !== bank ? 'geld op de bank, zonder vaste rekeningen' : 'geld op de bank'}</div>
+    <div class="vm-hero-sub">${free !== bank ? 'betaal- en spaarrekeningen, zonder vaste rekeningen' : 'betaal- en spaarrekeningen, potjes en buffer inbegrepen'}</div>
     ${segs.length > 1 && whole > 0 && html`<div class="vm-mix" role="img" aria-label=${'Verdeling: ' + segs.map(([, l, v]) => `${l} ${Math.round(v / whole * 100)}%`).join(', ')}>
       <div class="vm-mix-bar">${segs.map(([k, , v]) => v > 0 && html`<span key=${k} style=${{ flexGrow: v, '--c': colorVar(PILLAR_COLORS[k]) }}></span>`)}</div>
       <div class="vm-mix-legend">${segs.map(([k, l, v]) => html`<span key=${k} style=${{ '--c': colorVar(PILLAR_COLORS[k]) }}><i></i>${l} <b class="num">${Math.round(v / whole * 100)}%</b></span>`)}</div>

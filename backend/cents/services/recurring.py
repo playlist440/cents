@@ -27,6 +27,7 @@ FREQUENCIES: dict[str, tuple[int, int, float, int]] = {
     "yearly": (340, 390, 1 / 12, 365),
 }
 SUBSCRIPTION_FREQUENCIES = ("monthly", "quarterly", "half-year", "yearly")
+SERVICE_FREQUENCIES = ("2-weekly", "4-weekly")    # daily bakjes, not by card (cleaner, window cleaner)
 PER_YEAR = {"weekly": 52, "2-weekly": 26, "4-weekly": 13, "monthly": 12, "quarterly": 4,
             "half-year": 2, "yearly": 1}
 SUBSCRIPTION_BAKJES = ("abonnementen", "telecom")
@@ -193,9 +194,14 @@ def analyse_series(segments: list[list[dict]], data_today: date,
             return None
     group = _group(txs[-1])
     whole6 = [abs(t["amount_cents"]) for t in txs[-6:]]
-    if group == "daily" and (freq not in SUBSCRIPTION_FREQUENCIES or variable
+    by_card = all(t.get("method") == "card" for t in txs)
+    # a cleaner or window cleaner paid every two or four weeks by transfer is a fixed cost
+    rhythm = SUBSCRIPTION_FREQUENCIES + (() if by_card else SERVICE_FREQUENCIES)
+    if group == "daily" and (freq not in rhythm or variable
                              or max(whole6) > min(whole6) * SPENDING_STABLE):
         return None         # groceries, fuel, a favourite restaurant: no fixed cost
+    if group == "daily" and freq == "yearly" and n == 2 and by_card:
+        return None         # two card payments a year apart (fuel on holiday): a coincidence
 
     dates = [_day(t) for t in txs]
     since_last = (data_today - dates[-1]).days
@@ -367,7 +373,14 @@ def recurring_json(conn: sqlite3.Connection) -> dict:
                      if i["direction"] == "in" and group_of(lg, i) == "income")
     subs = [i for i in live if i["direction"] == "out"
             and lg.categories.get(i["category_id"] or -1, {}).get("key") in SUBSCRIPTION_BAKJES]
-    return {"monthly_out_cents": monthly_out, "monthly_in_cents": monthly_in,
+    from . import health                    # local import: health reads networth
+    inc = health.income(lg)
+    share = {"income_cents": inc["income_cents"] if inc else None,
+             "repaid_cents": inc["repaid_cents"] if inc else 0,
+             # the one "x % van je inkomen" (SPEC 9 Hoe staan we ervoor): real income, 12 months
+             "share_of_income": round(monthly_out / inc["income_cents"], 3)
+             if inc and inc["income_cents"] > 0 else None}
+    return {**share, "monthly_out_cents": monthly_out, "monthly_in_cents": monthly_in,
             "yearly_out_cents": monthly_out * 12, "items": [dict(i) for i in all_items],
             "subscriptions": {"per_month_cents": -sum(i["per_month_cents"] for i in subs),
                               "per_year_cents": sum(i["per_year_cents"] for i in subs),

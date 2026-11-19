@@ -131,12 +131,13 @@ function calToItem(c) {
 function Hero({ data, items, desk = false }) {
   const month = data.monthly_out_cents;
   const year = data.yearly_out_cents ?? month * 12;
-  const share = data.monthly_in_cents > 0 ? month / data.monthly_in_cents : null;
+  // the one "x % van je inkomen" (Hoe staan we ervoor): real income over 12 months
+  const share = data.share_of_income ?? (data.monthly_in_cents > 0 ? month / data.monthly_in_cents : null);
   const subs = data.subscriptions;
   const draw = useDrawIn([{ transform: 'scaleX(0)' }, {}], { duration: 900 });
   return html`<section class=${'vl-hero' + (desk ? ' is-desk' : '')} aria-label="Vaste lasten">
     <div class="vl-hero-amount rounded"><${Amount} cents=${month} whole animate /> <span class="vl-hero-unit">per maand</span></div>
-    <div class="vl-hero-sub num">${euros(year)} per jaar</div>
+    <div class="vl-hero-sub num">${euros(year)} per jaar${data.repaid_cents > 0 ? ` · waarvan ${euros(data.repaid_cents)} per maand aflossing` : ''}</div>
     ${share != null && html`<div class=${'vl-share' + (share > 0.6 ? ' is-high' : '')}>
       <span class="vl-share-track" aria-hidden="true"><span ref=${draw} style=${{ transform: `scaleX(${Math.min(1, share)})` }}></span></span>
       <span class="vl-share-label num">${percent(share)} van je inkomen</span>

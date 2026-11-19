@@ -71,7 +71,8 @@ def test_current_period_rules(client, book):
     assert found["pace"]["title"].startswith("Dagelijkse uitgaven " + E)
     assert found["pace"]["title"].endswith("boven normaal tot nu toe")
     assert found["unsorted"]["title"] == "1 winkel zonder bakje"
-    assert found["buffer"]["tone"] == "warn" and found["buffer"]["title"] == "Je buffer dekt 1,2 maanden vaste lasten"
+    # in months of the vaste lasten per maand of the Vaste lasten list (SPEC 9)
+    assert found["buffer"]["tone"] == "warn" and found["buffer"]["title"] == "Je buffer dekt 1,0 maanden vaste lasten"
     assert "stale" not in found and "left_over" not in found      # day 15: too late for last month
     # the API returns the five best, best first, without the internal score
     api = client.get("/api/overview").json()["insights"]

@@ -108,7 +108,8 @@ def test_wording(client, book, today):
     assert found["new_recurring"]["title"] == f"Nieuwe vaste last: Nieuwe Polis, {E}40 per maand"
     assert found["unsorted"]["title"] == "2 winkels of personen zonder bakje"
     assert found["buffer"]["title"] == "Je buffer dekt 0,5 maanden vaste lasten"
-    assert found["buffer"]["detail"] == "Doel: €\u00a03.040, 3,0 maanden"
+    # 3 × the vaste lasten per maand of the Vaste lasten list: rent + the new policy
+    assert found["buffer"]["detail"] == "Doel: €\u00a03.120, 3,0 maanden"
     book.conn.execute("DELETE FROM transactions WHERE merchant_key = 'p:j jansen'")
     book.commit()
     found = {i["kind"]: i for i in candidates(book)}
