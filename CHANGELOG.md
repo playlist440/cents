@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.1.5 — 2026-11-19
+
+- Vaste lasten: een vast bedrag elke maand (zakgeld naar een privérekening) wordt herkend, ook als er naar dezelfde rekening veel losse bedragen van allerlei grootte gaan (dingen die privé zijn betaald en met de hand teruggeboekt). Die losse bedragen vormden samen met het zakgeld één onregelmatige groep; nu haalt Cents de betalingen met precies hetzelfde bedrag en een vast ritme eruit.
+
 ## 1.1.4 — 2026-11-19
 
 - Vaste lasten: elke uitgaande overboeking met een rekeningnummer wordt herkend aan rekeningnummer én omschrijving, niet alleen wat Cents als persoon herkende. Inkomende overboekingen (salaris) blijven op rekeningnummer.

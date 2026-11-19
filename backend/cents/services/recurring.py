@@ -60,7 +60,28 @@ def _cluster(txs: list[dict]) -> list[list[dict]]:
             clusters[-1].append(t)
         else:
             clusters.append([t])
-    return [sorted(c, key=lambda t: (t["date"], t["id"])) for c in clusters]
+    out = []
+    for c in clusters:
+        out += _peel_fixed_amounts(sorted(c, key=lambda t: (t["date"], t["id"])))
+    return out
+
+
+def _peel_fixed_amounts(cluster: list[dict]) -> list[list[dict]]:
+    """Amounts chain: one-off transfers of every size to the same account (paid back by hand)
+    link up into one irregular cluster that swallows a standing order (pocket money, always the
+    same amount). When the cluster as a whole is not regular, take out each exact amount that
+    on its own is a regular series of three or more."""
+    if len(cluster) < 6 or _regular(cluster):
+        return [cluster]
+    by_amount: dict[int, list[dict]] = {}
+    for t in cluster:
+        by_amount.setdefault(t["amount_cents"], []).append(t)
+    peeled = [txs for txs in by_amount.values() if len(txs) >= 3 and _regular(txs)]
+    if not peeled:
+        return [cluster]
+    taken = {t["id"] for txs in peeled for t in txs}
+    rest = [t for t in cluster if t["id"] not in taken]
+    return peeled + ([rest] if rest else [])
 
 
 def _gaps(txs: list[dict]) -> list[int]:

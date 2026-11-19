@@ -514,3 +514,30 @@ def test_pocket_money_with_drifting_description():
     found = rec.detect_full(rows, date(2026, 1, 10))
     zak = [i for i in found if abs(i["amount_cents"]) == 2500]
     assert len(zak) == 1 and len(zak[0]["_ids"]) == 36
+
+
+def test_pocket_money_among_reimbursements_of_every_size():
+    """A private account outside Cents: € 150 pocket money every month, plus about three
+    transfers a month of every size (things paid privately and booked back by hand), all with
+    the same text. The amounts chain into one cluster; the fixed amount must come out as the
+    one recurring item with exactly its own payments."""
+    import random
+    from datetime import date, timedelta
+    from cents.services import recurring as rec
+    rnd = random.Random(7)
+    base = {"merchant_key": "eigen naam", "merchant_name": "Eigen naam", "account_id": 1, "account_type": "checking",
+            "counterparty_iban": "NL00TEST0000000009", "method": "transfer", "kind": "normal",
+            "category_id": None, "category_key": "unsorted", "grp": None, "description": "Eigen naam"}
+    rows, n = [], 0
+    for m in range(42):
+        y, mm = 2023 + (m // 12), m % 12 + 1
+        n += 1
+        rows.append({**base, "id": n, "date": date(y, mm, 25).isoformat(), "amount_cents": -15000})
+        for _ in range(3):
+            n += 1
+            rows.append({**base, "id": n, "date": (date(y, mm, 1) + timedelta(days=rnd.randint(0, 27))).isoformat(),
+                         "amount_cents": -rnd.randint(500, 40000)})
+    rows.sort(key=lambda r: (r["date"], r["id"]))
+    found = rec.detect_full(rows, date(2026, 7, 1))
+    zak = [i for i in found if i["amount_cents"] == -15000]
+    assert len(zak) == 1 and len(zak[0]["_ids"]) == 42 and zak[0]["frequency"] == "monthly"
