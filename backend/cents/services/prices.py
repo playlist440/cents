@@ -318,8 +318,18 @@ def refresh(db_path: str, force: bool = False) -> dict:
     try:
         return _refresh(db_path, force)
     except Exception as exc:          # never crash the app
-        log.warning("price refresh failed: %s", exc)
-        return {"ok": False, "error": str(exc)}
+        log.exception("price refresh failed")
+        msg = f"{type(exc).__name__}: {exc}"[:300]
+        try:                          # show it on the screen, not an old message
+            conn = db.connect(db_path)
+            try:
+                _set_status(conn, error=msg)
+                conn.commit()
+            finally:
+                conn.close()
+        except Exception:
+            pass
+        return {"ok": False, "error": msg}
     finally:
         _lock.release()
 

@@ -217,7 +217,10 @@ function PricesPart({ on, setAssumption }) {
     try {
       const r = await api.refreshPrices();
       invalidate();
-      toast({ text: r.result?.ok ? 'Koersen bijgewerkt' : 'Bijwerken lukte niet', icon: r.result?.ok ? 'check' : 'warning' });
+      const res = r.result || {};
+      const why = (res.errors || []).slice(0, 2).join('; ') || (res.error && res.error !== 'busy' ? res.error : res.error === 'busy' ? 'Cents is al bezig met bijwerken' : '');
+      toast({ text: res.ok ? `Koersen bijgewerkt${res.later ? ` (${res.later} fondsen volgen bij de volgende keer)` : ''}` : `Bijwerken lukte niet${why ? ': ' + why : ''}`,
+        icon: res.ok ? 'check' : 'warning' });
     } catch (err) { fail(err); }
     setBusy(false);
   };
@@ -227,7 +230,7 @@ function PricesPart({ on, setAssumption }) {
     : 'Uit: er gaat niets van je server naar internet. Cents gebruikt de koersen uit je DEGIRO-export of de waarde die je zelf invult.'}>
     <li class="field-row"><label class="field-label sa-grow" for="sa-prices">Koersen automatisch ophalen</label>
       <${Switch} id="sa-prices" checked=${on} onChange=${(v) => setAssumption({ prices_auto: { enabled: v } })} label="Koersen automatisch ophalen" /></li>
-    ${on && html`<${ListRow} title=${last} subtitle=${st?.error ? 'Laatste poging lukte niet' : null}
+    ${on && html`<${ListRow} class="sa-price-row" title=${last} subtitle=${st?.error ? `Laatste poging lukte niet: ${st.error}` : null}
       accessory=${html`<${Button} size="small" variant="tinted" onClick=${refresh} loading=${busy} disabled=${!st?.held}>Nu bijwerken</${Button}>`} />`}
   </${List}>`;
 }

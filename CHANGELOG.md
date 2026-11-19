@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.3.2 — 2026-11-19
+
+- Koersen: bij "Laatste poging lukte niet" staat nu waarom (per fonds, of de fout zelf), en "Nu bijwerken" meldt de reden direct. Een onverwachte fout overschrijft ook een oude melding, zodat je altijd de laatste ziet.
+
 ## 1.3.1 — 2026-11-19
 
 - Koersen bijwerken na het toevoegen van eToro:

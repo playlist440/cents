@@ -54,3 +54,5 @@
   .inst-imp .row-title, .inst-imp .row-sub { white-space: normal; overflow-wrap: anywhere; }
   .inst-imp .inst-undo-btn { margin: 4px 0 2px 44px; }
 }
+
+.sa-price-row .row-sub { white-space: normal; overflow-wrap: anywhere; }
