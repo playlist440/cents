@@ -30,6 +30,7 @@ import { Terugblik, TerugblikPeriode, TerugblikJaar } from './screens/terugblik.
 import { Instellingen, Regels, Imports, Backup } from './screens/instellingen.js';
 import { Gallery } from './screens/gallery.js';
 import { Aannames } from './screens/aannames.js';
+import { Controle } from './screens/controle.js';
 import { ImportSheet } from './screens/import.js';
 import { UitgaveSheet } from './screens/uitgave.js';
 import { TransactieSheet } from './screens/transactie.js';
@@ -53,6 +54,7 @@ export const routes = [
   { path: '/bakjes', screen: Bakjes, title: 'Bakjes', tab: 'meer', sidebar: 'instellingen', parent: '/meer' },
   { path: '/instellingen', screen: Instellingen, title: 'Instellingen', tab: 'meer', sidebar: 'instellingen', sidebarRoot: true, parent: '/meer' },
   { path: '/instellingen/aannames', screen: Aannames, title: 'Slimme aannames', tab: 'meer', sidebar: 'instellingen', parent: '/instellingen' },
+  { path: '/instellingen/controle', screen: Controle, title: 'Controle', tab: 'meer', sidebar: 'instellingen', parent: '/instellingen' },
   { path: '/instellingen/regels', screen: Regels, title: 'Geleerde regels', tab: 'meer', sidebar: 'instellingen', parent: '/instellingen' },
   { path: '/instellingen/imports', screen: Imports, title: 'Importgeschiedenis', tab: 'meer', sidebar: 'instellingen', parent: '/instellingen' },
   { path: '/instellingen/backup', screen: Backup, title: 'Back-up en export', tab: 'meer', sidebar: 'instellingen', parent: '/instellingen' },

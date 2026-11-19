@@ -48,6 +48,7 @@ def requests_for(today: str) -> list[list]:
             mm, yy = mm + 12, yy - 1
         past.append(f"{yy:04d}-{mm:02d}")
     out = [["overview", "/overview", {}], ["goals", "/goals", {}], ["recurring", "/recurring", {}],
+           ["checks", "/checks", {}],
            ["networth", "/networth", {}], ["trends", "/trends", {"periods": "24"}],
            [f"overview:{y}", "/overview", {"period": str(y)}],
            [f"recap:y{y}", "/recap", {"year": str(y)}]]
@@ -196,9 +197,11 @@ CHECK = {
     "recurring": ["monthly_out_cents", "monthly_in_cents", "subscriptions.", "income_cents",
                   "repaid_cents", "share_of_income"],
     "networth": ["total_cents"],
+    "checks": ["coverage.", "issues", "transfers.count", "accounts["],
 }
 
-SKIP_SUFFIX = (".name", ".label", ".as_of", ".stale", ".type", ".date", ".payday_source",
+SKIP_SUFFIX = (".name", ".label", ".as_of", ".stale", ".type", ".date", ".payday_source", "_date",
+               ".last_import", ".account", ".other_account",
                ".source", ".reason", ".emoji", ".kind", ".period", "partial", ".id", ".goal_id")
 
 

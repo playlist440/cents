@@ -33,6 +33,7 @@ export function InstSplit({ active, children }) {
   const items = [
     { id: 'algemeen', label: 'Algemeen', icon: 'instellingen', iconColor: 'gray', onClick: () => go('/instellingen') },
     { id: 'bakjes', label: 'Bakjes', icon: 'bakjes', iconColor: 'yellow', onClick: () => go('/bakjes') },
+    { id: 'controle', label: 'Controle', icon: 'check', iconColor: 'green', onClick: () => go('/instellingen/controle') },
     { id: 'aannames', label: 'Slimme aannames', icon: 'sparkles', iconColor: 'indigo', onClick: () => go('/instellingen/aannames') },
     { id: 'regels', label: 'Geleerde regels', icon: 'sparkles', iconColor: 'purple', onClick: () => go('/instellingen/regels') },
     { id: 'imports', label: 'Importgeschiedenis', icon: 'clock', iconColor: 'blue', onClick: () => go('/instellingen/imports') },
@@ -68,6 +69,7 @@ export function Instellingen() {
       <${ListRow} icon="calendar" iconColor="blue" title="Maand begint op" value=${`de ${day}e`} chevron onClick=${openDay} />
     </${List}>
     ${!desk && html`<${List}>
+      <${ListRow} icon="check" iconColor="green" title="Controle" subtitle="Kloppen je gegevens?" chevron onClick=${() => navigate('/instellingen/controle')} />
       <${ListRow} icon="sparkles" iconColor="indigo" title="Slimme aannames" chevron onClick=${() => navigate('/instellingen/aannames')} />
       <${ListRow} icon="sparkles" iconColor="purple" title="Geleerde regels" chevron onClick=${() => navigate('/instellingen/regels')} />
       <${ListRow} icon="clock" iconColor="blue" title="Importgeschiedenis" chevron onClick=${() => navigate('/instellingen/imports')} />

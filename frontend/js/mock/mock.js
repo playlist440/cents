@@ -747,7 +747,9 @@ function outlook() {
       checking_warning = { date: lowDay, low_cents: lowC, floor_cents: floor, suggest_cents: sav >= suggest ? suggest : null, account_id: chk.id, payday: pay };
     }
   }
-  return { free, tempo, buffer, checking_warning, health: health(buffer) };
+  const h = health(buffer);
+  if (h) { const cov = checksData().coverage; h.accounted = cov && { share: cov.share, unknown_cents: cov.unknown_cents, months: cov.months }; }
+  return { free, tempo, buffer, checking_warning, health: h };
 }
 
 /** Average monthly fixed costs (services/outlook.py monthly_fixed): with the mortgage repayment,
@@ -774,6 +776,68 @@ function assumedBuffer() {
   if (b.amount_cents != null) return [Math.max(0, b.amount_cents), 'je eigen bedrag'];
   const m = Number(b.months || 0);
   return [Math.max(0, Math.round(monthlyFixedCosts() * m)), `${String(m).replace('.', ',')} ${m === 1 ? 'maand' : 'maanden'} vaste lasten`];
+}
+
+/** Zelfcontrole (services/checks.py): verantwoordingsmeter, missing months, balance breaks,
+ *  transfers without their other half. */
+function checksData() {
+  const hist = previousComplete(currentPeriod(), 12);
+  let coverage = null;
+  if (hist.length) {
+    const spent = new Map();
+    for (const p of hist) for (const [id, e] of flows(p).cats) spent.set(id, (spent.get(id) || 0) + e.cents);
+    const total = [...spent.values()].filter((v) => v > 0).reduce((s, v) => s + v, 0);
+    const unknown = ['unsorted', 'contant', 'overig', 'creditcard'].map((key) => {
+      const id = catByKey(key)?.id;
+      const cents = Math.max(0, spent.get(id) || 0);
+      return { key, category_id: id, cents, per_month_cents: Math.round(cents / hist.length), share: total ? Math.round((cents / total) * 10000) / 10000 : 0 };
+    }).filter((u) => u.cents).sort((a, b) => b.cents - a.cents);
+    const unknown_cents = unknown.reduce((s, u) => s + u.cents, 0);
+    coverage = { months: hist.length, spent_cents: total, unknown_cents, share: total ? Math.round(((total - unknown_cents) / total) * 10000) / 10000 : null, unknown };
+  }
+  const breaksOf = (rows) => {
+    const totals = new Map();
+    const balanced = new Map();
+    for (const r of rows) {
+      totals.set(r.date, (totals.get(r.date) || 0) + r.amount_cents);
+      if (r.balance_after_cents != null) balanced.set(r.date, [...(balanced.get(r.date) || []), r]);
+    }
+    const out = [];
+    let prev = null;
+    for (const day of [...totals.keys()].sort()) {
+      const txs = (balanced.get(day) || []).sort((a, b) => (a.seq ?? 0) - (b.seq ?? 0) || a.id - b.id);
+      if (!txs.length) { prev = prev == null ? null : prev + totals.get(day); continue; }
+      if (prev == null) { prev = txs.at(-1).balance_after_cents; continue; }
+      const expected = prev + totals.get(day);
+      if (txs.some((r) => r.balance_after_cents === expected)) { prev = expected; continue; }
+      const end = txs.at(-1).balance_after_cents;
+      out.push({ date: day, expected_cents: expected, actual_cents: end, difference_cents: end - expected });
+      prev = end;
+    }
+    return out;
+  };
+  const accounts = db.accounts.filter((a) => !a.hidden && ['checking', 'savings', 'credit'].includes(a.type)).map((a) => {
+    const rows = db.transactions.filter((t) => t.account_id === a.id).sort((x, y) => (x.date < y.date ? -1 : x.date > y.date ? 1 : (x.seq ?? 0) - (y.seq ?? 0) || x.id - y.id));
+    const imp = db.imports.filter((i) => i.account_id === a.id).map((i) => i.imported_at.slice(0, 10)).sort().at(-1) || null;
+    const item = { id: a.id, name: a.name, type: a.type, count: rows.length, first_date: rows[0]?.date || null, last_date: rows.at(-1)?.date || null,
+      last_import: imp, days_since: rows.length ? daysBetween(rows.at(-1).date, db.today) : null, missing_months: [], breaks: [], breaks_count: 0 };
+    if (rows.length && a.type === 'checking') {
+      const seen = new Set(rows.map((r) => r.date.slice(0, 7)));
+      for (let m = rows[0].date.slice(0, 7); m <= rows.at(-1).date.slice(0, 7); m = shiftPeriod(m, 1)) if (!seen.has(m)) item.missing_months.push(m);
+    }
+    if (rows.length && a.type !== 'credit') { const b = breaksOf(rows); item.breaks = b.slice(-8); item.breaks_count = b.length; }
+    return item;
+  });
+  const spans = new Map(accounts.filter((a) => a.type !== 'credit' && a.first_date).map((a) => [a.id, [a.first_date, a.last_date]]));
+  const names = new Map(accounts.map((a) => [a.id, a.name]));
+  const unmatched = db.transactions.filter((t) => t.kind === 'transfer' && t.transfer_account_id != null)
+    .filter((t) => { const s = spans.get(t.transfer_account_id); return s && s[0] <= t.date && t.date <= s[1] && names.has(t.account_id); })
+    .filter((t) => !db.transactions.some((o) => o.account_id === t.transfer_account_id && o.amount_cents === -t.amount_cents && Math.abs(daysBetween(o.date, t.date)) <= 4))
+    .sort((x, y) => (x.date < y.date ? 1 : -1))
+    .map((t) => ({ transaction_id: t.id, date: t.date, amount_cents: t.amount_cents, account: names.get(t.account_id), other_account: names.get(t.transfer_account_id) }));
+  const transfers = { count: unmatched.length, items: unmatched.slice(0, 8) };
+  const issues = accounts.reduce((s, a) => s + a.breaks_count + a.missing_months.length, 0) + transfers.count;
+  return { coverage, accounts, transfers, issues };
 }
 
 /** Hoe staan we ervoor (services/health.py). */
@@ -2010,6 +2074,7 @@ const ROUTES = [
   ['GET', /^\/trends$/, ({ query }) => ok(trends(Number(query.periods) || 12))],
   ['GET', /^\/calendar$/, ({ query }) => ok(calendar(query.period || currentPeriod()))],
   ['GET', /^\/recap\/index$/, () => ok(recapIndex())],
+  ['GET', /^\/checks$/, () => ok(checksData())],
   ['GET', /^\/recap$/, ({ query }) => ok(query.year ? recap({ year: Number(query.year) }) : recap({ period: query.period || currentPeriod() }))],
 
   /* Recurring */

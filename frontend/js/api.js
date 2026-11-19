@@ -92,6 +92,7 @@ export const api = {
   /* Import */
   importFiles: (files) => upload('/import', files),
   imports: () => get('/imports'),
+  checks: () => get('/checks'),
   deleteImport: (id) => del(`/imports/${id}`),
 
   /* Transactions. params: period, from, to, account_id, category_id, tag_id, merchant_key, q,

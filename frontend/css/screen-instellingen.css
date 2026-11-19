@@ -33,3 +33,13 @@
 .inst-danger { margin-top: 32px; }
 .sa-chev svg { transition: transform 200ms var(--ease-out); }
 .sa-chev.is-open svg { transform: rotate(90deg); }
+
+/* Controle (.ctl-) */
+.ctl-head { display: flex; align-items: center; gap: 16px; padding: 4px 4px 18px; }
+.ctl-ring { font: 700 var(--fs-headline)/1 var(--font-rounded); letter-spacing: -.02em; }
+.ctl-head-text { min-width: 0; }
+.ctl-title { margin: 0 0 4px; font: 700 var(--fs-title3)/1.25 var(--font); letter-spacing: -.02em; }
+.ctl-sub { margin: 0; font: 400 var(--fs-subhead)/1.35 var(--font); color: var(--label-2); }
+.ctl .row-sub { white-space: normal; overflow: visible; text-overflow: clip; line-height: 1.35; }
+.ctl-issue .row-title { color: var(--warn-text); font-size: var(--fs-subhead); }
+.ctl-actions { display: flex; justify-content: center; margin: 4px 0 24px; }

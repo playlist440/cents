@@ -386,7 +386,11 @@ def compute(conn: sqlite3.Connection, lg: Ledger) -> dict:
     buf = buffer_status(conn, lg, items)
     f = free(conn, lg, items, buf)
     pay = date.fromisoformat(f["payday"]) if f else payday(conn, lg, items)[0]
-    from . import health                     # local import: health reads networth
+    from . import checks, health             # local import: health reads networth
+    h = health.compute(conn, lg, buf, monthly_fixed(lg, items))
+    if h:
+        cov = checks.coverage(lg)          # "kunnen we al onze uitgaven verantwoorden?"
+        h["accounted"] = cov and {"share": cov["share"], "unknown_cents": cov["unknown_cents"],
+                                  "months": cov["months"]}
     return {"free": f, "tempo": tempo(lg), "buffer": buf,
-            "checking_warning": checking_warning(conn, lg, items, pay),
-            "health": health.compute(conn, lg, buf, monthly_fixed(lg, items))}
+            "checking_warning": checking_warning(conn, lg, items, pay), "health": h}

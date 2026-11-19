@@ -683,6 +683,16 @@ function healthRows(h) {
       to: '/potjes',
     });
   }
+  const acc = h.accounted;
+  if (acc?.share != null) {
+    rows.push({
+      key: 'accounted', emoji: '🔎', color: 'green', title: 'Verantwoord', value: pctText(acc.share),
+      text: acc.unknown_cents > 0
+        ? `Zoveel van je uitgaven zit in een bakje dat zegt waarvoor het was. ${euros(Math.round(acc.unknown_cents / acc.months))} per maand is nog onbekend.`
+        : 'Al je uitgaven zitten in een bakje dat zegt waarvoor het was.',
+      to: '/instellingen/controle',
+    });
+  }
   const d = h.debts;
   const others = d.items.filter((x) => x.kind !== 'mortgage');
   rows.push({

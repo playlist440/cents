@@ -147,3 +147,11 @@ def test_nog_te_besteden_adds_up(demo):
     assert f["total_cents"] == f["balances_cents"] - parts
     assert f["balances_cents"] == sum(a["balance_cents"] for a in f["accounts"])
     assert sum(x["cents"] for x in f["fixed_overdue"]) == f["fixed_overdue_cents"]
+
+
+def test_zelfcontrole_finds_nothing_in_a_complete_import(demo):
+    """The demo files cover every month of both accounts without gaps: no false alarms."""
+    c = get(demo, "/checks")
+    assert c["issues"] == 0, c
+    assert 0.8 < c["coverage"]["share"] <= 1
+    assert get(demo, "/overview")["health"]["accounted"]["share"] == c["coverage"]["share"]
