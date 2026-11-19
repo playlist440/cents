@@ -14,7 +14,7 @@ import { Iban } from '../components/Iban.js';
 import { useTable, SortHead, TableTools } from '../components/SortableTable.js';
 import { html, useEffect, useRef, useState } from '../vendor/preact-htm.js';
 import { api } from '../api.js';
-import { useQuery, useStore, categoryById } from '../store.js';
+import { useQuery, useStore, categoryById, invalidate } from '../store.js';
 import { openSheet, replaceQuery } from '../router.js';
 import { euros, money, shortDate, percent, freqLabel, capitalize, addDays, daysBetween, parseISO, todayISO, dayLabel, longDate, shiftPeriod, plural, MONTHS_SHORT } from '../format.js';
 import { Screen } from '../components/Screen.js';
@@ -481,7 +481,13 @@ function ItemDetail({ close, it, cal = null, inline = false }) {
         ${payments.length > 12 && !all && html`<li class="row-li"><button class="row is-button" onClick=${() => setAll(true)}><span class="row-main"><span class="row-title" style="color: var(--tint)">Toon alle ${payments.length} betalingen</span></span></button></li>`}
       </${List}>`}
       ${!data && html`<${Skeleton} h=${150} r=${16} />`}
-      ${known && html`<div class="vl-sheet-ignore"><${Button} variant="gray" block onClick=${ignore}>Geen vaste last</${Button}></div>`}
+      ${it.pinned && it.price_suggestion && html`<div class="vl-sheet-ignore">
+        <p class="vm-p-note">Er is een betaling van ${money(Math.abs(it.price_suggestion.to_cents))} gezien op ${shortDate(it.price_suggestion.date)}, met dezelfde naam en omschrijving. Is dat de nieuwe prijs?</p>
+        <${Button} variant="tinted" block onClick=${() => api.pinAmount(it.pin_id, it.price_suggestion.to_cents).then(() => { invalidate(); toast({ text: 'Nieuw bedrag overgenomen', icon: 'check' }); close(); }, (e) => toast({ text: e.message, icon: 'warning' }))}>Nieuw bedrag overnemen</${Button}>
+      </div>`}
+      ${it.pinned
+        ? html`<div class="vl-sheet-ignore"><${Button} variant="gray" block onClick=${() => api.pinDelete(it.pin_id).then(() => { invalidate(); toast({ text: `${it.name} is geen gemarkeerd abonnement meer`, icon: 'check' }); close(); }, (e) => toast({ text: e.message, icon: 'warning' }))}>Markering opheffen</${Button}></div>`
+        : known && html`<div class="vl-sheet-ignore"><${Button} variant="gray" block onClick=${ignore}>Geen vaste last</${Button}></div>`}
   </div>`;
 }
 

@@ -24,6 +24,7 @@ import { navigate } from '../router.js';
 import { useId, useLayout } from '../hooks.js';
 import { openBakjePopover } from './_txdesk.js';
 import { Iban } from '../components/Iban.js';
+import { openPin } from './_subs.js';
 import { BakjeGrid, TagEditor, METHOD_LABEL, maskIban, emitTxChange, isUnsorted } from './_tx.js';
 import { CostSection, canSpread, canPossess, COSTS_FROM } from './_costs.js';
 
@@ -385,6 +386,7 @@ function MerchantLine({ t, m }) {
         : null}
       <span class="row-chev"><${Icon} name="chevron-right" size=${14} stroke=${2.6} /></span>
     </button>
+    ${!t.manual && !rec?.pinned && t.merchant_key && html`<button class="section-link td-own-link" onClick=${() => openPin(t)}>Markeer als abonnement…</button>`}
   </section>`;
 }
 

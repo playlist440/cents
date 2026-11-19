@@ -2,10 +2,10 @@
 // in a bank file. Listed in Vaste lasten and in the subscriptions total; never in the budget
 // figures (services/manual_subs.py).
 
-import { html, useState } from '../vendor/preact-htm.js';
+import { html, useEffect, useState } from '../vendor/preact-htm.js';
 import { api } from '../api.js';
 import { invalidate, categoryById } from '../store.js';
-import { todayISO } from '../format.js';
+import { todayISO, shortDate, money } from '../format.js';
 import { Segmented, Button } from '../components/Controls.js';
 import { List, ListRow } from '../components/List.js';
 import { TextField, AmountField, DateField } from '../components/Fields.js';
@@ -66,6 +66,46 @@ function SubscriptionSheet({ close, it }) {
     ${it && html`<${List}>
       <li class="field-row vm-add-row"><${Button} variant="gray" size="medium" block onClick=${stop} disabled=${busy}>${it.end_date ? 'Loopt weer' : 'Opgezegd'}</${Button}></li>
       <li class="field-row vm-add-row"><${Button} variant="plain" size="medium" block onClick=${remove} disabled=${busy}>Verwijder…</${Button}></li>
+    </${List}>`}
+  </${Sheet}>`;
+}
+
+/* ---------- Markeer als abonnement ---------- */
+
+// Strict on purpose: Cents follows exactly the payments with this name, counter account, amount
+// and description (dates, months and numbers left out). The list shows them before saving, so a
+// wrong match (a one-off transfer with the same amount) is seen before it counts.
+export function openPin(tx) { openSheet(PinSheet, { tx }); }
+
+function PinSheet({ close, tx }) {
+  const [data, setData] = useState(null);
+  const [error, setError] = useState(null);
+  const [busy, setBusy] = useState(false);
+  useEffect(() => { api.pinPreview(tx.id).then(setData, setError); }, [tx.id]);
+  const save = async () => {
+    setBusy(true);
+    try {
+      await api.pinCreate(tx.id);
+      invalidate('recurring'); invalidate('transaction');
+      toast({ text: `${tx.merchant_name} is gemarkeerd als abonnement`, icon: 'check' });
+      close();
+    } catch (err) { setBusy(false); toast({ text: err.message, icon: 'warning' }); }
+  };
+  const rule = data?.rule;
+  return html`<${Sheet} title="Markeer als abonnement" detents=${['medium', 'large']}
+      leading=${html`<${SheetButton} onClick=${close}>Annuleer</${SheetButton}>`}
+      trailing=${html`<${SheetButton} bold onClick=${save} disabled=${!data || busy}>Bewaar</${SheetButton}>`}>
+    ${error && html`<${List} footer=${error.message}></${List}>`}
+    ${rule && html`<${List} footer="Cents volgt alleen betalingen die op al deze punten precies gelijk zijn. Datums, maanden en nummers in de omschrijving tellen niet mee. Komt er een ander bedrag, dan vraagt Cents eerst of je het nieuwe bedrag wilt overnemen.">
+      <${ListRow} title="Naam" value=${tx.merchant_name} />
+      ${rule.iban && html`<${ListRow} title="Tegenrekening" value=${'•• ' + rule.iban.slice(-4)} />`}
+      <${ListRow} title="Bedrag" value=${html`<span class="num">${money(rule.amount_cents)}</span>`} />
+      <${ListRow} title="Omschrijving" value=${rule.desc_key || '(leeg)'} />
+    </${List}>`}
+    ${data && html`<${List} header=${`Dit koppelt ${data.count} ${data.count === 1 ? 'betaling' : 'betalingen'}`}
+        footer="Staat hier een betaling tussen die geen abonnement is? Bewaar dan niet.">
+      ${data.transactions.map((x) => html`<${ListRow} key=${x.id} title=${shortDate(x.date)} subtitle=${x.description || ''}
+        value=${html`<span class="num">${money(x.amount_cents)}</span>`} />`)}
     </${List}>`}
   </${Sheet}>`;
 }

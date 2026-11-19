@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.3.0 — 2026-11-19
+
+- Markeer als abonnement: bij een transactie markeer je die betaling als abonnement. Cents volgt daarna precies de betalingen met dezelfde naam, tegenrekening, hetzelfde bedrag en dezelfde omschrijving (datums, maanden en nummers tellen niet mee), ook als het ritme niet helemaal klopt. Voor het bewaren zie je welke betalingen er gekoppeld worden.
+- Een nieuw bedrag wordt nooit vanzelf overgenomen: bij de vaste last vraagt Cents "Is dat de nieuwe prijs?" en pas na "Nieuw bedrag overnemen" horen die betalingen erbij. Oude betalingen blijven gekoppeld.
+- "Markering opheffen" in het detailscherm zet het terug. (Database-schema v14.)
+
 ## 1.2.1 — 2026-11-19
 
 - Abonnementen die je met de hand toevoegt staan ook in de kalender (op hun verwachte dagen, niet in de totalen) en bij Besparen onder Abonnementen. Tik erop om ze te wijzigen.

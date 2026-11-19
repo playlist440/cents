@@ -485,11 +485,74 @@ def detect(rows: list[dict], data_today: date, ignored: set[str] = frozenset()) 
     return [public(i) for i in detect_full(rows, data_today, ignored)]
 
 
+# ---------------------------------------------------------------- marked as subscription
+
+def pin_fields(r: dict) -> dict:
+    """What a mark stores from one payment: exact name, counter account, amount, description."""
+    return {"merchant_key": r["merchant_key"], "iban": r.get("counterparty_iban") or None,
+            "amount_cents": r["amount_cents"], "desc_key": _potje(r.get("description"))}
+
+
+def _pin_like(pin: dict, r: dict) -> bool:
+    """Same name, counter account (when known) and cleaned description; amount not checked."""
+    return (r["merchant_key"] == pin["merchant_key"]
+            and (not pin["iban"] or (r.get("counterparty_iban") or None) == pin["iban"])
+            and _potje(r.get("description")) == pin["desc_key"])
+
+
+def pin_matches(pin: dict, rows: list[dict]) -> list[dict]:
+    """The payments a mark follows: all of the above and exactly the same amount (the current
+    price or one taken over before)."""
+    amounts = {pin["amount_cents"], *(int(x) for x in (pin.get("earlier_amounts") or "").split(",") if x)}
+    return [r for r in rows if r["amount_cents"] in amounts and _pin_like(pin, r)]
+
+
+def _pinned_item(pin: dict, txs: list[dict], rows: list[dict], data_today: date) -> dict | None:
+    if not txs:
+        return None
+    txs = sorted(txs, key=lambda t: (t["date"], t["id"]))
+    dates = [_day(t) for t in txs]
+    gaps = _gaps(txs)
+    freq = frequency(gaps) or ("monthly" if not gaps else min(
+        FREQUENCIES, key=lambda f: abs(((FREQUENCIES[f][0] + FREQUENCIES[f][1]) / 2) - _median(gaps))))
+    last = txs[-1]
+    mg = _median(gaps) if gaps else 30
+    nxt = _next_monthly(dates) if freq == "monthly" else dates[-1] + timedelta(days=FREQUENCIES[freq][3] or int(mg))
+    status = "ended" if (data_today - dates[-1]).days > ENDED_FACTOR * max(mg, 7) else "active"
+    amount = pin["amount_cents"]
+    # a payment like it but at another amount, after the last one: a new price? (asked, never taken over)
+    known = {amount, *(int(x) for x in (pin.get("earlier_amounts") or "").split(",") if x)}
+    newer = [r for r in rows if _pin_like(pin, r) and r["amount_cents"] not in known and r["date"] > last["date"]]
+    suggestion = ({"to_cents": newer[-1]["amount_cents"], "date": newer[-1]["date"], "transaction_id": newer[-1]["id"]}
+                  if newer and len({r["amount_cents"] for r in newer}) == 1 else None)
+    return {
+        "key": f"pin:{pin['id']}", "pin_id": pin["id"], "pinned": True,
+        "name": pin["name"], "merchant_key": pin["merchant_key"], "category_id": last["category_id"],
+        "direction": "out" if amount < 0 else "in", "amount_cents": amount, "frequency": freq,
+        "per_month_cents": int(round(amount * FREQUENCIES[freq][2])), "per_year_cents": abs(amount) * PER_YEAR[freq],
+        "last_date": last["date"], "next_date": nxt.isoformat(),
+        "day_of_month": int(_median([d.day for d in dates[-6:]])) if freq == "monthly" else None,
+        "status": status, "variable": False, "count": len(txs), "change": None,
+        "price_suggestion": suggestion, "iban": pin["iban"],
+        "own_account": bool(last.get("transfer_account_id")), "via_card": last.get("account_type") == "credit",
+        "_ids": [t["id"] for t in txs], "_group": _group(last), "_first": txs[0]["date"],
+    }
+
+
 def _computed(conn: sqlite3.Connection) -> dict:
     def compute() -> dict:
         lg = ledger_mod.get(conn)
         ignored = {r["key"] for r in db.rows(conn, "SELECT key FROM recurring_ignored")}
-        full = detect_full(candidate_rows(lg), lg.data_today, ignored)
+        rows = candidate_rows(lg)
+        # marked payments first: followed exactly, and taken out of the automatic detection
+        pinned, taken = [], set()
+        for pin in db.rows(conn, "SELECT * FROM recurring_pins ORDER BY id"):
+            txs = [r for r in pin_matches(pin, rows) if r["id"] not in taken]
+            item = _pinned_item(pin, txs, rows, lg.data_today)
+            if item:
+                pinned.append(item)
+                taken.update(item["_ids"])
+        full = pinned + detect_full([r for r in rows if r["id"] not in taken], lg.data_today, ignored)
         codes = {g["code"]: g["name"] for g in db.rows(conn, "SELECT code, name FROM goals WHERE code IS NOT NULL")}
         for i in full:
             code = i.pop("_potje_code", None)

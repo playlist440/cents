@@ -9,7 +9,7 @@
 import { generate } from './data.js';
 import { addDays, daysBetween, parseISO, shiftPeriod, monthLabel, todayISO, MONTHS, money, euros } from '../format.js';
 
-const VERSION = '1.2.1-mock';
+const VERSION = '1.3.0-mock';
 const PASSWORD = 'demo1234';
 
 let db;
@@ -57,6 +57,14 @@ function isCashflow(tx) {
   if (!a) return false;
   return a.type === 'checking' || (a.type === 'credit' && tx.manual);
 }
+
+// marked as subscription: cleaned description (services/recurring.py _potje)
+const descKey = (d) => (d || '').toLowerCase().replace(/referentie.*$|kenmerk.*$|\d+|[^\p{L}\s]/gu, ' ')
+  .replace(/\b(jan(uari)?|feb(ruari)?|maart|mrt|apr(il)?|mei|jun(i)?|jul(i)?|aug(ustus)?|sep(t(ember)?)?|okt(ober)?|nov(ember)?|dec(ember)?)\b/g, ' ').split(/\s+/).filter(Boolean).join(' ').slice(0, 40);
+const pinAmounts = (pin) => new Set([pin.amount_cents, ...(pin.earlier || [])]);
+const pinLike = (pin, t) => t.merchant_key === pin.merchant_key && (!pin.iban || (t.counterparty_iban || null) === pin.iban) && descKey(t.description) === pin.desc_key && !t.manual && t.kind !== 'settlement';
+const pinMatch = (pin, t) => pinAmounts(pin).has(t.amount_cents) && pinLike(pin, t);
+const pinFields = (t) => ({ merchant_key: t.merchant_key, iban: t.counterparty_iban || null, amount_cents: t.amount_cents, desc_key: descKey(t.description) });
 
 // subscriptions entered by hand (services/manual_subs.py)
 const SUB_FREQ = { weekly: [7, 52], '4-weekly': [28, 13], monthly: [0, 12], yearly: [0, 1] };
@@ -364,7 +372,24 @@ function recurringItems() {
     recTx = new Map();
     const today = dataToday();
     const groups = new Map();
+    // marked as subscription (services/recurring.py pins): exact matches, out of the detection
+    const pinItems = [];
+    const pinned = new Set();
+    for (const pin of db.recurring_pins || []) {
+      const txs = db.transactions.filter((t) => !pinned.has(t.id) && pinMatch(pin, t)).sort((a, b) => (a.date < b.date ? -1 : 1));
+      if (!txs.length) continue;
+      txs.forEach((t) => pinned.add(t.id));
+      const last = txs[txs.length - 1];
+      const newer = db.transactions.filter((t) => pinLike(pin, t) && !pinAmounts(pin).has(t.amount_cents) && t.date > last.date);
+      pinItems.push({ key: `pin:${pin.id}`, pin_id: pin.id, pinned: true, name: pin.name, merchant_key: pin.merchant_key, category_id: last.category_id,
+        direction: pin.amount_cents < 0 ? 'out' : 'in', amount_cents: pin.amount_cents, frequency: 'monthly', per_month_cents: pin.amount_cents,
+        per_year_cents: Math.abs(pin.amount_cents) * 12, last_date: last.date, next_date: addDays(last.date, 30), day_of_month: Number(last.date.slice(8, 10)),
+        status: 'active', variable: false, count: txs.length, change: null, iban: pin.iban, own_account: !!last.transfer_account_id, via_card: false,
+        price_suggestion: newer.length ? { to_cents: newer[newer.length - 1].amount_cents, date: newer[newer.length - 1].date, transaction_id: newer[newer.length - 1].id } : null,
+        tx_ids: txs.map((t) => t.id) });
+    }
     for (const t of db.transactions) {
+      if (pinned.has(t.id)) continue;
       if (!isCashflow(t) || t.manual || t.method === 'card' || t.method === 'atm' || t.kind === 'settlement') continue;
       const c = catById(t.category_id);
       if (!c || c.grp === 'internal') continue;
@@ -457,7 +482,7 @@ function recurringItems() {
         });
       }
     }
-    return items.sort((a, b) => Math.abs(b.per_month_cents) - Math.abs(a.per_month_cents));
+    return [...pinItems, ...items].sort((a, b) => Math.abs(b.per_month_cents) - Math.abs(a.per_month_cents));
   });
 }
 
@@ -2280,6 +2305,28 @@ const ROUTES = [
       share_of_income: inc && inc.income_cents > 0 && monthly_out_cents - inc.repaid_cents > 0 ? Math.round(((monthly_out_cents - inc.repaid_cents) / inc.income_cents) * 1000) / 1000 : null,   // without aflossing (services/health.py fixed_share)
       monthly_out_cents, monthly_in_cents: active.filter((i) => i.direction === 'in' && catById(i.category_id)?.grp === 'income').reduce((s, i) => s + i.per_month_cents, 0), yearly_out_cents: monthly_out_cents * 12, subscriptions,
       items: items.map((i) => (i.direction === 'out' && allSplits().has(i.merchant_key) ? { ...i, repaid_per_month_cents: Math.round(Math.abs(i.per_month_cents) * allSplits().get(i.merchant_key)) } : i)).concat(manual) });
+  }],
+  ['POST', /^\/recurring\/pins\/preview$/, ({ body }) => {
+    const t = db.transactions.find((x) => x.id === Number(body.transaction_id)); if (!t || !t.merchant_key) return fail(422, 'not_recurring', 'Deze betaling kan geen abonnement zijn.');
+    const rule = { ...pinFields(t), name: t.merchant_name };
+    const txs = db.transactions.filter((x) => pinMatch(rule, x)).sort((a, b) => (a.date < b.date ? 1 : -1));
+    return ok({ rule, count: txs.length, transactions: txs.map((x) => ({ id: x.id, date: x.date, amount_cents: x.amount_cents, description: x.description, merchant_name: x.merchant_name })) });
+  }],
+  ['POST', /^\/recurring\/pins$/, ({ body }) => {
+    const t = db.transactions.find((x) => x.id === Number(body.transaction_id)); if (!t || !t.merchant_key) return fail(422, 'not_recurring', 'Deze betaling kan geen abonnement zijn.');
+    const f = pinFields(t);
+    if ((db.recurring_pins || []).some((p) => p.merchant_key === f.merchant_key && p.iban === f.iban && p.amount_cents === f.amount_cents && p.desc_key === f.desc_key)) return fail(409, 'exists', 'Deze betaling is al als abonnement gemarkeerd.');
+    const id = (db.recurring_pins || []).reduce((m, x) => Math.max(m, x.id), 0) + 1;
+    (db.recurring_pins ||= []).push({ id, ...f, name: t.merchant_name, earlier: [] }); touch();
+    return ok({ ok: true, id, key: `pin:${id}` });
+  }],
+  ['POST', /^\/recurring\/pins\/(\d+)\/amount$/, ({ params: [id], body }) => {
+    const p = (db.recurring_pins || []).find((x) => x.id === Number(id)); if (!p) return fail(404, 'not_found', 'Deze markering bestaat niet (meer).');
+    p.earlier = [...(p.earlier || []), p.amount_cents]; p.amount_cents = body.amount_cents; touch(); return ok({ ok: true });
+  }],
+  ['DELETE', /^\/recurring\/pins\/(\d+)$/, ({ params: [id] }) => {
+    const n = (db.recurring_pins || []).length; db.recurring_pins = (db.recurring_pins || []).filter((x) => x.id !== Number(id)); touch();
+    return db.recurring_pins.length < n ? ok({ ok: true }) : fail(404, 'not_found', 'Deze markering bestaat niet (meer).');
   }],
   ['POST', /^\/subscriptions$/, ({ body }) => {
     if (!String(body.name || '').trim() || !(body.amount_cents > 0)) return fail(422, 'invalid', 'Vul een naam en bedrag in.');

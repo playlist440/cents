@@ -141,6 +141,10 @@ export const api = {
 
   /* Recurring (vaste lasten) */
   recurring: () => get('/recurring'),
+  pinPreview: (id) => post('/recurring/pins/preview', { transaction_id: id }),
+  pinCreate: (id) => post('/recurring/pins', { transaction_id: id }),
+  pinAmount: (pid, cents) => post(`/recurring/pins/${pid}/amount`, { amount_cents: cents }),
+  pinDelete: (pid) => del(`/recurring/pins/${pid}`),
   createSubscription: (body) => post('/subscriptions', body),
   updateSubscription: (id, body) => patch(`/subscriptions/${id}`, body),
   deleteSubscription: (id) => del(`/subscriptions/${id}`),

@@ -366,8 +366,24 @@ CREATE TABLE manual_subscriptions (
 );
 """
 
+# v14: a payment marked as subscription ("Markeer als abonnement"): Cents follows exactly the
+# payments with this name, counter account, amount and cleaned description, whatever the rules
+# say. A new price is never taken over without asking.
+SCHEMA_V14 = """
+CREATE TABLE recurring_pins (
+    id INTEGER PRIMARY KEY,
+    merchant_key TEXT NOT NULL,
+    iban TEXT,                                  -- counter account, when the payment has one
+    amount_cents INTEGER NOT NULL,              -- signed, exact
+    earlier_amounts TEXT NOT NULL DEFAULT '',   -- prices taken over before ("-1199,-1299")
+    desc_key TEXT NOT NULL DEFAULT '',          -- description without dates, months, numbers
+    name TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+"""
+
 MIGRATIONS: list[str] = [SCHEMA_V1, SCHEMA_V2, SCHEMA_V3, SCHEMA_V4, SCHEMA_V5, SCHEMA_V6, SCHEMA_V7, SCHEMA_V8,
-                         SCHEMA_V9, SCHEMA_V10, SCHEMA_V11, SCHEMA_V12, SCHEMA_V13]
+                         SCHEMA_V9, SCHEMA_V10, SCHEMA_V11, SCHEMA_V12, SCHEMA_V13, SCHEMA_V14]
 SCHEMA_VERSION = len(MIGRATIONS)
 
 DEFAULT_SETTINGS: dict[str, Any] = {"month_start_day": 1, "household_name": ""}
