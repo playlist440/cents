@@ -378,7 +378,7 @@ function MerchantLine({ t, m }) {
         aria-label=${`Alle betalingen van ${t.merchant_name}`}>
       <span class="td-merchant-text">
         <span class="td-merchant-line num">${parts ? parts.join(' · ') : html`<${Skeleton} w=${180} h=${15} />`}</span>
-        ${rec && html`<span class="td-merchant-sub">Vaste last · ${freqLabel(rec.frequency, 'every') || 'terugkerend'}${rec.amount_cents ? ' · ' + euros(Math.abs(rec.amount_cents)) : ''}</span>`}
+        ${rec && html`<span class="td-merchant-sub">${recLabel(rec)}${rec.name && rec.name !== t.merchant_name ? ` "${rec.name}"` : ''} · ${freqLabel(rec.frequency, 'every') || 'terugkerend'}${rec.amount_cents ? ' · ' + euros(Math.abs(rec.amount_cents)) : ''}</span>`}
       </span>
       ${values.some((v) => v > 0) && values.filter((v) => v > 0).length > 1
         ? html`<${Sparkline} values=${values} width=${76} height=${30} label=${`${t.merchant_name} per maand, afgelopen jaar`} />`
@@ -386,6 +386,15 @@ function MerchantLine({ t, m }) {
       <span class="row-chev"><${Icon} name="chevron-right" size=${14} stroke=${2.6} /></span>
     </button>
   </section>`;
+}
+
+/** The block of Vaste lasten the item is listed in, so the word matches what you find there. */
+function recLabel(rec) {
+  if (rec.direction === 'in') return 'Vast inkomen';
+  const g = categoryById(rec.category_id)?.grp;
+  if (g === 'saving') return 'Vaste spaaropdracht';
+  if (g === 'fixed') return rec.status === 'ended' ? 'Vaste last (gestopt?)' : 'Vaste last';
+  return 'Regelmatig';
 }
 
 /* ---------- Details ---------- */

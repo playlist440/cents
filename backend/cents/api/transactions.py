@@ -121,6 +121,10 @@ def get_transaction(tx_id: int, conn: sqlite3.Connection = Depends(get_conn)) ->
     out["category_reason"] = tx.get("category_reason") or tx["category_source"]
     out["category_reason_label"] = reason_label(tx.get("category_reason"), tx, get_library())
     out["merchant"] = merchant_summary(conn, tx["merchant_key"])
+    # the recurring item THIS payment belongs to (a name can have several: potjes, accounts,
+    # policies), not the merchant's biggest one; None when it is part of none
+    from ..services import recurring
+    out["merchant"]["recurring"] = recurring.by_transaction(conn).get(tx["id"])
     out["spread"] = spread.describe(conn, tx)
     return out
 

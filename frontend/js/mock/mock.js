@@ -1873,7 +1873,7 @@ function filterTransactions(q) {
 function txDetail(t) {
   const same = db.transactions.filter((x) => x.merchant_key === t.merchant_key);
   const yearAgo = addDays(db.today, -365);
-  const rec = recurringItems().find((it) => it.merchant_key === t.merchant_key) || null;
+  const rec = recurringItems().find((it) => (it.tx_ids || []).includes(t.id)) || null;   // the item this payment is part of
   const mccLabels = { 5411: 'Supermarkt', 5541: 'Tankstation', 5812: 'Restaurant', 5814: 'Fastfood', 5912: 'Drogisterij', 5200: 'Bouwmarkt', 5331: 'Warenhuis', 5311: 'Warenhuis', 5945: 'Speelgoed', 5995: 'Dierenwinkel', 4111: 'Openbaar vervoer', 7523: 'Parkeren', 7832: 'Bioscoop', 5651: 'Kleding', 5712: 'Meubels', 5462: 'Bakkerij', 5999: 'Winkel' };
   return {
     ...serializeTx(t),

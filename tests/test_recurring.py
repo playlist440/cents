@@ -350,3 +350,22 @@ def test_potjes_names_codes_and_changing_descriptions(client, book):
     items = [i for i in client.get("/api/recurring").json()["items"] if i["merchant_key"] == "spaarrekening"]
     ids = [set(i["tx_ids"]) for i in items]
     assert all(len(x) == 6 for x in ids) and not (ids[0] & ids[1]) and not (ids[1] & ids[2])
+
+
+def test_transaction_shows_the_item_it_belongs_to(client, book):
+    chk = book.account("Betaal", "checking")
+    sav = book.account("Spaarrekening", "savings", "NL33BANK0000000003")
+    ids = {}
+    for i in range(6):
+        d = (date(2026, 1, 5) + timedelta(days=31 * i)).replace(day=5).isoformat()
+        for amt, what in ((-5000, "Vakantie"), (-3000, "Buffer")):
+            ids.setdefault(what, []).append(book.tx(chk, d, amt, "sparen", "Spaarrekening", kind="transfer",
+                                                    to=sav, method="internal", description=what))
+    one_off = book.tx(chk, "2026-03-20", -77700, "sparen", "Spaarrekening", kind="transfer", to=sav,
+                      method="internal", description="Extra")
+    book.commit()
+    buf = client.get(f"/api/transactions/{ids['Buffer'][-1]}").json()["merchant"]["recurring"]
+    assert buf["name"] == "Spaarrekening · Buffer" and buf["amount_cents"] == -3000
+    assert client.get(f"/api/transactions/{one_off}").json()["merchant"]["recurring"] is None
+    listed = {i["key"] for i in client.get("/api/recurring").json()["items"]}
+    assert buf["key"] in listed
