@@ -24,6 +24,9 @@ en hoe je potjes ervoor staan.
   en koerskosten, bakjes boven vorig jaar en achteraf betalen, op één plek.
 - **Controle** (Instellingen): hoeveel van je uitgaven verantwoord is, en of er maanden of
   overboekingen ontbreken of een saldo niet aansluit, zodat je weet welke import nog mist.
+- **Creditcard met de hand**: download onder Importeren het invulbestand (Excel: datum, winkel,
+  bedrag), vul je aankopen in en importeer het. Hetzelfde bestand elke maand aanvullen mag; de
+  maandelijkse afschrijving van de creditcard telt niet dubbel.
 - Beleggingen bij DEGIRO: importeer de Transacties-, Rekeningoverzicht- of Portefeuille-CSV en
   Cents toont de echte waarde van je fondsen, wat je inlegde en je resultaat.
 - Beleggingen bij eToro: importeer het rekeningoverzicht (Account Statement, Excel). Telkens

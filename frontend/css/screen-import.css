@@ -96,3 +96,7 @@
 .im-more { display: flex; justify-content: center; }
 .im-note { color: var(--label-2); white-space: normal; }
 .im-choices { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.im-card { display: flex; align-items: center; gap: 12px; margin-top: 14px; padding: 12px 14px; border-radius: var(--r-list, 12px); background: var(--fill-4, var(--fill-3)); }
+.im-card-icon { flex: none; display: grid; place-items: center; width: 34px; height: 34px; border-radius: 9px; background: var(--tint-soft); color: var(--tint); }
+.im-card-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; font: 400 var(--fs-footnote)/1.35 var(--font); color: var(--label-2); }
+.im-card-text b { color: var(--label); font-size: var(--fs-subhead); font-weight: 600; }

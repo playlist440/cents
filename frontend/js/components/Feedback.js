@@ -55,7 +55,7 @@ export function DropZone({ onFiles, title, compact = false }) {
     <div class="dz-icon" aria-hidden="true"><${Icon} name="doc" size=${compact ? 30 : 44} stroke=${1.4} /><span class="dz-arrow"><${Icon} name="import" size=${compact ? 16 : 22} stroke=${2.2} /></span></div>
     <h2 class="dz-title">${title || (hover ? 'Sleep je bankbestand hierheen' : 'Voeg je bankbestand toe')}</h2>
     <${FileButton} onFiles=${onFiles} size=${compact ? 'medium' : 'large'} />
-    <p class="dz-caption">CSV of XML</p>
+    <p class="dz-caption">CSV, XML of Excel</p>
   </div>`;
 }
 

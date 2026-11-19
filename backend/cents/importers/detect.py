@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Callable, Iterator
 
-from . import ImportFormatError, Source, Statement, asn_csv, camt053, collect, degiro, etoro, read_head
+from . import ImportFormatError, Source, Statement, asn_csv, camt053, card_xlsx, collect, degiro, etoro, read_head
 
 PARSERS: dict[str, Callable[[Source], Iterator[tuple[Statement, dict]]]] = {
     "asn_csv": asn_csv.iter_rows,
@@ -15,9 +15,13 @@ PARSERS: dict[str, Callable[[Source], Iterator[tuple[Statement, dict]]]] = {
 def detect(source: Source) -> str:
     stripped = read_head(source).lstrip(b"\xef\xbb\xbf \t\r\n")
     if etoro.looks_like(stripped):
-        if etoro.is_statement(etoro.read_workbook(source)):
+        book = etoro.read_workbook(source)
+        if card_xlsx.looks_like(book):
+            return "card_xlsx"
+        if etoro.is_statement(book):
             return "etoro"
-        raise ImportFormatError("Dit Excel-bestand herken ik niet. Van eToro kan ik het rekeningoverzicht (Account Statement) lezen.")
+        raise ImportFormatError("Dit Excel-bestand herken ik niet. Ik lees het creditcard-invulbestand van Cents "
+                                "en het rekeningoverzicht (Account Statement) van eToro.")
     if stripped.startswith(b"<"):
         if camt053.looks_like(stripped):
             return "camt053"

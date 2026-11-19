@@ -18,6 +18,7 @@ import { openMenu } from '../components/Menu.js';
 import { toast } from '../components/Toast.js';
 import { Icon } from '../icons.js';
 import { maskIban, ACCOUNT_TYPE_LABEL } from './_tx.js';
+import { downloadFrom } from './_kit.js';
 
 let seq = 0;
 let live = null; // add() of the open Import sheet
@@ -97,7 +98,7 @@ export function ImportSheet({ files: initial, close }) {
       trailing=${done ? html`<${SheetButton} bold onClick=${close}>Klaar</${SheetButton}>` : undefined}>
     <div class="sheet-pad im">
       ${rows.length === 0
-        ? html`<${DropZone} compact onFiles=${add} />`
+        ? html`<${DropZone} compact onFiles=${add} /><${CardTemplate} />`
         : html`
           ${done && okRows.length > 0 && html`<${Summary} totalNew=${totalNew} totalKnown=${totalKnown} />`}
           <ul class="inset im-files" aria-label="Bestanden">
@@ -115,6 +116,19 @@ export function ImportSheet({ files: initial, close }) {
           </div>`}
     </div>
   </${Sheet}>`;
+}
+
+/** Creditcard purchases by hand: the invulbestand to download, fill in and drop here. */
+export function CardTemplate() {
+  const get = async () => {
+    try { await downloadFrom(api.cardTemplateUrl(), 'cents-creditcard.xlsx'); } catch (err) { toast({ text: err.message, icon: 'warning' }); }
+  };
+  return html`<div class="im-card">
+    <span class="im-card-icon" aria-hidden="true"><${Icon} name="creditcard" size=${20} stroke=${2} /></span>
+    <span class="im-card-text"><b>Creditcard met de hand bijhouden?</b>
+      <span>Download het invulbestand, zet er je aankopen in (datum, winkel, bedrag) en sleep het hierheen. De maandelijkse afschrijving telt niet dubbel.</span></span>
+    <${Button} size="small" variant="tinted" onClick=${get}>Download</${Button}>
+  </div>`;
 }
 
 function friendly(message, status) {
@@ -159,7 +173,7 @@ function FileRow({ row, onChoose }) {
     const what = inv?.kind === 'degiro_portfolio' ? 'koersen' : inv?.kind === 'degiro_account' ? 'dividend/kosten' : inv?.kind === 'etoro' ? 'posities en boekingen' : inv ? 'transacties' : null;
     sub = result.new === 0
       ? (result.duplicates > 0 ? 'Alles was al bekend' : inv ? 'Niets bruikbaars gevonden' : 'Geen betalingen gevonden')
-      : [`${number(result.new)} ${what ? what + ' ' : ''}nieuw`, result.duplicates ? `${number(result.duplicates)} al bekend` : null, inv?.kind === 'degiro_portfolio' ? null : range].filter(Boolean).join(' · ');
+      : [`${number(result.new)} ${what ? what + ' ' : ''}nieuw`, result.duplicates ? `${number(result.duplicates)} al bekend` : null, result.removed ? `${number(result.removed)} weggehaald` : null, inv?.kind === 'degiro_portfolio' ? null : range].filter(Boolean).join(' · ');
   }
   const mismatch = state === 'done' ? result.investment?.mismatch || [] : [];
   const working = state === 'upload' || state === 'process';

@@ -2231,6 +2231,7 @@ const ROUTES = [
   ['GET', /^\/recap\/index$/, () => ok(recapIndex())],
   ['GET', /^\/checks$/, () => ok(checksData())],
   ['GET', /^\/besparen$/, () => ok(besparenData())],
+  ['GET', /^\/creditcard\/template$/, () => fail(400, 'mock', 'Het invulbestand downloaden kan alleen in de echte app.')],
   ['GET', /^\/recap$/, ({ query }) => ok(query.year ? recap({ year: Number(query.year) }) : recap({ period: query.period || currentPeriod() }))],
 
   /* Recurring */

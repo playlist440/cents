@@ -227,6 +227,20 @@ Produces `method`, `merchant_name`, `merchant_key`, `city`, `mcc`, `wallet`, `ma
   spaces only. Persons (private counterparties) get a key too, prefixed `p:`; detect with
   initials / "eo" / "Hr" / "Mw" patterns and absence of company words.
 
+### 5.x Creditcard by hand (added later; additive)
+
+`GET /creditcard/template` returns `cents-creditcard.xlsx`: sheet Creditcard (Datum | Winkel |
+Bedrag | Bakje (mag leeg), date and euro formats, a bakje drop-down), sheet Uitleg, hidden sheet
+Bakjes. Import recognises it by the header (format `card_xlsx`, `services/cardfile.py`):
+- rows become manual transactions on the only credit account (else a new "Creditcard", whose
+  `match` keywords come from the payments sorted as Creditcard, so the monthly settlement is a
+  `settlement` linked to it and only its unexplained part counts);
+- a positive amount is a purchase, a negative one money back; a typed bakje is the user's choice,
+  an empty one is classified like any payment;
+- the file is leading for its period: rows of an earlier version between its first and last
+  date that are gone are removed (`removed`), equal rows are kept untouched, new ones added
+  (dedupe key `card:<account>:<date>:<amount>:<winkel>:<n>`).
+
 ## 6. The library (classification)
 
 Data file formats (all in `backend/cents/data/`, loaded once at start, missing file = empty):

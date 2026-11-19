@@ -291,7 +291,10 @@ def import_file(conn: sqlite3.Connection, filename: str, source: Source,
         conn.execute("BEGIN")
     conn.execute("SAVEPOINT import_file")
     try:
-        if fmt == "etoro":
+        if fmt == "card_xlsx":
+            from . import cardfile
+            cardfile.import_card(conn, filename, source, result)
+        elif fmt == "etoro":
             investments.import_etoro(conn, filename, source, investment_account_id, result)
         elif pairs is None:
             investments.import_degiro(conn, filename, source, fmt, investment_account_id, result)

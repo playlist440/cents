@@ -202,6 +202,7 @@ export const api = {
   updateSettings: (changes) => patch('/settings', changes),
   exportTransactionsUrl: () => downloadUrl('/export/transactions.csv'),
   backupUrl: () => downloadUrl('/export/backup'),
+  cardTemplateUrl: () => downloadUrl('/creditcard/template'),
   restore: (file) => upload('/restore', [file], 'file'),
   reclassify: () => post('/reclassify'),
   deleteData: (password) => del('/data', undefined, { password }),
