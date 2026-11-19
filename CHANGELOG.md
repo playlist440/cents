@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.1.2 — 2026-11-19
+
+- Vaste lasten: overboekingen aan een persoon worden herkend aan rekeningnummer én omschrijving. Een vaste opdracht ("Zakgeld") staat los van losse overboekingen naar dezelfde persoon, ook bij hetzelfde bedrag. Omschrijvingen die elke keer anders zijn, vallen terug op het rekeningnummer. Heeft één persoon zo meer vaste posten, dan heten ze "Naam · Omschrijving".
+
 ## 1.1.1 — 2026-11-19
 
 - Vaste lasten: een maandelijkse overboeking aan een persoon (zakgeld) blijft een vaste last, ook als er tussendoor andere, losse overboekingen naar dezelfde persoon gaan. Die regel ("een winkel waar je ook los komt") geldt alleen nog voor winkels en restaurants.

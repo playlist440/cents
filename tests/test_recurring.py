@@ -458,3 +458,27 @@ def test_monthly_pocket_money_with_other_transfers_in_between():
     found = rec.detect_full(rows, date(2026, 9, 10))
     monthly = [i for i in found if i["frequency"] == "monthly" and abs(i["amount_cents"]) == 2500]
     assert monthly and len(monthly[0]["_ids"]) == 45
+
+
+def test_pocket_money_told_apart_by_description():
+    """Same person, same IBAN, same amount: the standing order "Zakgeld" and one-off transfers
+    with other descriptions. Only the standing order is the recurring item."""
+    from datetime import date, timedelta
+    from cents.services import recurring as rec
+    base = {"merchant_key": "p:kind", "merchant_name": "Kind", "account_id": 1, "account_type": "checking",
+            "counterparty_iban": "NL00TEST0000000009", "method": "transfer", "kind": "normal",
+            "category_id": None, "category_key": "unsorted", "grp": None}
+    rows, n = [], 0
+    for m in range(45):
+        y, mm = 2023 + (m // 12), m % 12 + 1
+        n += 1
+        rows.append({**base, "id": n, "date": date(y, mm, 1).isoformat(), "amount_cents": -2500,
+                     "description": "Zakgeld"})
+        for k, what in enumerate((f"Bioscoop {chr(97 + m % 26)}x", f"Cadeau voor {['Tim', 'Sam', 'Noor', 'Lieke'][m % 4]}{'s' * (m % 3)}", f"Uitje {['zee', 'bos', 'stad', 'pret', 'zoo'][m % 5]}")):
+            n += 1
+            rows.append({**base, "id": n, "date": (date(y, mm, 3) + timedelta(days=8 * k)).isoformat(),
+                         "amount_cents": -2500 if m % 4 == k else -(900 + 650 * k + 37 * m), "description": what})
+    found = rec.detect_full(rows, date(2026, 9, 10))
+    zak = [i for i in found if i["frequency"] == "monthly"]
+    assert len(zak) == 1 and len(zak[0]["_ids"]) == 45
+    assert all(r["description"] == "Zakgeld" for r in rows if r["id"] in set(zak[0]["_ids"]))

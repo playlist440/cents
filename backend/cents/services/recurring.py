@@ -315,7 +315,9 @@ def _destination(r: dict) -> str | None:
         return f"acc{r['transfer_account_id']}{iban[-4:]}|{_potje(r.get('description'))}"
     if iban and ((r.get("merchant_key") or "").startswith("p:") or r.get("method") in ("transfer", "internal")
                  or r.get("kind") == "transfer"):
-        return iban
+        # the description too (a standing order "Zakgeld" next to one-off transfers to the same
+        # person); a description that changes every time falls back to the IBAN (detect_full)
+        return f"{iban}|{_potje(r.get('description'))}" if (r.get("merchant_key") or "").startswith("p:") else iban
     return None
 
 
@@ -388,9 +390,14 @@ def detect_full(rows: list[dict], data_today: date, ignored: set[str] = frozense
                         nice = nice[:40]
                         item["name"] = f"{account} · {nice[:1].upper()}{nice[1:]}" if what else account
                         item["_potje_code"] = what[1:] if what.startswith("#") else None
+                    elif what and sum(1 for d in split.get((flat[-1]["merchant_key"], flat[-1]["amount_cents"] < 0), ())
+                                      if d.partition("|")[0] == acc_part) > 1:   # one person, by description: "Kind · Zakgeld"
+                        item["name"] = f"{item['name']} · {what[:1].upper()}{what[1:40]}"
                     else:
                         item["name"] = f"{item['name']} · rekening ••{tail}"
-                    tag = f"{tail}{'~' + what if what else ''}"
+                    same_iban = sum(1 for d in split.get((flat[-1]["merchant_key"], flat[-1]["amount_cents"] < 0), ())
+                                    if d.partition("|")[0] == acc_part) > 1
+                    tag = f"{tail}{'~' + what if what and (account or same_iban) else ''}"
                     item["key"] = item["key"].replace(item["merchant_key"], f"{item['merchant_key']}@{tag}", 1)
                 items.append(item)
     seen: dict[str, int] = {}
