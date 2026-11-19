@@ -216,3 +216,22 @@ def test_room_and_health_count_the_full_payment(client, book, today):
     assert h["saving"]["cents"] == 0 and h["saving"]["repaid_cents"] == 40000
     assert h["debts"]["known"] is True
     assert h["debts"]["items"][0]["kind"] == "mortgage" and h["debts"]["items"][0]["cents"] > 0
+
+
+def test_repayment_is_shown_next_to_wonen(client, book, today):
+    today("2026-11-15")
+    _household(book)
+    _setup(client)
+    o = client.get("/api/overview?period=2026-10").json()
+    wonen = next(c for c in client.get("/api/categories").json() if c["key"] == "wonen")["id"]
+    cat = next(c for c in o["categories"] if c["category_id"] == wonen)
+    assert (cat["spent_cents"], cat["repaid_cents"]) == (PAY - 40000, 40000)
+    s = client.get(f"/api/categories/{wonen}/summary?period=2026-10").json()
+    assert s["repaid_cents"] == 40000
+    item = next(i for i in client.get("/api/recurring").json()["items"] if i["name"] == LENDER)
+    assert item["repaid_per_month_cents"] == 40000
+    top = client.get("/api/trends?periods=12").json()["top_merchants"]
+    lender = next(m for m in top if m["merchant_key"] == LENDER.lower())
+    assert lender["cents"] == PAY * lender["count"]          # what was paid to the lender
+    wonen_top = client.get(f"/api/categories/{wonen}/summary?period=2026-10").json()["merchants"][0]
+    assert wonen_top["cents"] == PAY                         # the bakje's top winkel: the full payment

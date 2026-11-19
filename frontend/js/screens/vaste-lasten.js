@@ -39,7 +39,7 @@ const VIEWS = [['lijst', 'Lijst'], ['kalender', 'Kalender']];
 /** Section of an item: by bakje group and direction. */
 const SECTIONS = [
   { id: 'fixed', title: 'Vaste lasten' },
-  { id: 'daily', title: 'Ook elke maand' },
+  { id: 'daily', title: 'Ook regelmatig, buiten de vaste lasten' },
   { id: 'saving', title: 'Sparen en beleggen' },
   { id: 'income', title: 'Inkomen' },
 ];
@@ -210,7 +210,7 @@ function TableRow({ it, selected, onSelect }) {
   return html`<button role="row" data-key=${it.key} class=${'dt-row' + (selected ? ' is-selected' : '') + (ended ? ' is-ended' : '')}
       aria-selected=${selected ? 'true' : 'false'} onClick=${() => onSelect(it)}>
     <span class="dt-cell vl2-name" role="gridcell">
-      <span class="vl2-title">${it.name}</span>
+      <span class="vl2-title">${it.name}${it.repaid_per_month_cents > 0 ? html` <span class="vl2-repaid num">waarvan ${euros(it.repaid_per_month_cents)} aflossing</span>` : ''}</span>
       ${badges(it).map((x) => html`<span class=${'mini-chip tone-' + x.tone}>${x.text}</span>`)}
       ${freq && html`<span class="mini-chip tone-info vl2-freq-chip">${freq}</span>`}
     </span>
@@ -267,7 +267,7 @@ function ItemRow({ it, onClick }) {
         ${b.map((x) => html`<span class=${'mini-chip tone-' + x.tone}>${x.text}</span>`)}
       </span>
       <span class="row-sub">
-        <span class="vl-when">${ended ? `laatst ${shortDate(it.last_date)}` : `volgende ${shortDate(it.next_date)}`}</span>
+        <span class="vl-when">${ended ? `laatst ${shortDate(it.last_date)}` : `volgende ${shortDate(it.next_date)}`}${it.repaid_per_month_cents > 0 ? ` · waarvan ${euros(it.repaid_per_month_cents)} aflossing` : ''}</span>
         ${freq && html`<span class="mini-chip tone-info">${freq}</span>`}
       </span>
     </span>
@@ -450,6 +450,7 @@ function ItemDetail({ close, it, cal = null, inline = false }) {
         <div class=${'vl-sheet-amount rounded num' + (it.direction === 'in' ? ' is-income' : '')}>${it.variable ? 'ca. ' : ''}${money(typ, { signed: it.direction === 'in' })}</div>
         <div class="vl-sheet-sub">${capitalize(freqLabel(it.frequency, 'every') || 'terugkerend')}${when}</div>
         ${it.per_year_cents != null && html`<div class="vl-sheet-sub num">${euros(it.per_year_cents)} per jaar</div>`}
+        ${it.repaid_per_month_cents > 0 && html`<div class="vl-sheet-sub num">${money(Math.abs(it.per_month_cents) - it.repaid_per_month_cents, { whole: true })} rente en kosten · ${euros(it.repaid_per_month_cents)} aflossing per maand. De aflossing telt als gespaard, niet in het bakje.</div>`}
         ${it.change && html`<div class="vl-sheet-change num">was ${money(Math.abs(it.change.from_cents))} tot ${shortDate(it.change.date)}</div>`}
       </div>
       ${cal && html`<${CalStatus} cal=${cal} />`}

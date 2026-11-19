@@ -75,11 +75,12 @@ export function Potjes() {
 /* ---------- Header + advice ---------- */
 
 function Summary({ data, goals }) {
-  const inPots = goals.reduce((s, g) => s + g.saldo_cents, 0);
+  const inPots = goals.reduce((s, g) => s + Math.max(0, g.saldo_cents), 0);   // as in Nog te besteden
   const bal = data.savings_balance_cents;
   const free = data.unallocated_cents;
   const room = data.room;
   const advice = data.total_advice_cents || 0;
+  const parts = goals.filter((g) => g.monthly_advice_cents > 0 && g.status !== 'reached');
   return html`<section class="pj-head" aria-label="Samenvatting">
     <div class="pj-head-label">In potjes</div>
     <div class="pj-head-amount rounded"><${Amount} cents=${inPots} whole animate /></div>
@@ -94,6 +95,7 @@ function Summary({ data, goals }) {
           ? html`<span class="pj-advice-state is-fits"><${Icon} name="check" size=${14} stroke=${2.8} /> past</span>`
           : html`<span class="pj-advice-state is-tight">${euros(-room.difference_cents)} meer dan je meestal overhoudt</span>`)}
         ${room && html`<span class="pj-advice-note num">${roomNote(room)}</span>`}
+        ${parts.length > 1 && html`<span class="pj-advice-note num">${parts.map((g) => `${g.name} ${euros(g.monthly_advice_cents)}`).join(' · ')}</span>`}
       </span>
     </div>`}
   </section>`;
@@ -102,10 +104,10 @@ function Summary({ data, goals }) {
 /** What "meestal over" is made of, in one line: real money, the full mortgage payment, without
  *  one-off purchases spread over months, after investing that is set up to repeat. */
 function roomNote(room) {
-  const parts = [`Jullie houden meestal ${room.avg_over_cents >= 0 ? `${euros(room.avg_over_cents)} per maand over` : `niets over (${euros(-room.avg_over_cents)} tekort)`}`];
-  const after = [room.repaid_cents > 0 && 'aflossing', room.investing_cents > 0 && `${euros(room.investing_cents)} beleggen`].filter(Boolean);
-  if (after.length) parts.push(`na ${after.join(' en ')}`);
-  return parts.join(', ') + '.';
+  const over = room.avg_over_cents >= 0 ? `${euros(room.avg_over_cents)} per maand over` : `niets over (${euros(-room.avg_over_cents)} tekort)`;
+  const after = [room.repaid_cents > 0 && `aflossing (${euros(room.repaid_cents)})`, room.investing_cents > 0 && `beleggen (${euros(room.investing_cents)})`].filter(Boolean);
+  // bridges to "gemiddeld per maand over" on the Overzicht, which still counts these as over
+  return after.length ? `Na ${after.join(' en ')} houden jullie meestal ${over}.` : `Jullie houden meestal ${over}.`;
 }
 
 /* ---------- Cards ---------- */

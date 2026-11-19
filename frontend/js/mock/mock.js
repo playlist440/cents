@@ -474,7 +474,7 @@ function overview(pid) {
   }
 
   const categories = [...f.cats.entries()]
-    .map(([category_id, e]) => ({ category_id, spent_cents: e.cents, avg_cents: categoryAvg(category_id, pid), count: e.count }))
+    .map(([category_id, e]) => ({ category_id, spent_cents: e.cents, avg_cents: categoryAvg(category_id, pid), count: e.count, repaid_cents: f.repaidCats.get(category_id) || 0 }))
     .filter((c) => c.spent_cents !== 0)
     .sort((a, b) => b.spent_cents - a.spent_cents);
   const income = [...f.incomeCats.entries()].map(([category_id, e]) => ({ category_id, cents: e.cents })).sort((a, b) => b.cents - a.cents);
@@ -683,6 +683,8 @@ function outlook() {
       .map((it) => ({ name: it.name, date: it.next_date, cents: -it.amount_cents })).sort((x, y) => (x.date < y.date ? -1 : 1));
     const overdueCents = overdue.reduce((s, x) => s + x.cents, 0);
     const toSavings = Math.max(0, due(start, pay, ['saving']).reduce((s, [it]) => s - it.amount_cents, 0));
+    const incoming = due(start, pay, ['income'], 'in').map(([it, d]) => ({ name: it.name, date: d, cents: it.amount_cents }));
+    const incomeCents = incoming.reduce((s, x) => s + x.cents, 0);
     // next credit-card settlement: median unexplained part of the last three, one month on
     const unexpl = settlementUnexplained().map;
     const settles = db.transactions.filter((t) => t.kind === 'settlement' && (unexpl.get(t.id) || 0) > 0).sort((x, y) => (x.date < y.date ? -1 : 1));
@@ -696,7 +698,7 @@ function outlook() {
     }
     const days = Math.max(0, daysBetween(start, pay));
     const daily = Math.round(rate * days);
-    const total = balances - fixed - overdueCents - toSavings - credit - (card ? card.cents : 0) - daily;
+    const total = balances + incomeCents - fixed - overdueCents - toSavings - credit - (card ? card.cents : 0) - daily;
     const daysLeft = daysBetween(db.today, pay);
     const inGoals = goals.reduce((s, g) => s + Math.max(0, g.saldo_cents), 0);
     const goalsCents = savingsTotal > 0 ? Math.min(inGoals, savingsTotal) : 0;
@@ -704,7 +706,7 @@ function outlook() {
     const accJson = (x) => ({ name: x.name, type: x.type, balance_cents: x.balance_cents, as_of: x.as_of, stale: stale(x.as_of) });
     free = {
       total_cents: total, balances_cents: balances, fixed_until_payday_cents: fixed, fixed_overdue_cents: overdueCents, fixed_overdue: overdue,
-      saving_until_payday_cents: toSavings, credit_cents: credit,
+      saving_until_payday_cents: toSavings, income_until_payday_cents: incomeCents, income_until_payday: incoming, credit_cents: credit, start,
       card_settlement: card, daily_until_payday_cents: daily, daily_rate_cents: Math.round(rate), daily_days: days,
       days_left: Math.max(0, daysLeft), per_day_cents: daysLeft > 0 ? Math.trunc(total / daysLeft) : null,
       day_budget_cents: daysLeft > 0 ? Math.max(0, Math.round(rate + total / daysLeft)) : null,
@@ -733,6 +735,15 @@ function outlook() {
     const start = chk.as_of ? addDays(chk.as_of, 1) : db.today;
     const dueBy = new Map();
     for (const [it, d] of [...due(start, pay, ['fixed', 'saving']), ...due(start, pay, ['income'], 'in')]) dueBy.set(d, (dueBy.get(d) || 0) + it.amount_cents);
+    if (free) {
+      // the same items as Nog te besteden (services/outlook.py checking_warning)
+      dueBy.set(start, (dueBy.get(start) || 0) - free.fixed_overdue_cents);
+      const last = addDays(pay, -1);
+      let cd = free.card_settlement ? free.card_settlement.date : last;
+      if (cd < start) cd = start;
+      if (cd > last) cd = last;
+      dueBy.set(cd, (dueBy.get(cd) || 0) - free.credit_cents - (free.card_settlement ? free.card_settlement.cents : 0));
+    }
     let bal = chk.balance_cents;
     let low = null;
     let lowDay = null;
@@ -840,6 +851,15 @@ function checksData() {
   return { coverage, accounts, transfers, issues };
 }
 
+/** Loans paid every month (bakje Leningen) that are not on Vermogen yet (services/health.py). */
+function unlistedLoans() {
+  const linked = new Set(db.assets.filter((a) => a.kind === 'debt' && a.merchant_key).map((a) => a.merchant_key));
+  const m = mortgageLinked().key;
+  if (m) linked.add(m);
+  return recurringItems().filter((i) => i.direction === 'out' && i.status !== 'ended' && catById(i.category_id)?.key === 'leningen' && !linked.has(i.merchant_key))
+    .map((i) => ({ name: i.name, per_month_cents: -i.per_month_cents }));
+}
+
 /** Hoe staan we ervoor (services/health.py). */
 function health(buffer) {
   const hist = previousComplete(currentPeriod(), 12);
@@ -867,7 +887,7 @@ function health(buffer) {
     housing: { cents: r(housing), share: share(housing) },
     fixed: { cents: r(fixed), share: share(fixed), rest_cents: r(income - fixed) },
     saving: { cents: r(saved), share: share(saved), repaid_cents: r(repaid) },
-    debts: { known: debts.length > 0, total_cents: debts.reduce((s, d) => s + d.cents, 0), items: debts },
+    debts: { known: debts.length > 0, total_cents: debts.reduce((s, d) => s + d.cents, 0), items: debts, unlisted: unlistedLoans() },
   };
 }
 
@@ -1998,7 +2018,7 @@ const ROUTES = [
     const income = c.grp === 'income';
     return ok({
       spent_cents: income ? (f.incomeCats.get(id)?.cents || 0) : (f.cats.get(id)?.cents || 0),
-      avg_cents: categoryAvg(id, pid), count: txs.length + parts.length, parts,
+      avg_cents: categoryAvg(id, pid), count: txs.length + parts.length, parts, repaid_cents: f.repaidCats.get(id) || 0,
       series: income ? series.map((s) => ({ period: s.period, cents: flows(s.period).incomeCats.get(id)?.cents || 0 })) : series,
       merchants: [...m.values()].map((x) => (income ? { ...x, cents: -x.cents } : x)).sort((a, b) => b.cents - a.cents).slice(0, 8),
       transactions: txs.map(serializeTx),
@@ -2088,7 +2108,8 @@ const ROUTES = [
     const inc = incomeAvg();
     return ok({ income_cents: inc ? inc.income_cents : null, repaid_cents: inc ? inc.repaid_cents : 0,
       share_of_income: inc && inc.income_cents > 0 && monthly_out_cents > 0 ? Math.round((monthly_out_cents / inc.income_cents) * 1000) / 1000 : null,
-      monthly_out_cents, monthly_in_cents: active.filter((i) => i.direction === 'in' && catById(i.category_id)?.grp === 'income').reduce((s, i) => s + i.per_month_cents, 0), yearly_out_cents: monthly_out_cents * 12, subscriptions, items });
+      monthly_out_cents, monthly_in_cents: active.filter((i) => i.direction === 'in' && catById(i.category_id)?.grp === 'income').reduce((s, i) => s + i.per_month_cents, 0), yearly_out_cents: monthly_out_cents * 12, subscriptions,
+      items: items.map((i) => (i.direction === 'out' && allSplits().has(i.merchant_key) ? { ...i, repaid_per_month_cents: Math.round(Math.abs(i.per_month_cents) * allSplits().get(i.merchant_key)) } : i)) });
   }],
   ['DELETE', /^\/recurring\/ignore$/, ({ body }) => { db.recurring_ignored = db.recurring_ignored.filter((k) => k !== String(body.key || '').trim()); return ok({ ok: true }); }],
   ['GET', /^\/assumptions$/, () => ok(assumptionsList())],

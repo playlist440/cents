@@ -276,11 +276,15 @@ def free(conn: sqlite3.Connection, lg: Ledger, items: list[dict], buf: dict | No
     overdue = _overdue_fixed(lg, items, start)
     overdue_cents = sum(x["cents"] for x in overdue)
     to_savings = -sum(i["amount_cents"] for i, _ in _spend_items(lg, items, start, pay, (SAVING,)))
+    # other money that comes in every month before payday (toeslagen, kinderbijslag)
+    incoming = [{"name": i["name"], "date": d.isoformat(), "cents": i["amount_cents"]}
+                for i, d in _spend_items(lg, items, start, pay, (INCOME,), direction="in")]
+    income_cents = sum(x["cents"] for x in incoming)
     card = expected_settlement(lg, start - timedelta(days=1), pay)
     rate = daily_rate(lg)
     days = max(0, (pay - start).days)
     daily = int(round(rate * days))
-    total = (balances - fixed - overdue_cents - max(0, to_savings) - credit
+    total = (balances + income_cents - fixed - overdue_cents - max(0, to_savings) - credit
              - (card["cents"] if card else 0) - daily)
     days_left = (pay - lg.today).days
 
@@ -303,9 +307,11 @@ def free(conn: sqlite3.Connection, lg: Ledger, items: list[dict], buf: dict | No
     return {"total_cents": total, "balances_cents": balances,
             "fixed_until_payday_cents": fixed, "fixed_overdue_cents": overdue_cents,
             "fixed_overdue": overdue, "saving_until_payday_cents": max(0, to_savings),
+            "income_until_payday_cents": income_cents, "income_until_payday": incoming,
             "credit_cents": credit, "card_settlement": card,
             "daily_until_payday_cents": daily,
             "daily_rate_cents": int(round(rate)), "daily_days": days,
+            "start": start.isoformat(),
             "days_left": max(0, days_left),
             # what is left on top of normal daily spending, per day …
             "per_day_cents": int(total / days_left) if days_left > 0 else None,
@@ -347,8 +353,13 @@ def tempo(lg: Ledger) -> dict | None:
             "months": [{"period": p.id, "net_cents": _net(lg, p)} for p in reversed(complete)]}
 
 
-def checking_warning(conn: sqlite3.Connection, lg: Ledger, items: list[dict],
-                     pay: date) -> dict | None:
+def checking_warning(conn: sqlite3.Connection, lg: Ledger, items: list[dict], pay: date,
+                     f: dict | None = None) -> dict | None:
+    """Day-by-day projection of the main checking account until the day before payday, with the
+    same items as Nog te besteden (`f`): fixed costs (and overdue ones, on the first day),
+    savings transfers and other income on their dates, the credit card (outstanding purchases
+    and the expected settlement, on the settlement day or else the last day) and the typical
+    daily rate. With one checking account its last day equals Nog te besteden."""
     acc = main_checking(conn)
     if acc is None or len(lg.complete_before(lg.current(), 6)) < 1:
         return None
@@ -361,6 +372,12 @@ def checking_warning(conn: sqlite3.Connection, lg: Ledger, items: list[dict],
              + _spend_items(lg, items, start, pay, (INCOME,), direction="in"))
     for i, d in moves:
         due[d] = due.get(d, 0) + i["amount_cents"]
+    if f:
+        due[start] = due.get(start, 0) - f["fixed_overdue_cents"]
+        card = f["card_settlement"]
+        card_day = date.fromisoformat(card["date"]) if card else pay - timedelta(days=1)
+        card_day = min(max(card_day, start), pay - timedelta(days=1))
+        due[card_day] = due.get(card_day, 0) - f["credit_cents"] - (card["cents"] if card else 0)
     per_day = daily_rate(lg)
     balance, low, low_day = float(acc["balance_cents"]), None, None
     day = start
@@ -393,4 +410,4 @@ def compute(conn: sqlite3.Connection, lg: Ledger) -> dict:
         h["accounted"] = cov and {"share": cov["share"], "unknown_cents": cov["unknown_cents"],
                                   "months": cov["months"]}
     return {"free": f, "tempo": tempo(lg), "buffer": buf,
-            "checking_warning": checking_warning(conn, lg, items, pay), "health": h}
+            "checking_warning": checking_warning(conn, lg, items, pay, f), "health": h}

@@ -768,7 +768,7 @@
 .menu-header { padding: 8px 16px 4px 36px; font: 600 var(--fs-caption1)/1.2 var(--font); color: var(--label-2); }
 .menu-item > svg { flex: none; }
 .menu-item.is-open { background-color: var(--fill-3); }
-.menu.is-popover { overflow: auto; }
+.menu.is-popover { overflow: auto; background: var(--bg-elevated); }   /* text to read: no see-through */
 
 /* ---------- Toast ---------- */
 .toast-host {

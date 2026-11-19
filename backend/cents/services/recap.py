@@ -246,7 +246,7 @@ def build(conn: sqlite3.Connection, lg: Ledger, r: Range, prev: Range | None) ->
         m = merchants.setdefault(x["merchant_key"], {"merchant_key": x["merchant_key"],
                                                      "merchant_name": x["merchant_name"],
                                                      "category_id": cid, "cents": 0, "count": 0})
-        m["cents"] += value
+        m["cents"] += value + (x.get("repaid") or 0)          # what was paid to them
         m["count"] += 1
     spend_rows = _spending_rows(r)
     largest_rows = sorted((x for x in spend_rows if x["id"] not in by_tx),

@@ -126,7 +126,8 @@ def build_overview(conn: sqlite3.Connection, lg: Ledger, p: Period) -> dict:
         avg = _mean([lg.flows_for(h).spent.get(cid, 0) for h in history])
         count = f.counts.get(cid, 0)
         if spent or avg or count:
-            cats.append({"category_id": cid, "spent_cents": spent, "avg_cents": avg, "count": count})
+            cats.append({"category_id": cid, "spent_cents": spent, "avg_cents": avg, "count": count,
+                         "repaid_cents": repaid_in(f, cid)})
     cats.sort(key=lambda c: (-c["spent_cents"], -c["avg_cents"], c["category_id"]))
 
     unsorted_rows = db.row(conn, """
@@ -310,6 +311,12 @@ def build_year_overview(conn: sqlite3.Connection, lg: Ledger, year: int) -> dict
     }
 
 
+def repaid_in(f, cid: int) -> int:
+    """The mortgage/debt repayment in a bakje this period: not in its spending (it counts as
+    saved), shown next to it so "Wonen € 697" and "Florius € 1.148" both make sense."""
+    return sum(r.get("repaid") or 0 for r in f.rows if r["bucket"][1] == cid)
+
+
 def overview(conn: sqlite3.Connection, period_id: str | None) -> dict:
     """GET /overview (cached per database state). `period_id` may be a year ("2026")."""
     lg = ledger_mod.get(conn)
@@ -356,7 +363,7 @@ def trends(conn: sqlite3.Connection, n: int = 12) -> dict:
                 m = merchants.setdefault(r["merchant_key"], {
                     "merchant_key": r["merchant_key"], "merchant_name": r["merchant_name"],
                     "category_id": cid, "cents": 0, "count": 0})
-                m["cents"] += value
+                m["cents"] += value + (r.get("repaid") or 0)       # what was paid to them
                 m["count"] += 1
                 m["merchant_name"], m["category_id"] = r["merchant_name"] or m["merchant_name"], cid
         top = sorted(merchants.values(), key=lambda m: -m["cents"])[:10]
@@ -385,7 +392,7 @@ def category_summary(conn: sqlite3.Connection, category: dict, period_id: str | 
         key = r["merchant_key"] or (f"asset:{r['part']['asset_id']}" if r.get("part") else "")
         m = merchants.setdefault(key, {"merchant_key": key or None,
                                        "merchant_name": r["merchant_name"], "cents": 0, "count": 0})
-        m["cents"] += r["bucket"][2]
+        m["cents"] += r["bucket"][2] + (r.get("repaid") or 0)      # what was paid to them
         m["count"] += 1
     # spread payments and possessions show as this month's part, not with their full amount
     parts = [spread_mod.part_json(r) for r in f.rows if r.get("part") and r["bucket"][1] == cid]
@@ -403,6 +410,7 @@ def category_summary(conn: sqlite3.Connection, category: dict, period_id: str | 
                                 "ORDER BY date DESC, id DESC", id_list)
     return {
         "spent_cents": category_value(f, category),
+        "repaid_cents": repaid_in(f, cid),
         "avg_cents": _mean([category_value(lg.flows_for(h), category) for h in history]),
         "count": len(tx_rows) + len(parts),
         "series": series,

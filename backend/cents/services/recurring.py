@@ -381,6 +381,13 @@ def recurring_json(conn: sqlite3.Connection) -> dict:
              "repaid_cents": inc["repaid_cents"] if inc else 0,
              # the one "x % van je inkomen" (SPEC 9 Hoe staan we ervoor): real income, 12 months
              "share_of_income": health.fixed_share(lg, monthly_out)}
+    from . import assets, mortgage           # local import: both read ledger rows
+    splits = assets.split_configs(conn)
+    m_split = mortgage.split_config(conn)
+    if m_split:
+        splits[m_split[0]] = m_split[1]
+    all_items = [{**i, "repaid_per_month_cents": int(round(abs(i["per_month_cents"]) * splits[i["merchant_key"]]))}
+                 if i["direction"] == "out" and i["merchant_key"] in splits else i for i in all_items]
     return {**share, "monthly_out_cents": monthly_out, "monthly_in_cents": monthly_in,
             "yearly_out_cents": monthly_out * 12, "items": [dict(i) for i in all_items],
             "subscriptions": {"per_month_cents": -sum(i["per_month_cents"] for i in subs),

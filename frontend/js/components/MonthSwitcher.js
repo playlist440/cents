@@ -39,7 +39,7 @@ export function MonthSwitcher({ value, first, last, onChange, years = false }) {
   });
   const text = year ? yearLabel(value) : monthSmart(value);
   return html`<div class="monthswitch" role="group" aria-label=${year ? 'Jaar' : 'Maand'}>
-    <button class="ms-arrow" disabled=${!prev} aria-label=${'Vorig ' + unit} data-tip=${`Vorig${year ? '' : 'e'} ${unit} (←)`} onClick=${() => prev && onChange(prev)}>
+    <button class="ms-arrow" disabled=${!prev} aria-label=${`Vorig${year ? '' : 'e'} ${unit}`} data-tip=${`Vorig${year ? '' : 'e'} ${unit} (←)`} onClick=${() => prev && onChange(prev)}>
       <${Icon} name="chevron-left" size=${17} stroke=${2.6} />
     </button>
     <button class="ms-label" onClick=${openGrid} aria-haspopup="dialog"

@@ -126,11 +126,15 @@ function heroModel(o) {
     if (f.as_of) sub.push(`betaalrekening ${shortDate(f.as_of)}`);
     if (f.salary_pending) sub.push('salaris nog niet verwerkt — importeer');
     else if (f.stale) sub.push('saldo verouderd — importeer');
-    if (f.savings?.free_cents > 0) sub.push(`${euros(f.savings.free_cents)} vrij spaargeld`);
+    const short = f.total_cents < 0;
+    const spare = f.savings?.free_cents || 0;
+    if (short && spare >= -f.total_cents) sub.push(`je vrije spaargeld (${euros(spare)}) vangt dit op`);
+    else if (spare > 0) sub.push(`${euros(spare)} vrij spaargeld`);
     return {
-      label: `Nog te besteden tot ${shortDate(f.payday)}`,
-      cents: f.total_cents,
-      warn: f.total_cents < 0,
+      // a negative "te besteden" reads as nonsense: call it what it is
+      label: short ? `Tekort tot ${shortDate(f.payday)}` : `Nog te besteden tot ${shortDate(f.payday)}`,
+      cents: short ? -f.total_cents : f.total_cents,
+      warn: short,
       // the whole day budget for daily spending (normal pace + what is left), not the extra
       perDay: f.day_budget_cents ?? null,
       normalDay: f.daily_rate_cents,
@@ -156,12 +160,13 @@ function FreeBreakdown({ f }) {
   const card = f.card_settlement;
   const rows = [
     ...f.accounts.map((a) => [a.name, a.balance_cents, a.as_of ? `saldo ${shortDate(a.as_of)}${a.stale ? ' · verouderd' : ''}` : 'handmatig saldo', a.stale]),
+    ...(f.income_until_payday || []).map((x) => [x.name, x.cents, `verwacht ${shortDate(x.date)}`]),
     ['Vaste lasten', -f.fixed_until_payday_cents, `tot ${shortDate(f.payday)}`],
     ...(f.fixed_overdue || []).map((x) => [x.name, -x.cents, `verwacht ${shortDate(x.date)}, nog niet afgeschreven`]),
     f.saving_until_payday_cents > 0 && ['Sparen en beleggen', -f.saving_until_payday_cents, 'gaat vast naar je spaar- of beleggingsrekening'],
     f.credit_cents > 0 && ['Creditcard', -f.credit_cents, 'aankopen nog niet afgerekend'],
     card && ['Creditcard-afrekening', -card.cents, `verwacht ${shortDate(card.date)}`],
-    ['Dagelijkse uitgaven', -f.daily_until_payday_cents, `${plural(f.daily_days, 'dag', 'dagen')} × ${euros(f.daily_rate_cents)} normaal`],
+    ['Dagelijkse uitgaven', -f.daily_until_payday_cents, `${plural(f.daily_days, 'dag', 'dagen')} × ${money(f.daily_rate_cents)} normaal`],
   ].filter(Boolean);
   const s = f.savings;
   const savingRows = s && [
@@ -177,10 +182,10 @@ function FreeBreakdown({ f }) {
   return html`<div class="free-pop">
     <dl class="free-rows">
       ${rows.map(Row)}
-      <div class="free-row is-total"><dt>Nog te besteden</dt><dd class=${'num' + (neg ? ' is-warn' : '')}>${money(f.total_cents, { whole: true, negative: true })}</dd></div>
+      <div class="free-row is-total"><dt>${neg ? 'Tekort tot het salaris' : 'Nog te besteden'}</dt><dd class=${'num' + (neg ? ' is-warn' : '')}>${money(f.total_cents, { whole: true, negative: true })}</dd></div>
     </dl>
     ${f.day_budget_cents > 0 && html`<p class="free-foot">Tot ${shortDate(f.payday)} is dat ongeveer ${euros(f.day_budget_cents)} per dag voor dagelijkse uitgaven. Normaal geven jullie ${euros(f.daily_rate_cents)} per dag uit.</p>`}
-    ${neg && html`<p class="free-foot">Bij een normaal tempo reikt het geld op de betaalrekening niet tot ${shortDate(f.payday)}.</p>`}
+    ${neg && html`<p class="free-foot">Bij een normaal tempo reikt het geld op de betaalrekening niet tot ${shortDate(f.payday)}. De waarschuwing hieronder rekent met dezelfde posten.</p>`}
     ${f.salary_pending && html`<p class="free-foot c-warn">Salaris van ${shortDate(f.payday)} nog niet verwerkt — importeer.</p>`}
     ${f.payday_source === 'period' && html`<p class="free-foot">Salaris niet herkend: tot het einde van de maand.</p>`}
     ${savingRows && html`<dl class="free-rows free-savings" aria-label="Spaargeld">
@@ -252,7 +257,7 @@ function CheckingWarning({ o, desk = false }) {
     <span class="chk-warn-text">
       <span class="chk-warn-title">Rond ${shortDate(w.date)} staat de betaalrekening naar verwachting op ${low}.</span>
       ${w.suggest_cents
-        ? html`<span class="chk-warn-sub">Zet ${euros(w.suggest_cents)} terug van de spaarrekening.</span>`
+        ? html`<span class="chk-warn-sub">Zet ${euros(w.suggest_cents)} over van de spaarrekening naar de betaalrekening.</span>`
         : html`<span class="chk-warn-sub">Er staat niet genoeg op de spaarrekening om het aan te vullen.</span>`}
     </span>
   </div>`;
@@ -399,14 +404,14 @@ function WhereTable({ o }) {
     .filter((c) => c.spent_cents > 0)
     .map((c) => {
       const cat = categoryById(c.category_id) || { name: 'Onbekend', emoji: '❔', color: 'gray', key: 'unsorted' };
-      return { c, cat, chip: chipFor(c, cat, p) };
+      return { c, cat, chip: chipFor(c, cat, p) || (c.repaid_cents > 0 ? { text: `+ ${euros(c.repaid_cents)} aflossing`, tone: 'info' } : null) };
     });
   if (!rows.length) return html`<section class="dk-card ov-where"><div class="dk-card-h"><h2>Waar het heen ging</h2></div><p class="quiet">Nog niets uitgegeven</p></section>`;
   const total = rows.reduce((s, r) => s + r.c.spent_cents, 0);
   const max = Math.max(...rows.map((r) => r.c.spent_cents));
   const open = (r) => navigate(`/overzicht/bakje/${r.c.category_id}`, { query: bakjeQuery(p) });
   return html`<section class="dk-card ov-where" aria-labelledby="ov-where-h">
-    <div class="dk-card-h"><h2 id="ov-where-h">Waar het heen ging</h2><span class="section-value num"><span class="ov-total-lbl">alles samen</span> ${euros(total)}</span></div>
+    <div class="dk-card-h"><h2 id="ov-where-h">Waar het heen ging ${whereWhen(p)}</h2><span class="section-value num"><span class="ov-total-lbl">alles samen</span> ${euros(total)}</span></div>
     <div class="capsule-wrap"><${StackedCapsule} segments=${rows.map((r) => ({ key: r.c.category_id, value: r.c.spent_cents, color: r.cat.color, label: r.cat.name }))} label="Uitgaven per bakje" /></div>
     <div class="dt ov-wt" role="table" aria-label="Uitgaven per bakje">
       <div class="dt-head" role="row">
@@ -490,7 +495,7 @@ const withRepaid = (sub, o) => (o.repaid_cents > 0
 function fixedSub(o) {
   const parts = [];
   if (o.fixed_upcoming_cents > 0) parts.push(`nog ${euros(o.fixed_upcoming_cents)}`);
-  if (o.fixed_overdue_cents > 0) parts.push(`${euros(o.fixed_overdue_cents)} achterstallig?`);
+  if (o.fixed_overdue_cents > 0) parts.push(`${euros(o.fixed_overdue_cents)} nog niet afgeschreven`);
   return parts.length ? parts.join(' · ') : 'alles betaald';
 }
 
@@ -517,6 +522,9 @@ function chipFor(c, cat, p) {
   return { text: `${euros(-diff)} minder`, tone: 'less' };
 }
 
+/** "in november" / "in 2026": the period the list is about, so nobody reads it as an average. */
+const whereWhen = (p) => (p.kind === 'year' ? `in ${p.id}` : `in ${monthLabel(p.id, { year: false })}`);
+
 function WhereItWent({ o }) {
   const [all, setAll] = useState(false);
   const p = o.period;
@@ -531,14 +539,16 @@ function WhereItWent({ o }) {
         dashed: cat.key === 'unsorted',
         label: cat.name,
         value: c.spent_cents,
-        chip: chipFor(c, cat, p),
+        // the repayment counts as saved: say so where "Wonen € 697" meets "Florius € 1.148"
+        chip: chipFor(c, cat, p) || (c.repaid_cents > 0 ? { text: `+ ${euros(c.repaid_cents)} aflossing`, tone: 'info' } : null),
         onClick: () => navigate(`/overzicht/bakje/${c.category_id}`, { query: bakjeQuery(p) }),
       };
     });
   if (!rows.length) return null;
   const total = rows.reduce((s, r) => s + r.value, 0);
   const shown = all || rows.length <= 7 ? rows : rows.slice(0, 6);
-  return html`<${Section} title="Waar het heen ging" trailing=${html`<span class="section-value num"><span class="ov-total-lbl">alles samen</span> ${euros(total)}</span>`}>
+  return html`<${Section} title=${`Waar het heen ging ${whereWhen(p)}`} trailing=${html`<span class="section-value num"><span class="ov-total-lbl">alles samen</span> ${euros(total)}</span>`}>
+    ${p.is_current && html`<p class="ov-where-note">T/m vandaag. "Meer" is vergeleken met een normale maand tot vandaag.</p>`}
     <div class="capsule-wrap"><${StackedCapsule} segments=${rows} label="Uitgaven per bakje" /></div>
     <${RankedBars} rows=${shown} />
     ${shown.length < rows.length && html`<button class="show-all" onClick=${() => setAll(true)}>
@@ -622,7 +632,7 @@ function Upcoming({ o, desk = false }) {
         const cat = categoryById(u.category_id);
         return html`<li class="ov-up-row" key=${u.key}>
           <${DateBadge} iso=${u.date} />
-          <span class="ov-up-main"><span class="ov-up-name">${u.name}</span><span class=${'ov-up-sub' + (u.overdue ? ' c-warn' : '')}>${u.overdue ? 'achterstallig?' : cat ? cat.name : relativeDays(u.date, today)}</span></span>
+          <span class="ov-up-main"><span class="ov-up-name">${u.name}</span><span class=${'ov-up-sub' + (u.overdue ? ' c-warn' : '')}>${u.overdue ? 'nog niet afgeschreven' : cat ? cat.name : relativeDays(u.date, today)}</span></span>
           <span class="num ov-up-amt">${money(u.amount_cents)}</span>
         </li>`;
       })}</ul>
@@ -633,7 +643,7 @@ function Upcoming({ o, desk = false }) {
       ${items.map((u) => {
         const cat = categoryById(u.category_id);
         return html`<${ListRow} key=${u.key} leading=${html`<${DateBadge} iso=${u.date} />`} title=${u.name}
-          subtitle=${u.overdue ? html`<span class="c-warn">achterstallig?</span>` : cat ? cat.name : relativeDays(u.date, today)}
+          subtitle=${u.overdue ? html`<span class="c-warn">nog niet afgeschreven</span>` : cat ? cat.name : relativeDays(u.date, today)}
           value=${html`<span class="num">${money(u.amount_cents)}</span>`} />`;
       })}
       <${ListRow} title="Alle vaste lasten" tint chevron onClick=${() => navigate('/vaste-lasten')} />
@@ -662,13 +672,13 @@ function healthRows(h) {
   if (h.income_cents > 0) {
     rows.push({
       key: 'housing', emoji: '🏠', color: 'orange', title: 'Woonlasten', value: pctText(h.housing.share),
-      text: `Van je inkomen gaat ${euros(h.housing.cents)} per maand naar hypotheek of huur, energie en gemeentelijke lasten.`,
+      text: `Van je inkomen gaat ${euros(h.housing.cents)} per maand naar hypotheek of huur, energie en gemeentelijke lasten. Een veelgebruikte vuistregel is hooguit een derde.`,
       to: '/vaste-lasten',
     });
     rows.push({
       key: 'fixed', emoji: '📌', color: 'indigo', title: 'Vaste lasten', value: pctText(h.fixed.share),
       text: h.fixed.rest_cents >= 0
-        ? `Van je inkomen gaat ${euros(h.fixed.cents)} per maand naar vaste lasten. Er blijft ${euros(h.fixed.rest_cents)} over voor boodschappen, sparen en de rest.`
+        ? `Van je inkomen gaat ${euros(h.fixed.cents)} per maand naar vaste lasten. Er blijft ${euros(h.fixed.rest_cents)} over voor boodschappen, sparen en de rest. Boven de 60 % wordt het meestal krap.`
         : `Jullie vaste lasten zijn ${euros(-h.fixed.rest_cents)} per maand hoger dan wat er binnenkomt.`,
       to: '/vaste-lasten',
     });
@@ -698,9 +708,11 @@ function healthRows(h) {
   rows.push({
     key: 'debts', emoji: '🧾', color: 'gray', title: 'Schulden',
     value: d.known ? euros(d.total_cents) : 'Geen bekend',
-    text: !d.known ? 'Een lening, studieschuld of achteraf betalen? Zet hem bij Vermogen, dan telt hij mee.'
-      : others.length ? d.items.map((x) => `${x.name} ${euros(x.cents)}`).join(' · ')
-        : 'Alleen de hypotheek. Een andere lening of achteraf betalen? Zet hem bij Vermogen.',
+    text: d.unlisted?.length
+      ? `${d.known ? d.items.map((x) => `${x.name} ${euros(x.cents)}`).join(' · ') + '. ' : ''}Jullie betalen elke maand aan ${d.unlisted.map((x) => `${x.name} (${euros(x.per_month_cents)})`).join(' en ')}: zet die lening bij Vermogen, dan telt hij mee.`
+      : !d.known ? 'Een lening, studieschuld of achteraf betalen? Zet hem bij Vermogen, dan telt hij mee.'
+        : others.length ? d.items.map((x) => `${x.name} ${euros(x.cents)}`).join(' · ')
+          : 'Alleen de hypotheek. Een andere lening of achteraf betalen? Zet hem bij Vermogen.',
     to: '/vermogen',
   });
   return rows;
@@ -721,8 +733,8 @@ function Health({ h, desk = false }) {
     </section>`;
   }
   return html`<${Section} title="Hoe staan we ervoor" id="ov-hl-h" class="ov-health">
+    <p class="ov-hl-sub">${sub}</p>
     ${list}
-    <p class="list-footer">${sub}</p>
   </${Section}>`;
 }
 

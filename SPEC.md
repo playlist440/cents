@@ -457,8 +457,10 @@ fly and cached until the next write:
 - **Nog te besteden** (`free`, current period only; `services/outlook.py`): the balance of the
   visible checking account(s) − recurring `fixed` items expected after the balance date and
   before payday − `fixed` items of this period whose expected date passed before the balance
-  date without a payment (`fixed_overdue`, "nog niet afgeschreven") − recurring savings and
-  investment transfers before payday − outstanding manual credit-card purchases − the expected
+  date without a payment to that merchant from ten days before it on (`fixed_overdue`, "nog
+  niet afgeschreven") + recurring income other than the salary expected before payday
+  (`income_until_payday`, toeslagen, kinderbijslag) − recurring savings and investment
+  transfers before payday − outstanding manual credit-card purchases − the expected
   next credit-card settlement (`card_settlement`: median unexplained part of the last three
   settlements, one month after the latest; only when it falls before payday) − typical daily
   spending for the days from the balance date to payday (`daily_rate` = median per-day daily
@@ -467,7 +469,8 @@ fly and cached until the next write:
   `free.savings = {balance_cents, goals_cents, buffer_cents, free_cents, accounts}` reports the
   savings balance − money in active potjes (at most the balance) − savings that form the buffer
   (never the unfilled target) = **vrij spaargeld**, shown next to it. Not clamped: negative is
-  shown negative. `per_day` = total ÷ days from today to payday (`null` on/after payday);
+  shown negative; the UI then says "Tekort tot <payday>" with the amount and whether vrij
+  spaargeld covers it. `per_day` = total ÷ days from today to payday (`null` on/after payday);
   `day_budget` = typical daily rate + `per_day` (at least 0): what can go to daily spending per
   day until payday; the UI shows it with "normaal € X". Moving money from checking to savings
   lowers it by that amount and raises vrij spaargeld by the same.
@@ -501,9 +504,12 @@ fly and cached until the next write:
   twelve complete periods. `null` with fewer than two complete periods. `since` = the first
   of the three, or the start of a longer run of short months.
 - **Waarschuwing betaalrekening** (`checking_warning`): the main checking account (most
-  transactions) projected day by day from its balance date until the day before payday:
-  recurring fixed costs, recurring savings transfers and other recurring income on their
-  expected dates, minus the typical daily rate (as above) per day. If the lowest point from
+  transactions) projected day by day from its balance date until the day before payday with
+  the same items as Nog te besteden: recurring fixed costs, recurring savings transfers and
+  other recurring income on their expected dates, overdue fixed costs on the first day, the
+  credit card (outstanding purchases + expected settlement) on the settlement day or else the
+  last day, minus the typical daily rate per day. With one checking account its last day is
+  Nog te besteden, so the two never tell different stories. If the lowest point from
   today on is below assumption `checking_floor_cents` (default 0) →
   `{date, low_cents, floor_cents, suggest_cents, account_id, payday}`; `suggest_cents` = the
   shortfall rounded up to € 50, `null` when the savings balance does not cover it. Else `null`.
@@ -533,7 +539,29 @@ spread parts: `buffer` (as above, in months of fixed costs), `housing` (bakjes W
 full mortgage payment, Energie & water, Belastingen & gemeente; per month and as a share of
 income), `fixed` (vaste lasten per maand, share, and `rest_cents` = income − fixed), `saving` (to savings and investments without the repayment, share, and
 `repaid_cents` separately; the UI mentions 10 % as a common rule of thumb), `debts` (the
-mortgage and the debts on Vermogen; `known: false` invites adding a loan or achteraf betalen).
+mortgage and the debts on Vermogen; `known: false` invites adding a loan or achteraf betalen;
+`unlisted` = recurring payments in bakje Leningen whose merchant is not linked to a debt, named
+so the family adds them). The UI gives a common rule of thumb where one exists: woonlasten at
+most a third of income, vaste lasten above 60 % is tight (the `fixed_share` insight's warn
+level), sparen 10 %.
+
+**Aflossing next to the bakje.** The repaid part of a mortgage or linked debt payment is not in
+its bakje (it counts as saved). Every place that shows the bakje or the payment says so:
+`/overview` categories and `/categories/{id}/summary` carry `repaid_cents`, `/recurring` items
+of a split merchant carry `repaid_per_month_cents` ("waarvan € 451 aflossing"), and top winkels
+(bakje, Jaaroverzicht, Terugblik) show what was paid to the merchant, the repayment included.
+
+**Zelfcontrole** ("Controle", `GET /checks`, `services/checks.py`): what Cents cannot see,
+computed on the household's own server. `coverage` (the verantwoordingsmeter, also
+`health.accounted`): of the fixed + daily spending in the last up to twelve complete periods,
+the share outside the bakjes that do not say what money was for (Nog te sorteren, Contant,
+Overig, the unexplained part of credit-card bills), with those listed per month. `accounts`:
+per visible checking, savings and credit account the first and last transaction, the last
+import, months without any transaction between them (checking only) and balance breaks (a day
+whose end balance is not the previous end balance plus the day's payments; order inside a day
+is not trusted). `transfers`: transfers to an own checking or savings account that has data
+around that date without the opposite payment within four days. `issues` = breaks + missing
+months + unmatched transfers.
 
 **Insights** (`services/insights.py`): each returns `{id, kind, tone, emoji, title, value_cents?,
 detail?, link}` with one short Dutch sentence as `title`. Compute all, rank, return at most five.

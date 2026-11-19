@@ -144,7 +144,8 @@ def test_nog_te_besteden_adds_up(demo):
     parts = (f["fixed_until_payday_cents"] + f["fixed_overdue_cents"] + f["saving_until_payday_cents"]
              + f["credit_cents"] + (f["card_settlement"]["cents"] if f["card_settlement"] else 0)
              + f["daily_until_payday_cents"])
-    assert f["total_cents"] == f["balances_cents"] - parts
+    assert f["total_cents"] == f["balances_cents"] + f["income_until_payday_cents"] - parts
+    assert sum(x["cents"] for x in f["income_until_payday"]) == f["income_until_payday_cents"]
     assert f["balances_cents"] == sum(a["balance_cents"] for a in f["accounts"])
     assert sum(x["cents"] for x in f["fixed_overdue"]) == f["fixed_overdue_cents"]
 

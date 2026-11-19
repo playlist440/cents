@@ -51,7 +51,8 @@ export function Bakje({ params, query }) {
       <div class="bc-head">
         <div>
           <div class="bc-value rounded num">${data ? euros(head.cents || 0) : html`<${Skeleton} w=${110} h=${30} />`}</div>
-          <div class="bc-label">${head.label}${!scrub && data?.avg_cents ? html` · normaal <span class="num">${euros(data.avg_cents)}</span>` : ''}</div>
+          <div class="bc-label">${head.label}${!scrub && data?.avg_cents ? html` · normaal <span class="num">${euros(data.avg_cents)}</span> per maand` : ''}</div>
+          ${!scrub && data?.repaid_cents > 0 && html`<div class="bc-label bc-repaid num">Plus ${euros(data.repaid_cents)} aflossing op de hypotheek of lening: die telt als gespaard, niet in dit bakje.</div>`}
         </div>
       </div>
       ${data

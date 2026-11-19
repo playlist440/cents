@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import sqlite3
 
+from .. import db
 from . import networth
 from .ledger import FIXED, Ledger
 
@@ -79,6 +80,16 @@ def compute(conn: sqlite3.Connection, lg: Ledger, buffer: dict | None,
         if a["kind"] == "debt" and (a.get("value_cents") or 0) > 0:
             debts.append({"kind": "debt", "name": a["name"], "cents": a["value_cents"],
                           "id": a["id"]})
+    # loans paid every month (bakje Leningen) that are not on Vermogen yet: DUO, a car loan
+    from . import mortgage, recurring
+    linked = {r["merchant_key"] for r in db.rows(conn, "SELECT merchant_key FROM assets WHERE kind = 'debt' "
+                                                     "AND merchant_key IS NOT NULL")}
+    linked.add(mortgage.linked_merchant(conn)[0])
+    loans_id = lg.cat_ids.get("leningen")
+    unlisted = [{"name": i["name"], "per_month_cents": -i["per_month_cents"]}
+                for i in recurring.items(conn)
+                if i["direction"] == "out" and i["status"] != "ended" and i["category_id"] == loans_id
+                and i["merchant_key"] not in linked]
     rnd = lambda x: int(round(x))  # noqa: E731
     return {
         "months": n,
@@ -92,5 +103,5 @@ def compute(conn: sqlite3.Connection, lg: Ledger, buffer: dict | None,
                   "rest_cents": rnd(inc - monthly_fixed)},
         "saving": {"cents": rnd(saved), "share": _share(saved, inc), "repaid_cents": rnd(repaid)},
         "debts": {"known": bool(debts), "total_cents": sum(d["cents"] for d in debts),
-                  "items": debts},
+                  "items": debts, "unlisted": unlisted},
     }

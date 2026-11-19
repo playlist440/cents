@@ -20,6 +20,8 @@ en hoe je potjes ervoor staan.
   verkoopt, zoals een auto, wordt een bezitting: de waarde staat bij Vermogen en elke maand
   telt het waardeverlies, niet de aankoop.
 - Elke aanname van de app is zichtbaar en aan te passen onder Instellingen → Slimme aannames.
+- **Controle** (Instellingen): hoeveel van je uitgaven verantwoord is, en of er maanden of
+  overboekingen ontbreken of een saldo niet aansluit, zodat je weet welke import nog mist.
 - Beleggingen bij DEGIRO: importeer de Transacties-, Rekeningoverzicht- of Portefeuille-CSV en
   Cents toont de echte waarde van je fondsen, wat je inlegde en je resultaat.
 - Beleggingen bij eToro: importeer het rekeningoverzicht (Account Statement, Excel). Telkens
@@ -83,6 +85,9 @@ CENTS_DATA_DIR=~/.cache/cents-dev uv run --python 3.12 --with-requirements requi
 Testen: `uv run --python 3.12 --with-requirements requirements.txt --with-requirements requirements-dev.txt pytest -q`
 
 Een verzonnen huishouden om mee te proberen: `python3 tools/make_demo_data.py`
+
+Rekent de testmodus (`?mock=1`) hetzelfde als de echte app? `tools/mock_parity.py` laadt de
+gegevens van de testmodus in de backend en vergelijkt alle bedragen (uitleg bovenin het bestand).
 
 Ontwerp en afspraken staan in [`SPEC.md`](SPEC.md) en [`docs/`](docs/).
 

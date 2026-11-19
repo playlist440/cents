@@ -165,7 +165,7 @@ def load(conn: sqlite3.Connection, mdb: dict) -> None:
 
 # Figures where the mock is a known approximation: reported, but not a failure.
 KNOWN = {
-    "recurring.items": "the mock never treats card payments as recurring",
+    "recurring.items": "item details are simplified in the mock (order, price changes, key amount)",
 }
 
 
@@ -191,17 +191,17 @@ CHECK = {
     "overview:": ["income_cents", "fixed_cents", "daily_cents", "saved_cents", "repaid_cents",
                   "result_cents", "net_cents"],
     "recap:": ["totals.", "savings.saved_cents"],
-    "trends": ["periods["],
+    "trends": ["periods[", "top_merchants["],
     "goals": ["total_advice_cents", "room.", "savings_balance_cents", "unallocated_cents",
               "suggestions["],
     "recurring": ["monthly_out_cents", "monthly_in_cents", "subscriptions.", "income_cents",
-                  "repaid_cents", "share_of_income"],
+                  "repaid_cents", "share_of_income", "items["],
     "networth": ["total_cents"],
     "checks": ["coverage.", "issues", "transfers.count", "accounts["],
 }
 
 SKIP_SUFFIX = (".name", ".label", ".as_of", ".stale", ".type", ".date", ".payday_source", "_date",
-               ".last_import", ".account", ".other_account",
+               ".last_import", ".account", ".other_account", ".category_id",
                ".source", ".reason", ".emoji", ".kind", ".period", "partial", ".id", ".goal_id")
 
 

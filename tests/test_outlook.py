@@ -367,7 +367,7 @@ def test_health_card(client, book):
     assert h["housing"] == {"cents": 100000, "share": 0.333}            # rent
     assert h["fixed"] == {"cents": 110000, "share": 0.367, "rest_cents": 190000}
     assert h["saving"] == {"cents": 50000, "share": 0.167, "repaid_cents": 0}
-    assert h["debts"] == {"known": False, "total_cents": 0, "items": []}
+    assert h["debts"] == {"known": False, "total_cents": 0, "items": [], "unlisted": []}
     b = overview(client)["buffer"]
     assert h["buffer"]["months"] == b["months"] and h["buffer"]["target_months"] == b["target_months"]
     assert client.get("/api/overview?period=2026-01").json()["health"] is None
@@ -405,3 +405,29 @@ def test_overdue_fixed_cost_paid_another_way_is_not_kept_aside(client, book, tod
     today("2026-03-23")
     f = overview(client)["free"]
     assert f["fixed_overdue"] == []
+
+
+def test_income_before_payday_and_one_prediction(client, book):
+    """Toeslagen before payday count in Nog te besteden, and the checking warning uses the same
+    items: on the day before payday it lands on Nog te besteden (usability test 2026-11)."""
+    chk, _ = household(book)
+    for m in MONTHS:
+        book.tx(chk, f"{m}-20", 30000, "toeslagen", "Belastingdienst")
+    book.commit()
+    set_assumption(client, "checking_floor_cents", {"cents": 500000})     # always warn
+    o = overview(client)
+    f, w = o["free"], o["checking_warning"]
+    assert f["income_until_payday"] == [{"name": "Belastingdienst", "date": "2026-03-20", "cents": 30000}]
+    assert f["total_cents"] == 200000 + 30000 - 10000 - round(10 * RATE)
+    # lowest on the 19th, just before the toeslag; from there the same items lead to the total
+    assert w["date"] == "2026-03-19"
+    assert abs(w["low_cents"] + 30000 - 10000 - 5 * RATE - f["total_cents"]) <= 2
+
+
+def test_loans_not_on_vermogen_are_named(client, book):
+    chk, _ = household(book)
+    for m in MONTHS:
+        book.tx(chk, f"{m}-15", -9600, "leningen", "DUO", method="debit")
+    book.commit()
+    d = overview(client)["health"]["debts"]
+    assert d["known"] is False and d["unlisted"] == [{"name": "DUO", "per_month_cents": 9600}]
