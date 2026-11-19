@@ -156,3 +156,10 @@ def test_zelfcontrole_finds_nothing_in_a_complete_import(demo):
     assert c["issues"] == 0, c
     assert 0.8 < c["coverage"]["share"] <= 1
     assert get(demo, "/overview")["health"]["accounted"]["share"] == c["coverage"]["share"]
+
+
+def test_bespaarlijst_agrees_with_vaste_lasten(demo):
+    b = get(demo, "/besparen")
+    rec = get(demo, "/recurring")
+    assert b["subscriptions"]["per_year_cents"] == rec["subscriptions"]["per_year_cents"]
+    assert len(b["subscriptions"]["items"]) == rec["subscriptions"]["count"]

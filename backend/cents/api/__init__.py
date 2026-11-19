@@ -5,7 +5,7 @@ from __future__ import annotations
 
 from fastapi import APIRouter
 
-from . import (accounts, assets, bootstrap, calendar, categories, checks, data, goals, health, imports, mortgage, networth, overview,
+from . import (accounts, assets, besparen, bootstrap, calendar, categories, checks, data, goals, health, imports, mortgage, networth, overview,
                prices, recap, recurring, rules, session, settings, smart, sort, tags, transactions)
 
 PUBLIC_ROUTERS: list[APIRouter] = [session.public_router, health.public_router]
@@ -34,4 +34,5 @@ PROTECTED_ROUTERS: list[APIRouter] = [
     calendar.router,
     recap.router,
     checks.router,
+    besparen.router,
 ]

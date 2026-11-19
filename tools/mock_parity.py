@@ -48,7 +48,7 @@ def requests_for(today: str) -> list[list]:
             mm, yy = mm + 12, yy - 1
         past.append(f"{yy:04d}-{mm:02d}")
     out = [["overview", "/overview", {}], ["goals", "/goals", {}], ["recurring", "/recurring", {}],
-           ["checks", "/checks", {}],
+           ["checks", "/checks", {}], ["besparen", "/besparen", {}],
            ["networth", "/networth", {}], ["trends", "/trends", {"periods": "24"}],
            [f"overview:{y}", "/overview", {"period": str(y)}],
            [f"recap:y{y}", "/recap", {"year": str(y)}]]
@@ -198,10 +198,11 @@ CHECK = {
                   "repaid_cents", "share_of_income", "items["],
     "networth": ["total_cents"],
     "checks": ["coverage.", "issues", "transfers.count", "accounts["],
+    "besparen": ["subscriptions.per_year_cents", "price_rises.", "contracts.", "fees.", "higher.", "later."],
 }
 
 SKIP_SUFFIX = (".name", ".label", ".as_of", ".stale", ".type", ".date", ".payday_source", "_date",
-               ".last_import", ".account", ".other_account", ".category_id",
+               ".last_import", ".account", ".other_account", ".category_id", ".since",
                ".source", ".reason", ".emoji", ".kind", ".period", "partial", ".id", ".goal_id")
 
 

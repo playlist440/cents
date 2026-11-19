@@ -20,6 +20,7 @@ export function Meer() {
     </${List}>
     <${List}>
       <${ListRow} icon="vaste-lasten" iconColor="indigo" title="Vaste lasten" chevron onClick=${() => navigate('/vaste-lasten')} />
+      <${ListRow} icon="euro" iconColor="green" title="Besparen" chevron onClick=${() => navigate('/besparen')} />
       <${ListRow} icon="jaaroverzicht" iconColor="blue" title="Jaaroverzicht" chevron onClick=${() => navigate('/jaaroverzicht')} />
       <${ListRow} icon="clock" iconColor="teal" title="Terugblik" chevron onClick=${() => navigate('/terugblik')} />
       <${ListRow} icon="tag" iconColor="pink" title="Tags" chevron onClick=${() => navigate('/tags')} />

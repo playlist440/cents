@@ -354,6 +354,7 @@ def suggestions(conn: sqlite3.Connection, lg: ledger_mod.Ledger, goals: list[dic
         if target > 0:
             out.append({"kind": "buffer", "name": "Buffer", "emoji": "🛟", "target_cents": target,
                         "target_date": None, "reason": reason})
+    out += irregular_suggestions(lg, names)
     yearly = [i for i in recurring.items(conn)
               if i["frequency"] == "yearly" and i["direction"] == "out" and i["status"] != "ended"]
     if yearly and "jaarlijkse" not in names.split() and "jaarlijks" not in names.split():
@@ -363,6 +364,35 @@ def suggestions(conn: sqlite3.Connection, lg: ledger_mod.Ledger, goals: list[dic
                         "target_cents": total, "target_date": None,
                         "reason": f"{euro(total / 12)} per maand"})
     return out
+
+
+IRREGULAR = ("vakantie", "kleding", "cadeaus", "huis-tuin")
+IRREGULAR_MIN = 30000          # at least € 300 a year
+IRREGULAR_PEAK = 0.35          # one month carries at least this share: not a steady cost
+
+
+def irregular_suggestions(lg: ledger_mod.Ledger, names: str) -> list[dict]:
+    """Reserveren voor onregelmatige uitgaven (expert review 2026-11): bakjes such as Vakantie
+    and Kleding that cost a lot a few times a year. Suggest a potje with last year's total, so
+    the money is put aside every month instead of found in one go. At most two, biggest first."""
+    history = lg.complete_before(lg.current(), 12)
+    if len(history) < 12:
+        return []
+    out = []
+    for key in IRREGULAR:
+        cid = lg.cat_ids.get(key)
+        cat = lg.categories.get(cid) if cid else None
+        if not cat or norm_text(cat["name"]).split()[0] in names.split():
+            continue
+        months = [max(0, lg.flows_for(p).spent.get(cid, 0)) for p in history]
+        total = sum(months)
+        if total < IRREGULAR_MIN or max(months) < IRREGULAR_PEAK * total:
+            continue
+        target = int(math.ceil(total / 5000) * 5000)
+        out.append({"kind": "irregular", "name": cat["name"], "emoji": cat["emoji"], "target_cents": target,
+                    "target_date": None, "category_id": cid,
+                    "reason": f"vorig jaar {euro(total)}: {euro(total / 12)} per maand opzij"})
+    return sorted(out, key=lambda s: -s["target_cents"])[:2]
 
 
 ROOM_MONTHS = 3

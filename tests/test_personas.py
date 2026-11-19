@@ -63,7 +63,7 @@ def test_renters_without_a_mortgage(client, book):
     ov = sane(client)
     h = ov["health"]
     assert h["housing"]["share"] == round(139000 / 310000, 3)
-    assert h["debts"] == {"known": False, "total_cents": 0, "items": [], "unlisted": []}
+    assert h["debts"] == {"known": False, "total_cents": 0, "items": [], "unlisted": [], "later": []}
     assert ov["free"]["payday"] == "2026-03-24" and ov["free"]["payday_source"] == "salary"
 
 

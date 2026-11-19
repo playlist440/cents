@@ -563,6 +563,18 @@ is not trusted). `transfers`: transfers to an own checking or savings account th
 around that date without the opposite payment within four days. `issues` = breaks + missing
 months + unmatched transfers.
 
+**Bespaarlijst** ("Besparen", `GET /besparen`, `services/besparen.py`): one place for "waar
+kunnen we besparen?". Cents does not know prices elsewhere, so it never promises a saving; it
+lists per year: `subscriptions` (live items in Abonnementen and Internet, tv & bellen, the same
+total as `/recurring` subscriptions), `price_rises` (live items that became more expensive in
+the last twelve months, extra per year), `contracts` (energie, verzekeringen, telecom running
+longer than a year: worth comparing), `fees` (bank costs and identifiable exchange-rate costs in
+the last twelve months), `higher` (daily bakjes whose last six complete months cost ≥ € 25 a
+month and ≥ 15 % more than the same months a year earlier) and `later` (payments to Klarna,
+Riverty/Afterpay, in3, Billink in the last three months; also `health.debts.later`). The bakje
+screen of the current month says how much is left of a normal month ("Nog € 28 tot een normale
+maand") in daily bakjes.
+
 **Insights** (`services/insights.py`): each returns `{id, kind, tone, emoji, title, value_cents?,
 detail?, link}` with one short Dutch sentence as `title`. Compute all, rank, return at most five.
 Only show an insight when the data really supports it (minimum history per rule). The
@@ -619,7 +631,10 @@ Tone: `good`, `warn`, `info`. Never moralise.
   so the UI can say what "meestal over" is.
 - `suggestions`: a buffer goal (the assumed buffer target above, rounded up to € 100, reason
   e.g. "3 maanden vaste lasten") when no potje's name contains "buffer"; a "Jaarlijkse
-  rekeningen" goal summing yearly recurring items ÷ 12.
+  rekeningen" goal summing yearly recurring items ÷ 12; `irregular` goals (at most two) for
+  Vakantie, Kleding, Cadeaus and Huis & tuin when last year's total was ≥ € 300 and one month
+  carried ≥ 35 % of it, with that total as target ("vorig jaar € 1.800: € 150 per maand
+  opzij"), unless a potje with that name exists.
 - Goal codes: random 5 digits, unique, first digit not 0.
 
 ## 10. API

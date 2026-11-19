@@ -391,12 +391,20 @@ function recurringItems() {
           const dim = new Date(Date.UTC(+np.slice(0, 4), +np.slice(5), 0)).getUTCDate();
           next = `${np}-${String(Math.min(day, dim)).padStart(2, '0')}`;
         }
-        const prev3 = txs.slice(-4, -1).map((t) => Math.abs(t.amount_cents));
+        // services/recurring.py _change: the run at the latest price against the three before it
         let change = null;
-        if (prev3.length >= 1) {
-          const m = median(prev3);
-          const a = Math.abs(last.amount_cents);
-          if (Math.abs(a - m) > m * 0.02 && Math.abs(a - m) > 50) change = { from_cents: Math.round(m) * Math.sign(last.amount_cents), to_cents: last.amount_cents, date: last.date };
+        if (!variable) {
+          const amts = txs.map((t) => Math.abs(t.amount_cents));
+          const latest = amts.at(-1);
+          const same = (x, y) => Math.abs(x - y) <= Math.max(0.02 * y, 50);
+          let i = amts.length - 1;
+          while (i > 0 && same(amts[i - 1], latest)) i--;
+          if (i > 0) {
+            const m = median(amts.slice(Math.max(0, i - 3), i));
+            if (!(Math.abs(latest - m) <= 0.02 * m || Math.abs(latest - m) <= 50) && daysBetween(txs[i].date, today) <= 365) {
+              change = { from_cents: Math.round(m) * Math.sign(last.amount_cents), to_cents: last.amount_cents, date: txs[i].date };
+            }
+          }
         }
         const typical = Math.round(median(txs.slice(-6).map((t) => t.amount_cents)));
         // same key as services/recurring.py: merchant|direction|frequency|first amount in euros
@@ -851,6 +859,66 @@ function checksData() {
   return { coverage, accounts, transfers, issues };
 }
 
+/** Buy-now-pay-later providers paid in the last three months (services/besparen.py). */
+const LATER = /\b(klarna|riverty|afterpay|in3|billink|achteraf ?betalen)\b/i;
+function laterPayments() {
+  const since = addDays(db.today, -92);
+  const out = new Map();
+  for (const t of db.transactions) {
+    if (t.amount_cents >= 0 || t.date < since || !isCashflow(t)) continue;
+    const m = [t.merchant_name, t.merchant_key, t.description].map((x) => LATER.exec(x || '')).find(Boolean);
+    if (!m) continue;
+    const w = m[1].toLowerCase();
+    const name = w === 'in3' ? 'in3' : w === 'afterpay' ? 'Riverty (Afterpay)' : w[0].toUpperCase() + w.slice(1);
+    const e = out.get(name) || { name, cents: 0, count: 0, last_date: t.date };
+    e.cents -= t.amount_cents; e.count += 1; if (t.date > e.last_date) e.last_date = t.date;
+    out.set(name, e);
+  }
+  return [...out.values()].sort((a, b) => b.cents - a.cents);
+}
+
+/** Bespaarlijst (services/besparen.py). */
+function besparenData() {
+  const items = recurringItems();
+  const live = items.filter((i) => i.direction === 'out' && i.status !== 'ended');
+  const keyOf = (i) => catById(i.category_id)?.key;
+  const yearAgo = addDays(db.today, -365);
+  const subs = live.filter((i) => ['abonnementen', 'telecom'].includes(keyOf(i)))
+    .map((i) => ({ ...i, per_year_cents: Math.abs(i.per_year_cents), new: i.status === 'new' })).sort((a, b) => b.per_year_cents - a.per_year_cents);
+  const rises = live.filter((i) => i.change && Math.abs(i.change.to_cents) > Math.abs(i.change.from_cents) && i.change.date >= yearAgo)
+    .map((i) => ({ ...i, from_cents: Math.abs(i.change.from_cents), to_cents: Math.abs(i.change.to_cents), since: i.change.date,
+      extra_per_year_cents: (Math.abs(i.change.to_cents) - Math.abs(i.change.from_cents)) * PER_YEAR[i.frequency] }))
+    .sort((a, b) => b.extra_per_year_cents - a.extra_per_year_cents);
+  const contracts = live.filter((i) => ['energie', 'verzekeringen', 'telecom'].includes(keyOf(i)))
+    .map((i) => ({ ...i, per_year_cents: Math.abs(i.per_year_cents), since: (recTx.get(i.key) || [])[0]?.date }))
+    .filter((i) => i.since && i.since <= yearAgo).sort((a, b) => b.per_year_cents - a.per_year_cents);
+  const bank = -db.transactions.filter((t) => t.method === 'fee' && t.amount_cents < 0 && t.date >= yearAgo && accById(t.account_id)?.type === 'checking').reduce((s, t) => s + t.amount_cents, 0);
+  const recent = previousComplete(currentPeriod(), 6);
+  const complete = new Set(previousComplete(currentPeriod(), 1000));
+  const before = recent.map((p) => shiftPeriod(p, -12));
+  const higher = recent.length < 6 || before.some((p) => !complete.has(p)) ? [] : db.categories
+    .filter((c) => c.grp === 'daily' && !['unsorted', 'creditcard'].includes(c.key))
+    .map((c) => {
+      const now = recent.reduce((s, p) => s + (flows(p).cats.get(c.id)?.cents || 0), 0) / 6;
+      const then = before.reduce((s, p) => s + (flows(p).cats.get(c.id)?.cents || 0), 0) / 6;
+      return { category_id: c.id, now, then };
+    })
+    .filter((x) => x.then > 0 && x.now - x.then >= 2500 && x.now >= x.then * 1.15)
+    .map((x) => ({ category_id: x.category_id, now_cents: Math.round(x.now), then_cents: Math.round(x.then), extra_per_year_cents: Math.round((x.now - x.then) * 12) }))
+    .sort((a, b) => b.extra_per_year_cents - a.extra_per_year_cents);
+  const later = laterPayments();
+  const out = {
+    subscriptions: { items: subs, per_year_cents: subs.reduce((s, i) => s + i.per_year_cents, 0) },
+    price_rises: { items: rises, per_year_cents: rises.reduce((s, i) => s + i.extra_per_year_cents, 0) },
+    contracts: { items: contracts, per_year_cents: contracts.reduce((s, i) => s + i.per_year_cents, 0) },
+    fees: { bank_cents: bank, fx_cents: 0, per_year_cents: bank, since: yearAgo },
+    higher: { items: higher },
+    later: { items: later },
+  };
+  out.count = subs.length + rises.length + contracts.length + higher.length + later.length + (bank > 0 ? 1 : 0);
+  return out;
+}
+
 /** Loans paid every month (bakje Leningen) that are not on Vermogen yet (services/health.py). */
 function unlistedLoans() {
   const linked = new Set(db.assets.filter((a) => a.kind === 'debt' && a.merchant_key).map((a) => a.merchant_key));
@@ -887,7 +955,7 @@ function health(buffer) {
     housing: { cents: r(housing), share: share(housing) },
     fixed: { cents: r(fixed), share: share(fixed), rest_cents: r(income - fixed) },
     saving: { cents: r(saved), share: share(saved), repaid_cents: r(repaid) },
-    debts: { known: debts.length > 0, total_cents: debts.reduce((s, d) => s + d.cents, 0), items: debts, unlisted: unlistedLoans() },
+    debts: { known: debts.length > 0, total_cents: debts.reduce((s, d) => s + d.cents, 0), items: debts, unlisted: unlistedLoans(), later: laterPayments() },
   };
 }
 
@@ -1148,6 +1216,21 @@ function goalsData() {
       const [cents, reason] = assumedBuffer();
       const target = Math.ceil(cents / 10000) * 10000;
       if (target > 0) suggestions.push({ kind: 'buffer', name: 'Buffer', emoji: '🛟', target_cents: target, target_date: null, reason });
+    }
+    // reserveren voor onregelmatige uitgaven (services/goals.py irregular_suggestions)
+    const hist12 = previousComplete(cur, 12);
+    if (hist12.length >= 12) {
+      const irr = [];
+      for (const key of ['vakantie', 'kleding', 'cadeaus', 'huis-tuin']) {
+        const c = catByKey(key);
+        if (!c || goals.some((g) => g.name.toLowerCase().split(/\s+/).includes(c.name.toLowerCase().split(/\s+/)[0]))) continue;
+        const months = hist12.map((p) => Math.max(0, flows(p).cats.get(c.id)?.cents || 0));
+        const total = months.reduce((s, x) => s + x, 0);
+        if (total < 30000 || Math.max(...months) < 0.35 * total) continue;
+        irr.push({ kind: 'irregular', name: c.name, emoji: c.emoji, target_cents: Math.ceil(total / 5000) * 5000, target_date: null, category_id: c.id,
+          reason: `vorig jaar ${euros(total)}: ${euros(Math.round(total / 12))} per maand opzij` });
+      }
+      suggestions.push(...irr.sort((a, b) => b.target_cents - a.target_cents).slice(0, 2));
     }
     const yearly = recurringItems().filter((it) => it.frequency === 'yearly' && it.direction === 'out');
     if (yearly.length && !goals.some((g) => /jaarlijks/i.test(g.name))) {
@@ -2095,6 +2178,7 @@ const ROUTES = [
   ['GET', /^\/calendar$/, ({ query }) => ok(calendar(query.period || currentPeriod()))],
   ['GET', /^\/recap\/index$/, () => ok(recapIndex())],
   ['GET', /^\/checks$/, () => ok(checksData())],
+  ['GET', /^\/besparen$/, () => ok(besparenData())],
   ['GET', /^\/recap$/, ({ query }) => ok(query.year ? recap({ year: Number(query.year) }) : recap({ period: query.period || currentPeriod() }))],
 
   /* Recurring */

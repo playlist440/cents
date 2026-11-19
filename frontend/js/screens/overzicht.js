@@ -705,6 +705,7 @@ function healthRows(h) {
   }
   const d = h.debts;
   const others = d.items.filter((x) => x.kind !== 'mortgage');
+  const later = d.later?.length ? ` Achteraf betaald bij ${d.later.map((x) => `${x.name} (${euros(x.cents)} in drie maanden)`).join(' en ')}: staat er nog iets open?` : '';
   rows.push({
     key: 'debts', emoji: '🧾', color: 'gray', title: 'Schulden',
     value: d.known ? euros(d.total_cents) : 'Geen bekend',
@@ -715,6 +716,7 @@ function healthRows(h) {
           : 'Alleen de hypotheek. Een andere lening of achteraf betalen? Zet hem bij Vermogen.',
     to: '/vermogen',
   });
+  if (later) rows[rows.length - 1].text += later;
   return rows;
 }
 
@@ -724,7 +726,8 @@ function Health({ h, desk = false }) {
   const sub = `Gemiddeld per maand, ${h.months >= 12 ? 'afgelopen 12 maanden' : `afgelopen ${plural(h.months, 'maand', 'maanden')}`}`;
   const list = html`<ul class="inset ov-hl">${rows.map((r) => html`<${ListRow} key=${r.key} class="ov-hl-row" emoji=${r.emoji} color=${r.color}
       title=${html`<span class="ov-hl-title">${r.title}</span><span class="ov-hl-value num">${r.value}</span>`}
-      subtitle=${r.text} chevron onClick=${() => navigate(r.to)} label=${`${r.title}: ${r.value}. ${r.text}`} />`)}</ul>`;
+      subtitle=${r.text} chevron onClick=${() => navigate(r.to)} label=${`${r.title}: ${r.value}. ${r.text}`} />`)}
+    <${ListRow} key="besparen" title="Waar kunnen we besparen?" tint chevron onClick=${() => navigate('/besparen')} /></ul>`;
   if (desk) {
     return html`<section class="dk-card ov-health" aria-labelledby="ov-hl-h">
       <div class="dk-card-h"><h2 id="ov-hl-h">Hoe staan we ervoor</h2></div>

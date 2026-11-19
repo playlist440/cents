@@ -367,7 +367,7 @@ def test_health_card(client, book):
     assert h["housing"] == {"cents": 100000, "share": 0.333}            # rent
     assert h["fixed"] == {"cents": 110000, "share": 0.367, "rest_cents": 190000}
     assert h["saving"] == {"cents": 50000, "share": 0.167, "repaid_cents": 0}
-    assert h["debts"] == {"known": False, "total_cents": 0, "items": [], "unlisted": []}
+    assert h["debts"] == {"known": False, "total_cents": 0, "items": [], "unlisted": [], "later": []}
     b = overview(client)["buffer"]
     assert h["buffer"]["months"] == b["months"] and h["buffer"]["target_months"] == b["target_months"]
     assert client.get("/api/overview?period=2026-01").json()["health"] is None

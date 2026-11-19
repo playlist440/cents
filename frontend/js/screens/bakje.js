@@ -39,6 +39,8 @@ export function Bakje({ params, query }) {
     : { cents: data?.spent_cents, label: isCurrent ? 'deze maand' : monthLabel(period) };
 
   const edit = () => openSheet(EditBakjeSheet, { cat });
+  // "kan dat nog?": what is left of a normal month in a daily bakje (current month only)
+  const room = isCurrent && cat.grp === 'daily' && data?.avg_cents > 0 ? data.avg_cents - (data.spent_cents || 0) : null;
 
   const header = html`<header class="bakje-head">
     <${EmojiTile} emoji=${cat.emoji} color=${cat.color} size=${72} />
@@ -52,6 +54,7 @@ export function Bakje({ params, query }) {
         <div>
           <div class="bc-value rounded num">${data ? euros(head.cents || 0) : html`<${Skeleton} w=${110} h=${30} />`}</div>
           <div class="bc-label">${head.label}${!scrub && data?.avg_cents ? html` · normaal <span class="num">${euros(data.avg_cents)}</span> per maand` : ''}</div>
+          ${!scrub && room != null && html`<div class="bc-label bc-room num">${room >= 0 ? `Nog ${euros(room)} tot een normale maand` : `${euros(-room)} meer dan een normale maand`}</div>`}
           ${!scrub && data?.repaid_cents > 0 && html`<div class="bc-label bc-repaid num">Plus ${euros(data.repaid_cents)} aflossing op de hypotheek of lening: die telt als gespaard, niet in dit bakje.</div>`}
         </div>
       </div>

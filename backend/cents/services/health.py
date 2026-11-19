@@ -81,7 +81,7 @@ def compute(conn: sqlite3.Connection, lg: Ledger, buffer: dict | None,
             debts.append({"kind": "debt", "name": a["name"], "cents": a["value_cents"],
                           "id": a["id"]})
     # loans paid every month (bakje Leningen) that are not on Vermogen yet: DUO, a car loan
-    from . import mortgage, recurring
+    from . import besparen, mortgage, recurring
     linked = {r["merchant_key"] for r in db.rows(conn, "SELECT merchant_key FROM assets WHERE kind = 'debt' "
                                                      "AND merchant_key IS NOT NULL")}
     linked.add(mortgage.linked_merchant(conn)[0])
@@ -103,5 +103,5 @@ def compute(conn: sqlite3.Connection, lg: Ledger, buffer: dict | None,
                   "rest_cents": rnd(inc - monthly_fixed)},
         "saving": {"cents": rnd(saved), "share": _share(saved, inc), "repaid_cents": rnd(repaid)},
         "debts": {"known": bool(debts), "total_cents": sum(d["cents"] for d in debts),
-                  "items": debts, "unlisted": unlisted},
+                  "items": debts, "unlisted": unlisted, "later": besparen.later_payments(lg)},
     }

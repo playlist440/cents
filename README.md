@@ -20,6 +20,8 @@ en hoe je potjes ervoor staan.
   verkoopt, zoals een auto, wordt een bezitting: de waarde staat bij Vermogen en elke maand
   telt het waardeverlies, niet de aankoop.
 - Elke aanname van de app is zichtbaar en aan te passen onder Instellingen → Slimme aannames.
+- **Besparen**: abonnementen per jaar, wat duurder werd, contracten om te vergelijken, bank-
+  en koerskosten, bakjes boven vorig jaar en achteraf betalen, op één plek.
 - **Controle** (Instellingen): hoeveel van je uitgaven verantwoord is, en of er maanden of
   overboekingen ontbreken of een saldo niet aansluit, zodat je weet welke import nog mist.
 - Beleggingen bij DEGIRO: importeer de Transacties-, Rekeningoverzicht- of Portefeuille-CSV en
