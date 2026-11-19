@@ -9,7 +9,7 @@
 import { generate } from './data.js';
 import { addDays, daysBetween, parseISO, shiftPeriod, monthLabel, todayISO, MONTHS, money, euros } from '../format.js';
 
-const VERSION = '1.0.3-mock';
+const VERSION = '1.1.0-mock';
 const PASSWORD = 'demo1234';
 
 let db;
@@ -287,7 +287,9 @@ function flows(pid) {
       }
       const c = catById(t.category_id) || catByKey('unsorted');
       if (c.grp === 'internal') continue;
-      if (c.key === 'unsorted' && amt > 0) { res.income += amt; addCat(res.incomeCats, c.id, amt); continue; }
+      // unsorted money in lowers daily spending (a tikkie); from € 500 it is income (services/ledger.py)
+      if (c.key === 'unsorted' && amt >= 50000) { res.income += amt; addCat(res.incomeCats, c.id, amt); continue; }
+      if (c.key === 'unsorted' && amt > 0) { res.daily -= amt; addCat(res.cats, c.id, -amt); res.dailyByDay.set(t.date, (res.dailyByDay.get(t.date) || 0) - amt); continue; }
       if (c.grp === 'income') { res.income += amt; addCat(res.incomeCats, c.id, amt); }
       else if (c.grp === 'fixed') {
         // Mortgage and linked debts (SPEC §7.2, §7.3): the repaid share of the linked payment counts as saved.
@@ -708,7 +710,8 @@ function outlook() {
       .map((it) => ({ name: it.name, date: it.next_date, cents: -it.amount_cents })).sort((x, y) => (x.date < y.date ? -1 : 1));
     const overdueCents = overdue.reduce((s, x) => s + x.cents, 0);
     const toSavings = [...due(start, pay, ['saving']), ...ownMoves(start, pay)].reduce((s, [it]) => s - it.amount_cents, 0);
-    const incoming = due(start, pay, ['income'], 'in').map(([it, d]) => ({ name: it.name, date: d, cents: it.amount_cents }));
+    const salary = rec.filter((it) => it.direction === 'in' && !it.own_account && it.status !== 'ended' && grp(it) === 'income').sort((x, y) => y.amount_cents - x.amount_cents)[0];
+    const incoming = due(start, pay, ['income'], 'in').filter(([it]) => !salary || it.key !== salary.key).map(([it, d]) => ({ name: it.name, date: d, cents: it.amount_cents }));
     const incomeCents = incoming.reduce((s, x) => s + x.cents, 0);
     // next credit-card settlement: median unexplained part of the last three, one month on
     const unexpl = settlementUnexplained().map;
@@ -980,7 +983,7 @@ function health(buffer) {
     months: n, income_cents: r(income),
     buffer: buffer ? { months: buffer.months, target_months: buffer.target_months, saved_cents: buffer.saved_cents, target_cents: buffer.target_cents, source: buffer.source } : null,
     housing: { cents: r(housing), share: share(housing) },
-    fixed: { cents: r(fixed), share: share(fixed), rest_cents: r(income - fixed) },
+    fixed: { cents: r(fixed), share: fixed - (incomeAvg()?.repaid_cents || 0) > 0 ? share(fixed - (incomeAvg()?.repaid_cents || 0)) : null, rest_cents: r(income - fixed) },
     saving: { cents: r(saved), share: share(saved), repaid_cents: r(repaid) },
     debts: { known: debts.length > 0, total_cents: debts.reduce((s, d) => s + d.cents, 0), items: debts, unlisted: unlistedLoans(), later: laterPayments() },
   };
@@ -1362,7 +1365,7 @@ function mortgageShare() {
   const y = mortgageLatestYear();
   if (!y) return null;
   const es = db.mortgage_years.filter((e) => e.year === y);
-  const rep = es.reduce((s, e) => s + e.repaid_cents, 0);
+  const rep = es.reduce((s, e) => s + e.repaid_cents - (e.extra_repaid_cents || 0), 0);
   const tot = rep + es.reduce((s, e) => s + e.interest_cents, 0);
   return tot > 0 ? rep / tot : 0;
 }
@@ -2240,13 +2243,13 @@ const ROUTES = [
   ['GET', /^\/recurring$/, () => {
     const items = recurringItems();
     const active = items.filter((i) => i.status !== 'ended');
-    const out = active.filter((i) => i.direction === 'out' && catById(i.category_id)?.grp === 'fixed'); // backend: fixed bakjes only
+    const out = active.filter((i) => i.direction === 'out' && !i.own_account && catById(i.category_id)?.grp === 'fixed'); // backend: fixed bakjes only
     const monthly_out_cents = out.reduce((s, i) => s - i.per_month_cents, 0);
     const subs = active.filter((i) => i.direction === 'out' && ['abonnementen', 'telecom'].includes(catById(i.category_id)?.key));
     const subscriptions = { per_month_cents: subs.reduce((s, i) => s - i.per_month_cents, 0), per_year_cents: subs.reduce((s, i) => s + i.per_year_cents, 0), count: subs.length };
     const inc = incomeAvg();
     return ok({ income_cents: inc ? inc.income_cents : null, repaid_cents: inc ? inc.repaid_cents : 0,
-      share_of_income: inc && inc.income_cents > 0 && monthly_out_cents > 0 ? Math.round((monthly_out_cents / inc.income_cents) * 1000) / 1000 : null,
+      share_of_income: inc && inc.income_cents > 0 && monthly_out_cents - inc.repaid_cents > 0 ? Math.round(((monthly_out_cents - inc.repaid_cents) / inc.income_cents) * 1000) / 1000 : null,   // without aflossing (services/health.py fixed_share)
       monthly_out_cents, monthly_in_cents: active.filter((i) => i.direction === 'in' && catById(i.category_id)?.grp === 'income').reduce((s, i) => s + i.per_month_cents, 0), yearly_out_cents: monthly_out_cents * 12, subscriptions,
       items: items.map((i) => (i.direction === 'out' && allSplits().has(i.merchant_key) ? { ...i, repaid_per_month_cents: Math.round(Math.abs(i.per_month_cents) * allSplits().get(i.merchant_key)) } : i)) });
   }],
@@ -2434,7 +2437,7 @@ const ROUTES = [
     const ids = (body.parts || []).map((x) => x.part_id);
     if (new Set(ids).size !== ids.length) fail(422, 'duplicate_part', 'Elk leningdeel mag maar één keer in de jaaropgave.');
     db.mortgage_years = db.mortgage_years.filter((e) => e.year !== year);
-    for (const x of body.parts || []) db.mortgage_years.push({ part_id: x.part_id, year, debt_end_cents: x.debt_end_cents || 0, interest_cents: x.interest_cents || 0, repaid_cents: x.repaid_cents || 0, principal_cents: x.principal_cents ?? null });
+    for (const x of body.parts || []) db.mortgage_years.push({ part_id: x.part_id, year, debt_end_cents: x.debt_end_cents || 0, interest_cents: x.interest_cents || 0, repaid_cents: x.repaid_cents || 0, extra_repaid_cents: x.extra_repaid_cents || null, principal_cents: x.principal_cents ?? null });
     return ok(mortgageOut());
   }],
   ['DELETE', /^\/mortgage\/years\/(\d+)$/, ({ params: [year] }) => { db.mortgage_years = db.mortgage_years.filter((e) => e.year !== year); return ok(mortgageOut()); }],

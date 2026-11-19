@@ -52,9 +52,12 @@ def income(lg: Ledger) -> dict | None:
 
 
 def fixed_share(lg: Ledger, monthly_fixed: float) -> float | None:
-    """The one "vaste lasten: x % van je inkomen" (Hoe staan we ervoor, Vaste lasten, insight)."""
+    """The one "vaste lasten: x % van je inkomen" (Hoe staan we ervoor, Vaste lasten, insight).
+    Without the aflossing: like Over of tekort, the part of the mortgage payment that makes the
+    debt smaller is saving, not a cost (the buffer still counts the full payment)."""
     inc = income(lg)
-    return _share(monthly_fixed, inc["income_cents"]) if inc and monthly_fixed > 0 else None
+    costs = monthly_fixed - (inc["repaid_cents"] if inc else 0)
+    return _share(costs, inc["income_cents"]) if inc and costs > 0 else None
 
 
 def compute(conn: sqlite3.Connection, lg: Ledger, buffer: dict | None,

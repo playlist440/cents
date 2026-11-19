@@ -420,3 +420,17 @@ def test_outlook_saves_minus_withdrawals():
             "next_date": "2026-11-20", "status": "active", "interval_days": 7}
     moves = outlook._own_moves([out, back], date(2026, 11, 19), date(2026, 11, 30))
     assert -sum(i["amount_cents"] for i, _ in moves) == 40000 - 2 * 10000
+
+
+def test_salary_never_counts_as_incoming_before_payday():
+    """With a payday setting of the 25th and the salary arriving early (the 23rd), the salary
+    item must not be added as other income before payday (financial review 2026-11)."""
+    from datetime import date
+    from types import SimpleNamespace
+    from cents.services import outlook
+    salary = {"key": "werkgever", "direction": "in", "amount_cents": 320000, "frequency": "monthly",
+              "next_date": "2026-11-23", "status": "active", "category_id": 1, "interval_days": 30, "day_of_month": 23}
+    toeslag = {"key": "toeslag", "direction": "in", "amount_cents": 15000, "frequency": "monthly",
+               "next_date": "2026-11-20", "status": "active", "category_id": 1, "interval_days": 30, "day_of_month": 20}
+    lg = SimpleNamespace(categories={1: {"grp": "income", "key": "salaris"}})
+    assert outlook.salary_item(lg, [salary, toeslag])["key"] == "werkgever"

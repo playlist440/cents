@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.1.0 — 2026-11-19
+
+Financiële controle: alle adviezen van de review verwerkt. Sommige bedragen veranderen hierdoor.
+
+- Hypotheek: bij de jaaropgave vul je "Waarvan extra afgelost" in. Extra (boetevrij) aflossen telt niet meer mee in hoe Cents elke gewone maandbetaling verdeelt over aflossing en rente, en de geschatte restschuld daalt niet meer te snel. (Database-schema v12.)
+- Nog te besteden: het salaris telt nooit als "komt nog binnen", ook niet als het door een weekend vóór de ingestelde salarisdag binnenkomt.
+- Geld dat binnenkomt zonder bakje (tikkie, terugbetaling, Marktplaats) maakt de dagelijkse uitgaven lager in plaats van het inkomen hoger. Vanaf € 500 telt het als inkomen tot je het sorteert.
+- Vaste lasten als deel van je inkomen rekent zonder aflossing, net als Over of tekort. De buffer blijft rekenen met de hele betaling.
+- Zonder vaste lasten valt Cents terug op het middelste bedrag (mediaan) van zes maanden in plaats van het gemiddelde.
+- Uitleg: nieuwe of aangevulde woorden voor bestedingsbudget, sparen min opnemen, geld zonder bakje, vrij spaargeld zonder buffer-potje, rente tegenover dividend, de creditcard in je vermogen en extra aflossen.
+
 ## 1.0.3 — 2026-11-19
 
 - Nog te besteden rekent met sparen min opnemen: wat tot je salaris nog naar je spaarrekening gaat, min wat terugkomt (zoals het wekelijks terugstorten uit een boodschappen-potje). Het blijft geen inkomen, maar het geld dat terugkomt telt wel mee.

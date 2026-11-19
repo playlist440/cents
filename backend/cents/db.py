@@ -343,8 +343,14 @@ SCHEMA_V11 = """
 ALTER TABLE assets ADD COLUMN curve TEXT;
 """
 
+# v12: extra (one-off, boetevrij) aflossing within repaid_cents, so the share of a regular
+# payment that is aflossing is not inflated by it. NULL = none.
+SCHEMA_V12 = """
+ALTER TABLE mortgage_years ADD COLUMN extra_repaid_cents INTEGER;
+"""
+
 MIGRATIONS: list[str] = [SCHEMA_V1, SCHEMA_V2, SCHEMA_V3, SCHEMA_V4, SCHEMA_V5, SCHEMA_V6, SCHEMA_V7, SCHEMA_V8,
-                         SCHEMA_V9, SCHEMA_V10, SCHEMA_V11]
+                         SCHEMA_V9, SCHEMA_V10, SCHEMA_V11, SCHEMA_V12]
 SCHEMA_VERSION = len(MIGRATIONS)
 
 DEFAULT_SETTINGS: dict[str, Any] = {"month_start_day": 1, "household_name": ""}

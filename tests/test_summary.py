@@ -31,12 +31,13 @@ def household(book):
 def test_overview_past_period_groups(client, book):
     household(book)
     o = client.get("/api/overview?period=2026-01").json()
-    # income: salary + unsorted in + savings interest; the savings-side mirror never counts
-    assert o["income_cents"] == 300000 + 2000 + 1500
+    # income: salary + savings interest; the savings-side mirror never counts. Unsorted money in
+    # (€ 20, a tikkie) lowers daily spending instead.
+    assert o["income_cents"] == 300000 + 1500
     assert o["fixed_cents"] == 100000
-    assert o["daily_cents"] == 20000 - 5000 + 3000
+    assert o["daily_cents"] == 20000 - 5000 + 3000 - 2000
     assert o["saved_cents"] == 50000
-    assert o["net_cents"] == 303500 - 100000 - 18000 - 50000
+    assert o["net_cents"] == 301500 - 100000 - 16000 - 50000
     assert o["left_cents"] is None and o["per_day_left_cents"] is None
     assert o["period"]["id"] == "2026-01" and o["period"]["is_current"] is False
     cats = {c["category_id"]: c for c in o["categories"]}
@@ -44,12 +45,12 @@ def test_overview_past_period_groups(client, book):
     assert cats[ids["wonen"]]["spent_cents"] == 100000
     assert cats[ids["boodschappen"]]["spent_cents"] == 15000
     assert cats[ids["boodschappen"]]["count"] == 2
-    assert cats[ids["unsorted"]]["spent_cents"] == 3000
+    assert cats[ids["unsorted"]]["spent_cents"] == 1000
     assert [c["spent_cents"] for c in o["categories"]] == sorted(
         [c["spent_cents"] for c in o["categories"]], reverse=True)
     income = {i["category_id"]: i["cents"] for i in o["income"]}
-    assert income == {ids["salaris"]: 300000, ids["unsorted"]: 2000, ids["inkomen-overig"]: 1500}
-    assert len(o["pace"]["days"]) == 31 and o["pace"]["actual"][-1] == 18000
+    assert income == {ids["salaris"]: 300000, ids["inkomen-overig"]: 1500}
+    assert len(o["pace"]["days"]) == 31 and o["pace"]["actual"][-1] == 16000
     assert o["pace"]["typical"] == []     # no complete period before January
 
 
@@ -58,8 +59,8 @@ def test_overview_current_period_left(client, book):
     o = client.get("/api/overview").json()
     assert o["period"]["id"] == "2026-03" and o["period"]["is_current"]
     assert o["income_cents"] == 0                                # a period without income
-    feb_income = 300000 + 2000
-    jan_income = 300000 + 2000 + 1500
+    feb_income = 300000
+    jan_income = 300000 + 1500
     expected = round((jan_income + feb_income) / 2)
     assert o["expected_income_cents"] == expected               # no recurring income yet
     assert o["fixed_cents"] == 100000 and o["daily_cents"] == 10000
@@ -67,7 +68,7 @@ def test_overview_current_period_left(client, book):
     assert o["per_day_left_cents"] == int(o["left_cents"] / 17)  # 15..31 March
     # typical = median of January and February at each day index (two months: their mean)
     assert o["pace"]["typical"][9] == 20000                      # day 10: groceries both months
-    assert o["pace"]["typical"][-1] == 18000
+    assert o["pace"]["typical"][-1] == 16000
     assert len(o["pace"]["actual"]) == 8                         # data until 5 March + 3 days
     cats = {c["category_id"]: c for c in o["categories"]}
     assert cats[book.cats["boodschappen"]]["avg_cents"] == 15000

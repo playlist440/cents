@@ -52,7 +52,8 @@ def ratio(conn: sqlite3.Connection) -> tuple[int | None, float | None]:
     year = latest_year(conn)
     if year is None:
         return None, None
-    r = db.row(conn, "SELECT SUM(repaid_cents) AS rep, SUM(interest_cents) AS int "
+    # extra (one-off) aflossing is not part of the regular payment: leave it out of the share
+    r = db.row(conn, "SELECT SUM(repaid_cents - COALESCE(extra_repaid_cents, 0)) AS rep, SUM(interest_cents) AS int "
                      "FROM mortgage_years WHERE year = ?", (year,))
     total = (r["rep"] or 0) + (r["int"] or 0)
     return year, ((r["rep"] or 0) / total if total > 0 else 0.0)
@@ -236,6 +237,7 @@ def summary(conn: sqlite3.Connection, lg) -> dict:
                    "years": [{"year": y, "debt_end_cents": per[p["id"]]["debt_end_cents"],
                               "interest_cents": per[p["id"]]["interest_cents"],
                               "repaid_cents": per[p["id"]]["repaid_cents"],
+                              "extra_repaid_cents": per[p["id"]]["extra_repaid_cents"],
                               "principal_cents": per[p["id"]]["principal_cents"]}
                              for y, per in sorted(st.items(), reverse=True) if p["id"] in per]}
                   for p in plist],

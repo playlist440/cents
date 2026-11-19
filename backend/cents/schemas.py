@@ -234,6 +234,7 @@ class MortgageYearPart(BaseModel):
     debt_end_cents: Annotated[int, Field(ge=0, le=MONEY_LIMIT)]
     interest_cents: Annotated[int, Field(ge=0, le=MONEY_LIMIT)] = 0
     repaid_cents: Annotated[int, Field(ge=0, le=MONEY_LIMIT)] = 0
+    extra_repaid_cents: Annotated[int, Field(ge=0, le=MONEY_LIMIT)] | None = None   # part of repaid that was extra
     principal_cents: Annotated[int, Field(ge=0, le=MONEY_LIMIT)] | None = None   # new loan that year
 
 

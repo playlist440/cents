@@ -264,3 +264,19 @@ def test_mortgage_under_leningen_counts_as_woonlasten(client, book, today):
     _setup(client)
     h = client.get("/api/overview").json()["health"]
     assert h["housing"]["cents"] == PAY + 15000          # the full payment, though under Leningen
+
+
+def test_extra_repaid_does_not_inflate_the_split(client, book, today):
+    """Boetevrij extra aflossen sits in the jaaropgave's repaid amount; it must not raise the
+    aflossing share of every regular payment (financial review 2026-11)."""
+    today("2026-11-15")
+    _household(book)
+    m = client.post("/api/mortgage", json={"parts": [{"name": "Deel 1"}]}).json()
+    pid = m["parts"][0]["id"]
+    body = {"parts": [{"part_id": pid, "debt_end_cents": 20000000, "interest_cents": 600000,
+                       "repaid_cents": 1400000, "extra_repaid_cents": 1000000}]}
+    m = client.put("/api/mortgage/years/2025", json=body).json()
+    assert m["repaid_share"] == 0.4                     # 4000 / (4000 + 6000), not 14000 / 20000
+    assert m["parts"][0]["years"][0]["extra_repaid_cents"] == 1000000
+    body["parts"][0]["extra_repaid_cents"] = 2000000    # more extra than repaid in total
+    assert client.put("/api/mortgage/years/2025", json=body).status_code == 422

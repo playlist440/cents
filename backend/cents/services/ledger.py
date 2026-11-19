@@ -36,6 +36,7 @@ from .periods import Period
 
 INCOME, FIXED, DAILY, SAVING = "income", "fixed", "daily", "saving"
 SPENDING = (FIXED, DAILY)
+UNSORTED_INCOME_FROM = 50000      # € 500: unsorted money in from this amount counts as income
 
 
 @dataclass
@@ -196,7 +197,12 @@ def bucket(r: dict, cat_ids: dict[str, int], unexplained: dict[int, int],
     if key == "creditcard":
         return DAILY, cat, unexplained.get(r["id"], -amount)
     if key is None or key == "unsorted":
-        return (INCOME, cat, amount) if amount > 0 else (DAILY, cat, -amount)
+        # unsorted money in (a tikkie, a refund, a Marktplaats sale) lowers daily spending until
+        # it is sorted; it is not income. A large unsorted amount (a salary Cents did not
+        # recognise yet) still counts as income, so a new household does not see negative spending.
+        if amount > 0 and amount >= UNSORTED_INCOME_FROM:
+            return INCOME, cat, amount
+        return DAILY, cat, -amount
     if grp == INCOME:
         return INCOME, cat, amount
     if grp in SPENDING:

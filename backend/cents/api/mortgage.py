@@ -78,6 +78,8 @@ def put_year(year: int, body: MortgageYearBody, conn: sqlite3.Connection = Depen
     known = {p["id"] for p in mortgage.parts(conn)}
     if any(p.part_id not in known for p in body.parts):
         raise not_found("Dit leningdeel bestaat niet (meer).")
+    if any((p.extra_repaid_cents or 0) > p.repaid_cents for p in body.parts):
+        raise ApiError(422, "invalid", "Extra afgelost kan niet meer zijn dan wat er in totaal is afgelost.")
     if len({p.part_id for p in body.parts}) != len(body.parts):
         raise ApiError(422, "invalid", "Elk leningdeel mag maar één keer voorkomen.")
     conn.execute("DELETE FROM mortgage_years WHERE year = ?", (year,))
@@ -86,6 +88,7 @@ def put_year(year: int, body: MortgageYearBody, conn: sqlite3.Connection = Depen
                                            "debt_end_cents": p.debt_end_cents,
                                            "interest_cents": p.interest_cents,
                                            "repaid_cents": p.repaid_cents,
+                                           "extra_repaid_cents": p.extra_repaid_cents or None,
                                            "principal_cents": p.principal_cents})
     return _out(conn)
 

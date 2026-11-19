@@ -147,15 +147,17 @@ def _own_moves(items: list[dict], start: date, end: date) -> list[tuple[dict, da
 def monthly_fixed(lg: Ledger, items: list[dict]) -> float:
     """The one "vaste lasten per maand" (SPEC 9): the live recurring fixed costs per month, as
     on the Vaste lasten screen (the full mortgage payment, no one-off purchases); without any,
-    the average of the previous up to six complete periods."""
-    live = -sum(i["per_month_cents"] for i in items if i["direction"] == "out"
+    the median of the previous up to six complete periods (one yearly insurance payment does not
+    pull it up)."""
+    live = -sum(i["per_month_cents"] for i in items if i["direction"] == "out" and not i.get("own_account")
                 and i["status"] != "ended" and _group(lg, i) == FIXED)
     if live > 0:
         return live
     history = lg.complete_before(lg.current(), 6)
     if history:
-        return sum(lg.flows_for(p).fixed - lg.flows_for(p).spread_fixed + lg.flows_for(p).repaid
-                   for p in history) / len(history)
+        vals = sorted(lg.flows_for(p).fixed - lg.flows_for(p).spread_fixed + lg.flows_for(p).repaid for p in history)
+        n = len(vals)
+        return vals[n // 2] if n % 2 else (vals[n // 2 - 1] + vals[n // 2]) / 2
     return 0.0
 
 
@@ -294,8 +296,12 @@ def free(conn: sqlite3.Connection, lg: Ledger, items: list[dict], buf: dict | No
     to_savings = -sum(i["amount_cents"] for i, _ in _spend_items(lg, items, start, pay, (SAVING,))
                       + _own_moves(items, start, pay))
     # other money that comes in every month before payday (toeslagen, kinderbijslag)
+    # the salary itself never counts as "coming in before payday", also when it arrives a few
+    # days before the payday setting (weekend): Nog te besteden runs until that salary
+    main = salary_item(lg, items)
     incoming = [{"name": i["name"], "date": d.isoformat(), "cents": i["amount_cents"]}
-                for i, d in _spend_items(lg, items, start, pay, (INCOME,), direction="in")]
+                for i, d in _spend_items(lg, items, start, pay, (INCOME,), direction="in")
+                if not main or i["key"] != main["key"]]
     income_cents = sum(x["cents"] for x in incoming)
     card = expected_settlement(lg, start - timedelta(days=1), pay)
     rate = daily_rate(lg)
@@ -386,7 +392,8 @@ def checking_warning(conn: sqlite3.Connection, lg: Ledger, items: list[dict], pa
         return None
     due: dict[date, int] = {}
     moves = (_spend_items(lg, items, start, pay, (FIXED, SAVING))
-             + _spend_items(lg, items, start, pay, (INCOME,), direction="in")
+             + [m for m in _spend_items(lg, items, start, pay, (INCOME,), direction="in")
+                if not (salary := salary_item(lg, items)) or m[0]["key"] != salary["key"]]
              + _own_moves(items, start, pay))
     for i, d in moves:
         due[d] = due.get(d, 0) + i["amount_cents"]

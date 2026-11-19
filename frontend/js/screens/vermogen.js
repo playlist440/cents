@@ -647,7 +647,7 @@ function YearForm({ m, onChange }) {
     const prev = p.years.find((x) => x.year === y - 1);
     const start = e?.principal_cents != null ? 0
       : e ? e.debt_end_cents + (e.repaid_cents || 0) : (prev ? prev.debt_end_cents : null);
-    return [p.id, { debt_start_cents: start, principal_cents: e?.principal_cents ?? null, debt_end_cents: e?.debt_end_cents ?? null, interest_cents: e?.interest_cents ?? null }];
+    return [p.id, { debt_start_cents: start, principal_cents: e?.principal_cents ?? null, debt_end_cents: e?.debt_end_cents ?? null, interest_cents: e?.interest_cents ?? null, extra_repaid_cents: e?.extra_repaid_cents ?? null }];
   }));
   const [vals, setVals] = useState(() => filled(year));
   const [busy, setBusy] = useState(false);
@@ -665,6 +665,7 @@ function YearForm({ m, onChange }) {
     try {
       await api.saveMortgageYear(year, m.parts.map((p) => ({ part_id: p.id, debt_end_cents: vals[p.id].debt_end_cents || 0,
         interest_cents: vals[p.id].interest_cents || 0, repaid_cents: repaid(vals[p.id]),
+        extra_repaid_cents: Math.min(vals[p.id].extra_repaid_cents || 0, repaid(vals[p.id])) || null,
         principal_cents: vals[p.id].debt_start_cents === 0 ? (vals[p.id].principal_cents ?? null) : null })));
       onChange();
       toast({ text: `Jaaropgave ${year} bewaard` });
@@ -687,8 +688,9 @@ function YearForm({ m, onChange }) {
       <${AmountField} label=${`Restant op 31-12-${year}`} cents=${vals[p.id]?.debt_end_cents} onChange=${(c) => set(p.id, 'debt_end_cents', c)} />
       <${AmountField} label="Betaalde rente" cents=${vals[p.id]?.interest_cents} onChange=${(c) => set(p.id, 'interest_cents', c)} />
       <${ListRow} title="Afgelost" value=${html`<span class="num">${money(repaid(vals[p.id]))}</span>`} />
+      <${AmountField} label="Waarvan extra afgelost" cents=${vals[p.id]?.extra_repaid_cents} onChange=${(c) => set(p.id, 'extra_repaid_cents', c)} />
     </${List}>`)}
-    <${List} footer=${`Neem de bedragen over van je jaaropgave. Afgelost rekent Cents zelf uit. Nieuwe lening dat jaar? Vul bij 1 januari 0 in en daarna het bedrag bij ingang. De opgave over ${m.form_year + 1} komt begin ${m.form_year + 2}.`}>
+    <${List} footer=${`Neem de bedragen over van je jaaropgave. Afgelost rekent Cents zelf uit. Heb je dat jaar zelf extra afgelost (boetevrij)? Vul dat bedrag in bij Waarvan extra; dan rekent Cents de gewone maandbetaling goed uit. Nieuwe lening dat jaar? Vul bij 1 januari 0 in en daarna het bedrag bij ingang. De opgave over ${m.form_year + 1} komt begin ${m.form_year + 2}.`}>
       <li class="field-row vm-add-row"><${Button} variant="tinted" size="medium" block onClick=${save} disabled=${!ready} loading=${busy}>Bewaar jaaropgave</${Button}></li>
       ${!ready && html`<li class="field-row vm-p-note">Vul bij elk deel de restschuld op 31 december in om te bewaren.</li>`}
     </${List}>
