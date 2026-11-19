@@ -252,3 +252,15 @@ def test_mortgage_paid_under_leningen_is_not_asked_as_a_new_loan(client, book, t
     assert d["unlisted"] and d["unlisted"][0]["maybe_mortgage"] is True
     cands = [c["merchant_key"] for c in client.get("/api/mortgage").json().get("candidates", [])]
     assert "florius" in cands
+
+
+def test_mortgage_under_leningen_counts_as_woonlasten(client, book, today):
+    today("2026-11-15")
+    chk = book.account("Betaal", "checking")
+    book.monthly(chk, "2025-01-20", 22, 400000, "salaris", "Werkgever")
+    book.monthly(chk, "2025-01-01", 22, -PAY, "leningen", LENDER, method="debit")
+    book.monthly(chk, "2025-01-08", 22, -15000, "energie", "Energie", method="debit")
+    book.commit()
+    _setup(client)
+    h = client.get("/api/overview").json()["health"]
+    assert h["housing"]["cents"] == PAY + 15000          # the full payment, though under Leningen

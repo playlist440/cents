@@ -6,8 +6,8 @@ so holiday pay and a thirteenth month count. Without spread parts (one-off purch
 monthly pattern):
 
 - `buffer`: the buffer bar's figures (outlook.buffer_status) in months of fixed costs.
-- `housing`: wonen (the full mortgage payment, the repayment included) + energie + belastingen
-  & gemeente, per month and as a share of income.
+- `housing`: wonen + energie + belastingen & gemeente + the linked mortgage payment wherever it
+  was sorted (the full payment, the repayment included), per month and as a share of income.
 - `fixed`: the one "vaste lasten per maand" (outlook.monthly_fixed, as on the Vaste lasten
   screen), as a share of income, and what is left of the income for the rest.
 - `saving`: what went to savings and investments, without the mortgage repayment (shown
@@ -70,8 +70,12 @@ def compute(conn: sqlite3.Connection, lg: Ledger, buffer: dict | None,
     repaid = sum(f.repaid for f in flows) / n
     saved = sum(f.saved - f.repaid for f in flows) / n
     housing_ids = {lg.cat_ids[k] for k in HOUSING if k in lg.cat_ids}
+    # the mortgage payment counts as woonlasten in whatever bakje it was sorted (Leningen too)
+    from . import mortgage as mortgage_mod
+    m_key = mortgage_mod.linked_merchant(conn)[0] if mortgage_mod.parts(conn) else None
     housing = sum(r["bucket"][2] + (r.get("repaid") or 0) for f in flows for r in f.rows
-                  if r["bucket"][0] == FIXED and r["bucket"][1] in housing_ids and not r.get("part")) / n
+                  if r["bucket"][0] == FIXED and not r.get("part")
+                  and (r["bucket"][1] in housing_ids or (m_key and r["merchant_key"] == m_key))) / n
 
     nw = networth.get(conn)
     debts = []

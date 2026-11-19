@@ -958,8 +958,15 @@ function health(buffer) {
   const saved = avg((f) => f.saved - f.repaid);
   const housingIds = ['wonen', 'energie', 'belastingen'].map((k) => catByKey(k)?.id).filter(Boolean);
   // without spread parts: the parts are in f.cats too, so take them out per bakje
+  // the linked mortgage payment counts wherever it was sorted (services/health.py)
+  const mKey = db.mortgage_parts.length ? mortgageLinked().key : null;
+  const mElsewhere = mKey ? hist.reduce((s, p) => {
+    const { from, to } = periodBounds(p);
+    return s + db.transactions.filter((t) => t.merchant_key === mKey && t.date >= from && t.date <= to && t.amount_cents < 0 && isCashflow(t) && !housingIds.includes(t.category_id) && catById(t.category_id)?.grp === 'fixed')
+      .reduce((a, t) => a - t.amount_cents, 0);
+  }, 0) / n : 0;
   const housing = avg((f) => housingIds.reduce((s, id) => s + (f.cats.get(id)?.cents || 0) + (f.repaidCats.get(id) || 0), 0))
-    - hist.reduce((s, p) => s + periodParts(p).filter((x) => housingIds.includes(x.category_id)).reduce((a, x) => a + x.cents, 0), 0) / n;
+    - hist.reduce((s, p) => s + periodParts(p).filter((x) => housingIds.includes(x.category_id)).reduce((a, x) => a + x.cents, 0), 0) / n + mElsewhere;
   const share = (x) => (income > 0 ? Math.round((x / income) * 1000) / 1000 : null);
   const nw = networth();
   const debts = [];
