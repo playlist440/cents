@@ -97,3 +97,4 @@
 .vm-p-fact .is-expense { color: var(--red-text); }
 .vm-p-split { padding-bottom: 6px; margin-bottom: 6px; border-bottom: .5px solid var(--sep); }
 .vm-p-note { margin: 6px 0 0; font: 400 var(--fs-footnote)/1.35 var(--font); color: var(--label-2); }
+.vm-hero-note { white-space: normal; overflow-wrap: anywhere; }

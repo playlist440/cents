@@ -61,10 +61,11 @@ export function Vermogen() {
   const boot = useStore((s) => s.boot);
   const pending = usePending();
   const desk = useLayout() === 'wide';
-  const trailing = html`<${NavButton} icon="plus" label="Rekening toevoegen" onClick=${() => openSheet(AccountSheet, {})} />`;
   const addItems = [{ label: 'Rekening toevoegen', icon: 'wallet', onSelect: () => openSheet(AccountSheet, {}) },
     ...(data?.home ? [] : [{ label: 'Hypotheek toevoegen', icon: 'vermogen', onSelect: () => openSheet(MortgageSheet, {}) }]),
     ...ASSET_KINDS.map((k) => ({ label: k.add, icon: k.icon, onSelect: () => openSheet(AssetSheet, { kind: k.kind }) }))];
+  // the same choices as the Mac toolbar menu (rekening, hypotheek, bezitting, schuld, pensioen, …)
+  const trailing = html`<${NavButton} icon="plus" label="Toevoegen" onClick=${(e) => openMenu(e.currentTarget, addItems)} />`;
 
   if (!data) {
     return html`<${Screen} title="Vermogen" trailing=${trailing} add=${addItems}>
