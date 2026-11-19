@@ -47,7 +47,7 @@ export function firstPart(total, months, keep = 0, curve = 'linear') {
 }
 
 /** How a possession loses value (services/spread.py amounts, curve). */
-const CURVES = [{ value: 'linear', label: 'Gelijkmatig' }, { value: 'front', label: 'Sneller in het begin' }];
+const CURVES = [['linear', 'Gelijkmatig'], ['front', 'Sneller in het begin']];   // Segmented: [value, label]
 function CurvePick({ value, onChange }) {
   return html`<div class="ps-life">
     <span class="ps-life-label">Waardeverlies</span>

@@ -30,7 +30,10 @@ export function Chip({ selected = false, onClick, color, emoji, children, tone, 
     : html`<span class=${c} style=${style} ...${rest}>${inner}</span>`;
 }
 
-export function Segmented({ value, onChange, options, label, size = 'medium' }) {
+export function Segmented({ value, onChange, options: raw, label, size = 'medium' }) {
+  // [value, label] pairs; {value, label} objects are accepted too (a wrong shape must never
+  // take the whole sheet down)
+  const options = raw.map((o) => (Array.isArray(o) ? o : [o.value, o.label]));
   // Equal columns (grid, minmax(0, 1fr)), so the thumb is placed by CSS from the index alone:
   // exact at every width, after resizes and while hidden — nothing is measured.
   const ref = useRef(null);
