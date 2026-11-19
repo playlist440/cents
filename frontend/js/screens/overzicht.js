@@ -724,14 +724,23 @@ function healthRows(h) {
   const d = h.debts;
   const others = d.items.filter((x) => x.kind !== 'mortgage');
   const later = d.later?.length ? ` Achteraf betaald bij ${d.later.map((x) => `${x.name} (${euros(x.cents)} in drie maanden)`).join(' en ')}: staat er nog iets open?` : '';
+  const itemText = (x) => (x.unknown ? `${x.name} (bedrag volgt na een jaaropgave bij Vermogen)` : `${x.name} ${euros(x.cents)}`);
+  const known = d.known ? d.items.map(itemText).join(' · ') + '. ' : '';
+  // a payment under Leningen while the mortgage is on Vermogen: most likely that mortgage
+  const maybe = (d.unlisted || []).filter((x) => x.maybe_mortgage);
+  const loans = (d.unlisted || []).filter((x) => !x.maybe_mortgage);
+  const parts = [
+    maybe.length && `Jullie betalen elke maand ${maybe.map((x) => `${euros(x.per_month_cents)} aan ${x.name}`).join(' en ')}. Is dat de hypotheek? Kies die betaling bij Vermogen → Hypotheek → Betaling.`,
+    loans.length && `Jullie betalen elke maand aan ${loans.map((x) => `${x.name} (${euros(x.per_month_cents)})`).join(' en ')}: zet die lening bij Vermogen, dan telt hij mee.`,
+  ].filter(Boolean);
   rows.push({
     key: 'debts', emoji: '🧾', color: 'gray', title: 'Schulden',
-    value: d.known ? euros(d.total_cents) : 'Geen bekend',
-    text: d.unlisted?.length
-      ? `${d.known ? d.items.map((x) => `${x.name} ${euros(x.cents)}`).join(' · ') + '. ' : ''}Jullie betalen elke maand aan ${d.unlisted.map((x) => `${x.name} (${euros(x.per_month_cents)})`).join(' en ')}: zet die lening bij Vermogen, dan telt hij mee.`
+    value: !d.known ? 'Geen bekend' : d.total_cents > 0 ? euros(d.total_cents) : 'Hypotheek',
+    text: parts.length
+      ? known + parts.join(' ')
       : !d.known ? 'Een lening, studieschuld of achteraf betalen? Zet hem bij Vermogen, dan telt hij mee.'
-        : others.length ? d.items.map((x) => `${x.name} ${euros(x.cents)}`).join(' · ')
-          : 'Alleen de hypotheek. Een andere lening of achteraf betalen? Zet hem bij Vermogen.',
+        : others.length ? d.items.map(itemText).join(' · ')
+          : `${d.items[0]?.unknown ? itemText(d.items[0]) + '. ' : 'Alleen de hypotheek. '}Een andere lening of achteraf betalen? Zet hem bij Vermogen.`,
     to: '/vermogen',
   });
   if (later) rows[rows.length - 1].text += later;

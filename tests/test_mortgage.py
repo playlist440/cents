@@ -235,3 +235,20 @@ def test_repayment_is_shown_next_to_wonen(client, book, today):
     assert lender["cents"] == PAY * lender["count"]          # what was paid to the lender
     wonen_top = client.get(f"/api/categories/{wonen}/summary?period=2026-10").json()["merchants"][0]
     assert wonen_top["cents"] == PAY                         # the bakje's top winkel: the full payment
+
+
+def test_mortgage_paid_under_leningen_is_not_asked_as_a_new_loan(client, book, today):
+    """The mortgage is on Vermogen, but its payment was sorted under Leningen: Cents asks to
+    link that payment, not to add a loan, and the payment can be chosen (2026-11)."""
+    today("2026-11-15")
+    chk = book.account("Betaal", "checking")
+    book.monthly(chk, "2025-01-20", 22, 400000, "salaris", "Werkgever")
+    book.monthly(chk, "2025-01-01", 22, -PAY, "leningen", "Florius", method="debit")
+    book.monthly(chk, "2025-01-05", 22, -20000, "boodschappen", "Supermarkt", method="card")
+    book.commit()
+    client.post("/api/mortgage", json={"parts": [{"name": "Deel 1"}]})
+    d = client.get("/api/overview").json()["health"]["debts"]
+    assert d["known"] is True and d["items"][0]["kind"] == "mortgage"
+    assert d["unlisted"] and d["unlisted"][0]["maybe_mortgage"] is True
+    cands = [c["merchant_key"] for c in client.get("/api/mortgage").json().get("candidates", [])]
+    assert "florius" in cands

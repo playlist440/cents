@@ -19,6 +19,8 @@ from __future__ import annotations
 
 import sqlite3
 
+from datetime import timedelta
+
 from .. import db
 from . import networth
 from .ledger import FIXED, Ledger
@@ -74,8 +76,13 @@ def compute(conn: sqlite3.Connection, lg: Ledger, buffer: dict | None,
     nw = networth.get(conn)
     debts = []
     home = nw.get("home")
+    from . import mortgage as mortgage_mod
+    has_mortgage = bool(mortgage_mod.parts(conn))
     if home and home.get("debt_cents"):
         debts.append({"kind": "mortgage", "name": "Hypotheek", "cents": home["debt_cents"]})
+    elif has_mortgage:
+        # on Vermogen, but no jaaropgave yet: known, amount unknown
+        debts.append({"kind": "mortgage", "name": "Hypotheek", "cents": 0, "unknown": True})
     for a in nw.get("assets") or []:
         if a["kind"] == "debt" and (a.get("value_cents") or 0) > 0:
             debts.append({"kind": "debt", "name": a["name"], "cents": a["value_cents"],
@@ -86,7 +93,14 @@ def compute(conn: sqlite3.Connection, lg: Ledger, buffer: dict | None,
                                                      "AND merchant_key IS NOT NULL")}
     linked.add(mortgage.linked_merchant(conn)[0])
     loans_id = lg.cat_ids.get("leningen")
-    unlisted = [{"name": i["name"], "per_month_cents": -i["per_month_cents"]}
+    # with a mortgage on Vermogen whose payment is not one of these, such a payment is most
+    # likely that mortgage: ask to link it instead of to add a loan
+    m_key = mortgage_mod.linked_merchant(conn)[0]
+    since = (lg.today - timedelta(days=62)).isoformat()
+    m_paid = bool(m_key) and any(r["merchant_key"] == m_key and r["amount_cents"] < 0 and r["date"] >= since
+                                 for r in lg.rows)
+    unlisted = [{"name": i["name"], "per_month_cents": -i["per_month_cents"],
+                 "maybe_mortgage": has_mortgage and not m_paid}
                 for i in recurring.items(conn)
                 if i["direction"] == "out" and i["status"] != "ended" and i["category_id"] == loans_id
                 and i["merchant_key"] not in linked]

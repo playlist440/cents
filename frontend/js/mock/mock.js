@@ -939,8 +939,10 @@ function unlistedLoans() {
   const linked = new Set(db.assets.filter((a) => a.kind === 'debt' && a.merchant_key).map((a) => a.merchant_key));
   const m = mortgageLinked().key;
   if (m) linked.add(m);
+  // only when no linked mortgage payment came in the last two months (services/health.py)
+  const mPaid = !!m && db.transactions.some((t) => t.merchant_key === m && t.amount_cents < 0 && t.date >= addDays(db.today, -62));
   return recurringItems().filter((i) => i.direction === 'out' && i.status !== 'ended' && catById(i.category_id)?.key === 'leningen' && !linked.has(i.merchant_key))
-    .map((i) => ({ name: i.name, per_month_cents: -i.per_month_cents }));
+    .map((i) => ({ name: i.name, per_month_cents: -i.per_month_cents, maybe_mortgage: db.mortgage_parts.length > 0 && !mPaid }));
 }
 
 /** Hoe staan we ervoor (services/health.py). */
@@ -962,6 +964,7 @@ function health(buffer) {
   const nw = networth();
   const debts = [];
   if (nw.home?.debt_cents) debts.push({ kind: 'mortgage', name: 'Hypotheek', cents: nw.home.debt_cents });
+  else if (db.mortgage_parts.length) debts.push({ kind: 'mortgage', name: 'Hypotheek', cents: 0, unknown: true });
   for (const x of nw.assets || []) if (x.kind === 'debt' && (x.value_cents || 0) > 0) debts.push({ kind: 'debt', name: x.name, cents: x.value_cents, id: x.id });
   const r = Math.round;
   return {
@@ -1358,8 +1361,10 @@ function mortgageCandidates() {
   const m = new Map();
   for (const t of db.transactions) {
     const c = catById(t.category_id);
-    if (c?.key !== 'wonen' || t.amount_cents >= 0 || accById(t.account_id)?.type !== 'checking' || !t.merchant_key) continue;
-    const e = m.get(t.merchant_key) || { merchant_key: t.merchant_key, merchant_name: t.merchant_name, amount_cents: t.amount_cents, count: 0, last_date: t.date, description: t.description || '' };
+    // Wonen or Leningen (services/mortgage.py candidates)
+    if (!['wonen', 'leningen'].includes(c?.key) || t.amount_cents >= 0 || accById(t.account_id)?.type !== 'checking' || !t.merchant_key) continue;
+    const e = m.get(t.merchant_key) || { merchant_key: t.merchant_key, merchant_name: t.merchant_name, amount_cents: t.amount_cents, count: 0, last_date: t.date, description: t.description || '', in_wonen: false };
+    if (c.key === 'wonen') e.in_wonen = true;
     e.count += 1;
     if (t.date >= e.last_date) { e.last_date = t.date; e.amount_cents = t.amount_cents; }
     m.set(t.merchant_key, e);
@@ -1371,7 +1376,7 @@ function mortgageLinked() {
   const chosen = db.settings.mortgage_merchant_key;
   if (chosen !== undefined && chosen !== null) return { key: chosen || null, auto: false };
   const c = mortgageCandidates();
-  const found = c.find((x) => x.likely) || c.find((x) => x.count >= 3);
+  const found = c.find((x) => x.likely) || c.find((x) => x.count >= 3 && x.in_wonen);
   return { key: found?.merchant_key || null, auto: true };
 }
 function mortgageSplit() {

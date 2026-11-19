@@ -430,7 +430,7 @@ def test_loans_not_on_vermogen_are_named(client, book):
         book.tx(chk, f"{m}-15", -9600, "leningen", "DUO", method="debit")
     book.commit()
     d = overview(client)["health"]["debts"]
-    assert d["known"] is False and d["unlisted"] == [{"name": "DUO", "per_month_cents": 9600}]
+    assert d["known"] is False and d["unlisted"] == [{"name": "DUO", "per_month_cents": 9600, "maybe_mortgage": False}]
 
 
 def test_overdrawn_checking_is_said_plainly(client, book):

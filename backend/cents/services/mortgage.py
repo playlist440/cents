@@ -25,6 +25,7 @@ from datetime import date
 from .. import db
 
 CATEGORY = "wonen"
+LOANS = "leningen"          # some households sort the mortgage payment under Leningen
 HINTS = ("hypothe",)
 MERCHANT_SETTING = "mortgage_merchant_key"      # None/absent = automatic, "" = no link
 INCLUDE_SETTING = "mortgage_include_home"
@@ -62,23 +63,25 @@ def include_home(conn: sqlite3.Connection) -> bool:
 
 
 def candidates(conn: sqlite3.Connection) -> list[dict]:
-    """Merchants paid from a checking account in bakje Wonen, likely mortgage first."""
+    """Merchants paid from a checking account in bakje Wonen or Leningen, likely mortgage
+    first (a payment sorted under Leningen must be selectable as the mortgage payment too)."""
     rows = db.rows(conn, """
         SELECT t.merchant_key, MAX(t.merchant_name) AS merchant_name, COUNT(*) AS n,
+               MAX(c.key = 'wonen') AS in_wonen,
                MAX(t.date) AS last_date, SUM(LOWER(COALESCE(t.description, '')) LIKE '%hypothe%') AS hinted,
                (SELECT t2.amount_cents FROM transactions t2 WHERE t2.merchant_key = t.merchant_key
                   AND t2.amount_cents < 0 ORDER BY t2.date DESC, t2.id DESC LIMIT 1) AS amount_cents
         FROM transactions t JOIN accounts a ON a.id = t.account_id
         JOIN categories c ON c.id = t.category_id
-        WHERE c.key = ? AND a.type = 'checking' AND t.amount_cents < 0 AND t.merchant_key IS NOT NULL
-        GROUP BY t.merchant_key""", (CATEGORY,))
+        WHERE c.key IN (?, ?) AND a.type = 'checking' AND t.amount_cents < 0 AND t.merchant_key IS NOT NULL
+        GROUP BY t.merchant_key""", (CATEGORY, LOANS))
     for r in rows:
         text = f"{r['merchant_key']} {r['merchant_name'] or ''}".lower()
         r["likely"] = any(h in text for h in HINTS) or bool(r["hinted"])
     rows.sort(key=lambda r: (not r["likely"], -r["n"], r["amount_cents"] or 0))
     return [{"merchant_key": r["merchant_key"], "merchant_name": r["merchant_name"],
              "amount_cents": r["amount_cents"], "count": r["n"], "last_date": r["last_date"],
-             "likely": r["likely"]} for r in rows]
+             "likely": r["likely"], "in_wonen": bool(r["in_wonen"])} for r in rows]
 
 
 def detected(conn: sqlite3.Connection, strict: bool = False) -> dict | None:
@@ -90,7 +93,8 @@ def detected(conn: sqlite3.Connection, strict: bool = False) -> dict | None:
             return c
     if strict:
         return None
-    return next((c for c in found if c["count"] >= 3), None)
+    # the automatic fallback stays in Wonen: a regular payment under Leningen may be DUO
+    return next((c for c in found if c["count"] >= 3 and c["in_wonen"]), None)
 
 
 def linked_merchant(conn: sqlite3.Connection) -> tuple[str | None, bool]:
