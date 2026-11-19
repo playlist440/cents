@@ -482,3 +482,35 @@ def test_pocket_money_told_apart_by_description():
     zak = [i for i in found if i["frequency"] == "monthly"]
     assert len(zak) == 1 and len(zak[0]["_ids"]) == 45
     assert all(r["description"] == "Zakgeld" for r in rows if r["id"] in set(zak[0]["_ids"]))
+
+
+def test_similar_descriptions():
+    from cents.services.recurring import similar
+    assert similar("zakgeld", "zakgeld tim")
+    assert similar("zakgeld", "zakgeldd")
+    assert similar("zakgeld voor tim", "tim zakgeld voor")
+    assert not similar("zakgeld", "bioscoop")
+    assert not similar("zakgeld", "")
+
+
+def test_pocket_money_with_drifting_description():
+    """The standing order's text changes a little over time ("Zakgeld", "Zakgeld Tim",
+    "zakgeld tim nov 2025"): still one series, apart from one-off transfers."""
+    from datetime import date
+    from cents.services import recurring as rec
+    base = {"merchant_key": "p:kind", "merchant_name": "Kind", "account_id": 1, "account_type": "checking",
+            "counterparty_iban": "NL00TEST0000000009", "method": "transfer", "kind": "normal",
+            "category_id": None, "category_key": "unsorted", "grp": None}
+    texts = ["Zakgeld", "Zakgeld Tim", "zakgeld tim nov 2025", "Zakgeld Tim."]
+    rows, n = [], 0
+    for m in range(36):
+        y, mm = 2023 + (m // 12), m % 12 + 1
+        n += 1
+        rows.append({**base, "id": n, "date": date(y, mm, 1).isoformat(), "amount_cents": -2500,
+                     "description": texts[m * len(texts) // 36]})
+        n += 1
+        rows.append({**base, "id": n, "date": date(y, mm, 14).isoformat(), "amount_cents": -(800 + 41 * m),
+                     "description": f"Uitje {['zee', 'bos', 'stad', 'pret', 'zoo', 'kart'][m % 6]}"})
+    found = rec.detect_full(rows, date(2026, 1, 10))
+    zak = [i for i in found if abs(i["amount_cents"]) == 2500]
+    assert len(zak) == 1 and len(zak[0]["_ids"]) == 36

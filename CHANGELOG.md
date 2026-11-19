@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.1.3 — 2026-11-19
+
+- Vaste lasten: de omschrijving van een overboeking aan een persoon hoeft niet precies gelijk te zijn. "Zakgeld", "Zakgeld Tim", "zakgeld tim nov 2025" en een typefout als "Zakgeldd" horen bij dezelfde vaste opdracht. Duidelijk andere omschrijvingen ("Bioscoop") blijven apart. Potjes op je eigen spaarrekening worden niet zo samengevoegd.
+
 ## 1.1.2 — 2026-11-19
 
 - Vaste lasten: overboekingen aan een persoon worden herkend aan rekeningnummer én omschrijving. Een vaste opdracht ("Zakgeld") staat los van losse overboekingen naar dezelfde persoon, ook bij hetzelfde bedrag. Omschrijvingen die elke keer anders zijn, vallen terug op het rekeningnummer. Heeft één persoon zo meer vaste posten, dan heten ze "Naam · Omschrijving".

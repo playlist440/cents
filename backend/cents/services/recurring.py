@@ -8,6 +8,7 @@ money out); the totals of GET /recurring are positive magnitudes.
 from __future__ import annotations
 
 import calendar
+import difflib
 import re
 import sqlite3
 import statistics
@@ -321,6 +322,50 @@ def _destination(r: dict) -> str | None:
     return None
 
 
+SIMILAR = 0.8                 # descriptions at least this alike are one standing order
+
+
+def similar(a: str, b: str) -> bool:
+    """Two cleaned descriptions of transfers to one person that mean the same standing order:
+    a typo or a word more or less ("zakgeld" / "zakgeld tim" / "zakgeldd"), the same words in
+    another order. Not: two different things ("zakgeld" / "bioscoop")."""
+    if not a or not b:
+        return False
+    if a == b:
+        return True
+    ta, tb = set(a.split()), set(b.split())
+    if sorted(ta) == sorted(tb):
+        return True
+    small, big = (ta, tb) if len(ta) <= len(tb) else (tb, ta)
+    if small <= big and any(len(w) >= 4 for w in small):
+        return True                               # a word more: "zakgeld" / "zakgeld tim"
+    return difflib.SequenceMatcher(None, a, b).ratio() >= SIMILAR
+
+
+def _merge_similar_descriptions(groups: dict[tuple, list[dict]]) -> None:
+    """Transfers to a person (key IBAN|description): fold groups whose descriptions are alike
+    into the most frequent one, so a standing order whose text changes a little stays one
+    series. Own accounts are left alone (two potjes can have alike names)."""
+    by_base: dict[tuple, list[tuple]] = {}
+    for key in groups:
+        dest = key[2]
+        if dest and "|" in dest and not dest.startswith("acc"):
+            iban, _, what = dest.partition("|")
+            if what and not what.startswith("#"):
+                by_base.setdefault((key[0], key[1], iban), []).append(key)
+    for keys in by_base.values():
+        keys.sort(key=lambda k: -len(groups[k]))
+        kept: list[tuple] = []
+        for k in keys:
+            what = k[2].partition("|")[2]
+            home = next((h for h in kept if similar(h[2].partition("|")[2], what)), None)
+            if home is None:
+                kept.append(k)
+            else:
+                groups[home].extend(groups.pop(k))
+                groups[home].sort(key=lambda t: (t["date"], t["id"]))
+
+
 def public(item: dict) -> dict:
     """The API shape; `tx_ids` = the payments that make up this item (newest last), so a
     detail screen shows exactly these and not every payment to the same name."""
@@ -343,6 +388,7 @@ def detect_full(rows: list[dict], data_today: date, ignored: set[str] = frozense
         if r["amount_cents"] == 0:
             continue
         groups.setdefault((r["merchant_key"], r["amount_cents"] < 0, _destination(r)), []).append(r)
+    _merge_similar_descriptions(groups)
     # a potje split that does not give a series (a description that changes every time) falls
     # back to the account as a whole
     for key in [k for k in groups if k[2] and "|" in k[2] and k[2].split("|", 1)[1]]:
