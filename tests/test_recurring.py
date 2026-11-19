@@ -300,3 +300,25 @@ def test_one_name_two_accounts_are_two_items(client, book):
     assert len(items) == 2
     assert {i["amount_cents"] for i in items} == {-10000}
     assert len({i["key"] for i in items}) == 2 and all("••" in i["name"] for i in items)
+
+
+def test_potjes_on_one_day_and_two_accounts_in_one_name(client, book):
+    """Several savings orders on one day (one per potje) are separate items, as are transfers
+    in one name to an investment and a pocket-money account (2026-11)."""
+    chk = book.account("Betaal", "checking")
+    sav = book.account("Spaar", "savings", "NL33BANK0000000003")
+    for i in range(6):
+        d = (date(2026, 1, 5) + timedelta(days=31 * i)).replace(day=5).isoformat()
+        for amt, what in ((-5000, "Vakantie"), (-5500, "Buffer"), (-10000, "Auto")):
+            tid = book.tx(chk, d, amt, "sparen", "Spaar", kind="transfer", to=sav, method="internal", description=what)
+            book.conn.execute("UPDATE transactions SET counterparty_iban = 'NL33BANK0000000003' WHERE id = ?", (tid,))
+        for iban, amt in (("NL44BANK0000000004", -20000), ("NL55BANK0000000005", -20000)):
+            tid = book.tx(chk, d, amt, "beleggen", "Test Gezin", method="transfer")
+            book.conn.execute("UPDATE transactions SET counterparty_iban = ? WHERE id = ?", (iban, tid))
+    book.commit()
+    items = client.get("/api/recurring").json()["items"]
+    pots = [i for i in items if i["merchant_key"] == "spaar"]
+    assert len(pots) == 3 and all(i["change"] is None for i in pots)
+    assert {i["amount_cents"] for i in pots} == {-5000, -5500, -10000}
+    names = [i for i in items if i["merchant_key"] == "test gezin"]
+    assert len(names) == 2

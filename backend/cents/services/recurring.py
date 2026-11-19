@@ -8,6 +8,7 @@ money out); the totals of GET /recurring are positive magnitudes.
 from __future__ import annotations
 
 import calendar
+import re
 import sqlite3
 import statistics
 from datetime import date, timedelta
@@ -287,13 +288,21 @@ def _busy_between(pair: list[dict], txs: list[dict]) -> bool:
     return sum(1 for t in txs if lo < t["date"] < hi and t["id"] not in ids) >= 2
 
 
+POTJE_NOISE = re.compile(r"\d+|referentie.*$|kenmerk.*$", re.I)
+
+
 def _destination(r: dict) -> str | None:
-    """Which account a transfer goes to, for payments to a person or an own account (a name can
-    have several accounts); None for shops and companies."""
+    """Which account a transfer goes to, so one name with several accounts (pocket money,
+    investing) gives several items; for transfers to an own account also which potje (the
+    description: several savings orders on one day, one per potje, are separate items).
+    None for shops and companies paid by card, iDEAL or direct debit."""
+    iban = r.get("counterparty_iban") or ""
     if r.get("transfer_account_id"):
-        return f"acc{r['transfer_account_id']}" + (r.get("counterparty_iban") or "")[-4:]
-    if (r.get("merchant_key") or "").startswith("p:") and r.get("counterparty_iban"):
-        return r["counterparty_iban"]
+        what = " ".join(POTJE_NOISE.sub(" ", (r.get("description") or "").lower()).split())[:40]
+        return f"acc{r['transfer_account_id']}{iban[-4:]}|{what}"
+    if iban and ((r.get("merchant_key") or "").startswith("p:") or r.get("method") in ("transfer", "internal")
+                 or r.get("kind") == "transfer"):
+        return iban
     return None
 
 
@@ -335,9 +344,14 @@ def detect_full(rows: list[dict], data_today: date, ignored: set[str] = frozense
                 dest = _destination(flat[-1])
                 item["iban"] = flat[-1].get("counterparty_iban")
                 if dest and len(split.get((flat[-1]["merchant_key"], flat[-1]["amount_cents"] < 0), ())) > 1:
-                    label = flat[-1].get("transfer_account_name") or f"rekening ••{dest[-4:]}"
+                    acc_part, _, what = dest.partition("|")
+                    tail = (flat[-1].get("counterparty_iban") or acc_part)[-4:]
+                    label = flat[-1].get("transfer_account_name") or f"rekening ••{tail}"
+                    if what:
+                        label = f"{label} · {(flat[-1].get('description') or what).strip()[:40]}"
                     item["name"] = f"{item['name']} · {label}"
-                    item["key"] = item["key"].replace(item["merchant_key"], f"{item['merchant_key']}@{dest[-4:]}", 1)
+                    tag = f"{tail}{'~' + what if what else ''}"
+                    item["key"] = item["key"].replace(item["merchant_key"], f"{item['merchant_key']}@{tag}", 1)
                 items.append(item)
     seen: dict[str, int] = {}
     for item in sorted(items, key=lambda i: (i["last_date"], i["name"])):
