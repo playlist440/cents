@@ -322,3 +322,27 @@ def test_potjes_on_one_day_and_two_accounts_in_one_name(client, book):
     assert {i["amount_cents"] for i in pots} == {-5000, -5500, -10000}
     names = [i for i in items if i["merchant_key"] == "test gezin"]
     assert len(names) == 2
+
+
+def test_potjes_names_codes_and_changing_descriptions(client, book):
+    chk = book.account("Betaal", "checking")
+    sav = book.account("Spaarrekening", "savings", "NL33BANK0000000003")
+    book.commit()
+    r = client.post("/api/goals", json={"name": "Nieuwe auto", "target_cents": 1000000, "code": "41827"})
+    assert r.status_code in (200, 201), r.text
+    goal = {"code": "41827"}
+    months = ["januari", "februari", "maart", "april", "mei", "juni"]
+    for i in range(6):
+        d = (date(2026, 1, 5) + timedelta(days=31 * i)).replace(day=5).isoformat()
+        rows = [(-5000, f"Spaardoel {goal['code']}"), (-5000, f"vakantie {months[i]} 2026"),
+                (-3000, f"Opdracht {i + 1}: {months[i]}")]
+        for amt, what in rows:
+            book.tx(chk, d, amt, "sparen", "Spaarrekening", kind="transfer", to=sav, method="internal",
+                    description=what)
+    book.commit()
+    names = sorted(i["name"] for i in client.get("/api/recurring").json()["items"] if i["merchant_key"] == "spaarrekening")
+    # potje code -> the potje's name; a month in the text does not break the series; the
+    # opdracht whose text has nothing stable left still counts (as "Spaarrekening · Opdracht")
+    assert "Spaarrekening · Nieuwe auto" in names
+    assert "Spaarrekening · Vakantie" in names and "Spaarrekening · Opdracht" in names
+    assert len(names) == 3

@@ -288,7 +288,20 @@ def _busy_between(pair: list[dict], txs: list[dict]) -> bool:
     return sum(1 for t in txs if lo < t["date"] < hi and t["id"] not in ids) >= 2
 
 
-POTJE_NOISE = re.compile(r"\d+|referentie.*$|kenmerk.*$", re.I)
+GOAL_CODE = re.compile(r"\b[1-9]\d{4}\b")          # a potje code (services/goals.py)
+MONTHS_RE = re.compile(r"\b(jan(uari)?|feb(ruari)?|maart|mrt|apr(il)?|mei|jun(i)?|jul(i)?|aug(ustus)?|"
+                       r"sep(t(ember)?)?|okt(ober)?|nov(ember)?|dec(ember)?)\b", re.I)
+POTJE_NOISE = re.compile(r"referentie.*$|kenmerk.*$|\d+|[^\w\s]", re.I)
+
+
+def _potje(description: str | None) -> str:
+    """What a savings order is for: the potje code when there is one, else the description
+    without dates, months, numbers and references."""
+    text = description or ""
+    code = GOAL_CODE.search(text)
+    if code:
+        return "#" + code.group(0)
+    return " ".join(MONTHS_RE.sub(" ", POTJE_NOISE.sub(" ", text.lower())).split())[:40]
 
 
 def _destination(r: dict) -> str | None:
@@ -298,8 +311,7 @@ def _destination(r: dict) -> str | None:
     None for shops and companies paid by card, iDEAL or direct debit."""
     iban = r.get("counterparty_iban") or ""
     if r.get("transfer_account_id"):
-        what = " ".join(POTJE_NOISE.sub(" ", (r.get("description") or "").lower()).split())[:40]
-        return f"acc{r['transfer_account_id']}{iban[-4:]}|{what}"
+        return f"acc{r['transfer_account_id']}{iban[-4:]}|{_potje(r.get('description'))}"
     if iban and ((r.get("merchant_key") or "").startswith("p:") or r.get("method") in ("transfer", "internal")
                  or r.get("kind") == "transfer"):
         return iban
@@ -323,6 +335,12 @@ def detect_full(rows: list[dict], data_today: date, ignored: set[str] = frozense
         if r["amount_cents"] == 0:
             continue
         groups.setdefault((r["merchant_key"], r["amount_cents"] < 0, _destination(r)), []).append(r)
+    # a potje split that does not give a series (a description that changes every time) falls
+    # back to the account as a whole
+    for key in [k for k in groups if k[2] and "|" in k[2] and k[2].split("|", 1)[1]]:
+        if len(groups[key]) < 3:
+            base = (key[0], key[1], key[2].split("|", 1)[0] + "|")
+            groups.setdefault(base, []).extend(groups.pop(key))
     # one name, several accounts (your own name on a pocket-money and an investment account):
     # those are separate items, told apart by the account
     split = {}
@@ -346,10 +364,16 @@ def detect_full(rows: list[dict], data_today: date, ignored: set[str] = frozense
                 if dest and len(split.get((flat[-1]["merchant_key"], flat[-1]["amount_cents"] < 0), ())) > 1:
                     acc_part, _, what = dest.partition("|")
                     tail = (flat[-1].get("counterparty_iban") or acc_part)[-4:]
-                    label = flat[-1].get("transfer_account_name") or f"rekening ••{tail}"
-                    if what:
-                        label = f"{label} · {(flat[-1].get('description') or what).strip()[:40]}"
-                    item["name"] = f"{item['name']} · {label}"
+                    account = flat[-1].get("transfer_account_name")
+                    if account:                       # own account: "Spaarrekening · Vakantie"
+                        # the stable part of the text (no months, dates or numbers); a code: the potje
+                        nice = (what if not what.startswith("#")
+                                else GOAL_CODE.sub("", flat[-1].get("description") or "").strip(" -·:") or "potje")
+                        nice = nice[:40]
+                        item["name"] = f"{account} · {nice[:1].upper()}{nice[1:]}" if what else account
+                        item["_potje_code"] = what[1:] if what.startswith("#") else None
+                    else:
+                        item["name"] = f"{item['name']} · rekening ••{tail}"
                     tag = f"{tail}{'~' + what if what else ''}"
                     item["key"] = item["key"].replace(item["merchant_key"], f"{item['merchant_key']}@{tag}", 1)
                 items.append(item)
@@ -373,6 +397,11 @@ def _computed(conn: sqlite3.Connection) -> dict:
         lg = ledger_mod.get(conn)
         ignored = {r["key"] for r in db.rows(conn, "SELECT key FROM recurring_ignored")}
         full = detect_full(candidate_rows(lg), lg.data_today, ignored)
+        codes = {g["code"]: g["name"] for g in db.rows(conn, "SELECT code, name FROM goals WHERE code IS NOT NULL")}
+        for i in full:
+            code = i.pop("_potje_code", None)
+            if code and code in codes:
+                i["name"] = f"{i['name'].split(' · ')[0]} · {codes[code]}"
         return {"items": [public(i) for i in full],
                 "full": full,
                 "groups": {i["key"]: i["_group"] for i in full},
