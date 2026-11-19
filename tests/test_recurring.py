@@ -346,3 +346,7 @@ def test_potjes_names_codes_and_changing_descriptions(client, book):
     assert "Spaarrekening · Nieuwe auto" in names
     assert "Spaarrekening · Vakantie" in names and "Spaarrekening · Opdracht" in names
     assert len(names) == 3
+    # each item lists exactly its own six payments, none shared (the detail screen shows these)
+    items = [i for i in client.get("/api/recurring").json()["items"] if i["merchant_key"] == "spaarrekening"]
+    ids = [set(i["tx_ids"]) for i in items]
+    assert all(len(x) == 6 for x in ids) and not (ids[0] & ids[1]) and not (ids[1] & ids[2])

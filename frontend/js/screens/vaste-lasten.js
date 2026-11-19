@@ -428,11 +428,15 @@ function ItemSheet({ close, it, cal = null }) {
 
 /** The item's details: sheet on iPhone, inspector on the Mac. `cal` = the calendar entry clicked. */
 function ItemDetail({ close, it, cal = null, inline = false }) {
-  const { data } = useQuery(`recurring-tx:${it.merchant_key}`, () => api.transactions({ merchant_key: it.merchant_key, limit: 60 }));
+  const { data } = useQuery(`recurring-tx:${it.merchant_key}`, () => api.transactions({ merchant_key: it.merchant_key, limit: 1000 }));
   const cat = categoryById(it.category_id) || { emoji: '📦', color: 'gray', name: '' };
   const typ = Math.abs(it.amount_cents);
   const sign = Math.sign(it.amount_cents) || -1;
-  const payments = (data?.items || []).filter((t) => Math.sign(t.amount_cents) === sign && Math.abs(t.amount_cents) >= typ * 0.6 && Math.abs(t.amount_cents) <= typ * 1.6);
+  // exactly this item's payments (one name can have several items: potjes, accounts, policies);
+  // without the list (a calendar entry, an older server) the amount decides, as before
+  const own = it.tx_ids ? new Set(it.tx_ids) : null;
+  const payments = (data?.items || []).filter((t) => (own ? own.has(t.id)
+    : Math.sign(t.amount_cents) === sign && Math.abs(t.amount_cents) >= typ * 0.6 && Math.abs(t.amount_cents) <= typ * 1.6));
   const bars = payments.slice(0, 12).reverse().map((t) => ({ label: shortDate(t.date), short: shortDate(t.date).split(' ')[1] || '', value: Math.abs(t.amount_cents) }));
   const [sel, setSel] = useState(null);
   const known = it.frequency != null;

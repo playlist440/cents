@@ -319,7 +319,12 @@ def _destination(r: dict) -> str | None:
 
 
 def public(item: dict) -> dict:
-    return {k: v for k, v in item.items() if not k.startswith("_")}
+    """The API shape; `tx_ids` = the payments that make up this item (newest last), so a
+    detail screen shows exactly these and not every payment to the same name."""
+    out = {k: v for k, v in item.items() if not k.startswith("_")}
+    if "_ids" in item:
+        out["tx_ids"] = list(item["_ids"])
+    return out
 
 
 def detect_full(rows: list[dict], data_today: date, ignored: set[str] = frozenset()) -> list[dict]:

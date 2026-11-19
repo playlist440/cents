@@ -421,7 +421,7 @@ function recurringItems() {
         if (db.recurring_ignored.includes(key)) continue;
         recTx.set(key, txs);
         items.push({
-          key, name: last.merchant_name, merchant_key: last.merchant_key, category_id: last.category_id, iban: last.counterparty_iban || null,
+          key, name: last.merchant_name, merchant_key: last.merchant_key, category_id: last.category_id, iban: last.counterparty_iban || null, tx_ids: txs.map((t) => t.id),
           direction: last.amount_cents < 0 ? 'out' : 'in', amount_cents: last.amount_cents, frequency: win[0],
           per_month_cents: Math.round(Math.abs(variable ? typical : last.amount_cents) * win[3]) * Math.sign(last.amount_cents),
           per_year_cents: Math.abs(variable ? typical : last.amount_cents) * PER_YEAR[win[0]],
