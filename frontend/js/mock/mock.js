@@ -9,7 +9,7 @@
 import { generate } from './data.js';
 import { addDays, daysBetween, parseISO, shiftPeriod, monthLabel, todayISO, MONTHS, money, euros } from '../format.js';
 
-const VERSION = '1.1.5-mock';
+const VERSION = '1.2.0-mock';
 const PASSWORD = 'demo1234';
 
 let db;
@@ -57,6 +57,32 @@ function isCashflow(tx) {
   if (!a) return false;
   return a.type === 'checking' || (a.type === 'credit' && tx.manual);
 }
+
+// subscriptions entered by hand (services/manual_subs.py)
+const SUB_FREQ = { weekly: [7, 52], '4-weekly': [28, 13], monthly: [0, 12], yearly: [0, 1] };
+function manualSubItem(r) {
+  const today = db.today;
+  const ended = !!r.end_date && r.end_date <= today;
+  let next = r.start_date;
+  if (r.frequency === 'weekly' || r.frequency === '4-weekly') {
+    const step = SUB_FREQ[r.frequency][0];
+    while (next < today) next = addDays(next, step);
+  } else {
+    const months = r.frequency === 'yearly' ? 12 : 1; const d0 = Number(r.start_date.slice(8, 10)); const [y, mo] = r.start_date.split('-').map(Number); let n = 0;
+    while (next < today) {
+      n += months; const t = new Date(Date.UTC(y, mo - 1 + n, 1));
+      const last = new Date(Date.UTC(t.getUTCFullYear(), t.getUTCMonth() + 1, 0)).getUTCDate();
+      next = `${t.getUTCFullYear()}-${String(t.getUTCMonth() + 1).padStart(2, '0')}-${String(Math.min(d0, last)).padStart(2, '0')}`;
+    }
+  }
+  const perYear = r.amount_cents * SUB_FREQ[r.frequency][1];
+  return { key: `manual:${r.id}`, id: r.id, manual: true, name: r.name, merchant_key: null, category_id: r.category_id, direction: 'out',
+    amount_cents: -r.amount_cents, frequency: r.frequency, per_month_cents: -Math.round(perYear / 12), per_year_cents: perYear,
+    start_date: r.start_date, end_date: r.end_date, paid_from: r.paid_from, last_date: ended ? r.end_date : null, next_date: ended ? null : next,
+    day_of_month: r.frequency === 'monthly' ? Number(r.start_date.slice(8, 10)) : null, status: ended ? 'ended' : 'active',
+    variable: false, count: null, change: null, own_account: false, via_card: false, tx_ids: [] };
+}
+const manualSubItems = () => (db.manual_subs || []).slice().sort((a, b) => a.name.localeCompare(b.name)).map(manualSubItem);
 
 function serializeTx(tx) {
   return {
@@ -2245,13 +2271,29 @@ const ROUTES = [
     const active = items.filter((i) => i.status !== 'ended');
     const out = active.filter((i) => i.direction === 'out' && !i.own_account && catById(i.category_id)?.grp === 'fixed'); // backend: fixed bakjes only
     const monthly_out_cents = out.reduce((s, i) => s - i.per_month_cents, 0);
-    const subs = active.filter((i) => i.direction === 'out' && ['abonnementen', 'telecom'].includes(catById(i.category_id)?.key));
+    const manual = manualSubItems();
+    const subs = [...active.filter((i) => i.direction === 'out' && ['abonnementen', 'telecom'].includes(catById(i.category_id)?.key)), ...manual.filter((i) => i.status !== 'ended')];
     const subscriptions = { per_month_cents: subs.reduce((s, i) => s - i.per_month_cents, 0), per_year_cents: subs.reduce((s, i) => s + i.per_year_cents, 0), count: subs.length };
     const inc = incomeAvg();
     return ok({ income_cents: inc ? inc.income_cents : null, repaid_cents: inc ? inc.repaid_cents : 0,
       share_of_income: inc && inc.income_cents > 0 && monthly_out_cents - inc.repaid_cents > 0 ? Math.round(((monthly_out_cents - inc.repaid_cents) / inc.income_cents) * 1000) / 1000 : null,   // without aflossing (services/health.py fixed_share)
       monthly_out_cents, monthly_in_cents: active.filter((i) => i.direction === 'in' && catById(i.category_id)?.grp === 'income').reduce((s, i) => s + i.per_month_cents, 0), yearly_out_cents: monthly_out_cents * 12, subscriptions,
-      items: items.map((i) => (i.direction === 'out' && allSplits().has(i.merchant_key) ? { ...i, repaid_per_month_cents: Math.round(Math.abs(i.per_month_cents) * allSplits().get(i.merchant_key)) } : i)) });
+      items: items.map((i) => (i.direction === 'out' && allSplits().has(i.merchant_key) ? { ...i, repaid_per_month_cents: Math.round(Math.abs(i.per_month_cents) * allSplits().get(i.merchant_key)) } : i)).concat(manual) });
+  }],
+  ['POST', /^\/subscriptions$/, ({ body }) => {
+    if (!String(body.name || '').trim() || !(body.amount_cents > 0)) return fail(422, 'invalid', 'Vul een naam en bedrag in.');
+    const r = { id: (db.manual_subs || []).reduce((m, x) => Math.max(m, x.id), 0) + 1, name: body.name.trim(), amount_cents: body.amount_cents, frequency: body.frequency,
+      start_date: body.start_date, end_date: body.end_date || null, category_id: body.category_id ?? null, paid_from: body.paid_from || null };
+    (db.manual_subs ||= []).push(r); return ok(manualSubItem(r));
+  }],
+  ['PATCH', /^\/subscriptions\/(\d+)$/, ({ params: [id], body }) => {
+    const r = (db.manual_subs || []).find((x) => x.id === Number(id)); if (!r) return fail(404, 'not_found', 'Dit abonnement bestaat niet (meer).');
+    for (const k of ['name', 'amount_cents', 'frequency', 'start_date', 'end_date', 'category_id', 'paid_from']) if (k in body && !(k === 'start_date' && body[k] == null)) r[k] = body[k];
+    return ok(manualSubItem(r));
+  }],
+  ['DELETE', /^\/subscriptions\/(\d+)$/, ({ params: [id] }) => {
+    const n = (db.manual_subs || []).length; db.manual_subs = (db.manual_subs || []).filter((x) => x.id !== Number(id));
+    return db.manual_subs.length < n ? ok({ ok: true }) : fail(404, 'not_found', 'Dit abonnement bestaat niet (meer).');
   }],
   ['DELETE', /^\/recurring\/ignore$/, ({ body }) => { db.recurring_ignored = db.recurring_ignored.filter((k) => k !== String(body.key || '').trim()); return ok({ ok: true }); }],
   ['GET', /^\/assumptions$/, () => ok(assumptionsList())],

@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.2.0 — 2026-11-19
+
+- Abonnementen met de hand: in Vaste lasten (+ → Abonnement toevoegen) voeg je abonnementen toe die Cents niet in je bankbestand ziet, zoals op de creditcard of een privérekening. Naam, bedrag, per week, 4 weken, maand of jaar, betaaldag, bakje en "betaald met". Ze staan onder een eigen kopje en tellen mee in het abonnementenoverzicht, maar niet in je vaste lasten of Nog te besteden (dat geld is al ergens anders geteld). Wijzigen, opzeggen en verwijderen met een tik. (Database-schema v13.)
+
 ## 1.1.5 — 2026-11-19
 
 - Vaste lasten: een vast bedrag elke maand (zakgeld naar een privérekening) wordt herkend, ook als er naar dezelfde rekening veel losse bedragen van allerlei grootte gaan (dingen die privé zijn betaald en met de hand teruggeboekt). Die losse bedragen vormden samen met het zakgeld één onregelmatige groep; nu haalt Cents de betalingen met precies hetzelfde bedrag en een vast ritme eruit.

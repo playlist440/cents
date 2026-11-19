@@ -349,8 +349,25 @@ SCHEMA_V12 = """
 ALTER TABLE mortgage_years ADD COLUMN extra_repaid_cents INTEGER;
 """
 
+# v13: subscriptions entered by hand (paid by credit card or from a private account). Shown in
+# Vaste lasten and the subscriptions total, never in the budget figures (already paid from
+# pocket money, or already in the credit-card file).
+SCHEMA_V13 = """
+CREATE TABLE manual_subscriptions (
+    id INTEGER PRIMARY KEY,
+    name TEXT NOT NULL,
+    amount_cents INTEGER NOT NULL,              -- positive: what it costs each time
+    frequency TEXT NOT NULL,                    -- weekly | 4-weekly | monthly | yearly
+    start_date TEXT NOT NULL,                   -- a payment day (anchor for the next dates)
+    end_date TEXT,                              -- stopped (opgezegd) on this day
+    category_id INTEGER REFERENCES categories(id) ON DELETE SET NULL,
+    paid_from TEXT,                             -- "Creditcard", "Privérekening", own text
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+"""
+
 MIGRATIONS: list[str] = [SCHEMA_V1, SCHEMA_V2, SCHEMA_V3, SCHEMA_V4, SCHEMA_V5, SCHEMA_V6, SCHEMA_V7, SCHEMA_V8,
-                         SCHEMA_V9, SCHEMA_V10, SCHEMA_V11, SCHEMA_V12]
+                         SCHEMA_V9, SCHEMA_V10, SCHEMA_V11, SCHEMA_V12, SCHEMA_V13]
 SCHEMA_VERSION = len(MIGRATIONS)
 
 DEFAULT_SETTINGS: dict[str, Any] = {"month_start_day": 1, "household_name": ""}

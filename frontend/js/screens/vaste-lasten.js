@@ -35,6 +35,8 @@ import { commitLater, usePending } from './_kit.js';
 import { useDrawIn } from '../anim.js';
 import { useLayout, useMedia } from '../hooks.js';
 import { Icon } from '../icons.js';
+import { openSubscription } from './_subs.js';
+import { NavButton } from '../components/Screen.js';
 
 const VIEWS = [['lijst', 'Lijst'], ['kalender', 'Kalender']];
 
@@ -44,8 +46,10 @@ const SECTIONS = [
   { id: 'daily', title: 'Ook regelmatig, buiten de vaste lasten' },
   { id: 'saving', title: 'Sparen en potjes' },
   { id: 'income', title: 'Vast inkomen' },
+  { id: 'manual', title: 'Met de hand toegevoegd (telt niet mee in de bedragen)' },
 ];
 function sectionOf(it) {
+  if (it.manual) return 'manual';
   const g = categoryById(it.category_id)?.grp;
   // to or from your own account (savings, potjes, terugstorten): never income or a fixed cost
   if (it.own_account || g === 'saving') return 'saving';
@@ -93,6 +97,7 @@ export function VasteLasten({ query = {} }) {
   const byKey = new Map(items.map((i) => [i.key, i]));
   const selItem = sel && side ? (byKey.get(sel.key) || calToItem(sel.cal)) : null;
   const choose = (key, cal = null) => {
+    if (byKey.get(key)?.manual) { openSubscription(byKey.get(key)); return; }
     if (side) setSel(sel && sel.key === key && (sel.cal?.date ?? null) === (cal?.date ?? null) ? null : { key, cal });
     else openSheet(ItemSheet, { it: byKey.get(key) || calToItem(cal), cal });
   };
@@ -107,12 +112,14 @@ export function VasteLasten({ query = {} }) {
         : html`<${EmptyState} emoji="🔁" title="Nog geen vaste lasten" />`}`;
 
   if (!desk) {
-    return html`<${Screen} title="Vaste lasten" titleView=${titleView} class="vl">
+    return html`<${Screen} title="Vaste lasten" titleView=${titleView} class="vl"
+        trailing=${html`<${NavButton} icon="plus" label="Abonnement toevoegen" onClick=${() => openSubscription()} />`}>
       ${view === 'kalender' && html`<div class="vl-seg">${seg}</div>`}
       ${body}
     </${Screen}>`;
   }
-  return html`<${Screen} title="Vaste lasten" titleView=${titleView} class="vl vl2" wide>
+  return html`<${Screen} title="Vaste lasten" titleView=${titleView} class="vl vl2" wide
+      add=${[{ label: 'Abonnement toevoegen', icon: 'plus', onSelect: () => openSubscription() }]}>
     <div class=${'vl2-split' + (selItem ? ' has-inspector' : '')}>
       <div class="vl2-main">${body}</div>
       ${selItem && html`<aside class="vl2-inspector" aria-label=${selItem.name}>

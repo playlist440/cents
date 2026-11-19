@@ -141,6 +141,9 @@ export const api = {
 
   /* Recurring (vaste lasten) */
   recurring: () => get('/recurring'),
+  createSubscription: (body) => post('/subscriptions', body),
+  updateSubscription: (id, body) => patch(`/subscriptions/${id}`, body),
+  deleteSubscription: (id) => del(`/subscriptions/${id}`),
   ignoreRecurring: (key) => post('/recurring/ignore', { key }),
   unignoreRecurring: (key) => del('/recurring/ignore', undefined, { key }),
 

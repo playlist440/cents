@@ -545,8 +545,13 @@ def recurring_json(conn: sqlite3.Connection) -> dict:
         splits[m_split[0]] = m_split[1]
     all_items = [{**i, "repaid_per_month_cents": int(round(abs(i["per_month_cents"]) * splits[i["merchant_key"]]))}
                  if i["direction"] == "out" and i["merchant_key"] in splits else i for i in all_items]
+    # subscriptions entered by hand: listed and in the subscriptions total, never in the
+    # budget figures above (paid from pocket money or already in the credit-card file)
+    from . import manual_subs
+    manual = manual_subs.items(conn, lg.today)
+    subs += [i for i in manual if i["status"] != "ended"]
     return {**share, "monthly_out_cents": monthly_out, "monthly_in_cents": monthly_in,
-            "yearly_out_cents": monthly_out * 12, "items": [dict(i) for i in all_items],
+            "yearly_out_cents": monthly_out * 12, "items": [dict(i) for i in all_items] + manual,
             "subscriptions": {"per_month_cents": -sum(i["per_month_cents"] for i in subs),
                               "per_year_cents": sum(i["per_year_cents"] for i in subs),
                               "count": len(subs)}}
