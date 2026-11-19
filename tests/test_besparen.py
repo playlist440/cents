@@ -61,3 +61,17 @@ def test_irregular_spending_gets_a_potje_suggestion(client, book):
     client.post("/api/goals", json={"name": "Vakantie", "target_cents": 200000})
     s = [x["name"] for x in client.get("/api/goals").json()["suggestions"] if x["kind"] == "irregular"]
     assert "Vakantie" not in s
+
+
+def test_a_car_is_no_saving_tip(client, book):
+    """A big purchase or a car's waardeverlies does not make Auto & vervoer "meer dan vorig jaar"."""
+    chk = household(book)
+    for m in MONTHS:
+        book.tx(chk, f"{m}-15", -15000, "vervoer", "Tankstation", method="card")
+    car = book.tx(chk, "2025-11-20", -2500000, "vervoer", "Autobedrijf", method="debit")
+    book.commit()
+    higher = {x["category_id"] for x in client.get("/api/besparen").json()["higher"]["items"]}
+    assert book.cats["vervoer"] not in higher                 # one purchase is no trend
+    client.post("/api/assets", json={"kind": "possession", "name": "Auto", "tx_id": car})
+    higher = {x["category_id"] for x in client.get("/api/besparen").json()["higher"]["items"]}
+    assert book.cats["vervoer"] not in higher                 # waardeverlies is no habit either

@@ -914,9 +914,9 @@ function besparenData() {
   const higher = recent.length < 6 || before.some((p) => !complete.has(p)) ? [] : db.categories
     .filter((c) => c.grp === 'daily' && !['unsorted', 'creditcard'].includes(c.key))
     .map((c) => {
-      const now = recent.reduce((s, p) => s + (flows(p).cats.get(c.id)?.cents || 0), 0) / 6;
-      const then = before.reduce((s, p) => s + (flows(p).cats.get(c.id)?.cents || 0), 0) / 6;
-      return { category_id: c.id, now, then };
+      // median month, without spread parts and waardeverlies (services/besparen.py _higher)
+      const habit = (p) => (flows(p).cats.get(c.id)?.cents || 0) - periodParts(p).filter((x) => x.category_id === c.id).reduce((a, x) => a + x.cents, 0);
+      return { category_id: c.id, now: median(recent.map(habit)), then: median(before.map(habit)) };
     })
     .filter((x) => x.then > 0 && x.now - x.then >= 2500 && x.now >= x.then * 1.15)
     .map((x) => ({ category_id: x.category_id, now_cents: Math.round(x.now), then_cents: Math.round(x.then), extra_per_year_cents: Math.round((x.now - x.then) * 12) }))

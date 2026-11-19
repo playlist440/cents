@@ -8,8 +8,9 @@ every year and what changed, each with the amount per year:
 - `contracts`: energy, insurance and telecom contracts that have run for more than a year:
   worth comparing.
 - `fees`: bank costs and identifiable currency-conversion costs in the last twelve months.
-- `higher`: daily bakjes whose last six complete months cost clearly more than the same six
-  months a year earlier (≥ € 25 per month and ≥ 15 %).
+- `higher`: daily bakjes whose typical month (the median) of the last six complete months is
+  clearly above that of the same six months a year earlier (≥ € 25 and ≥ 15 %), without spread
+  parts and waardeverlies (no habit to cut back on), so one big purchase is no trend.
 - `later`: payments to buy-now-pay-later services (Klarna, Riverty, in3, Billink) in the last
   three months: money already spent that still has to be paid.
 """
@@ -18,6 +19,7 @@ from __future__ import annotations
 
 import re
 import sqlite3
+import statistics
 from datetime import timedelta
 
 from . import cache, ledger as ledger_mod, recurring
@@ -60,12 +62,18 @@ def _higher(lg: ledger_mod.Ledger) -> list[dict]:
     before = [lg.shift(q, -12) for q in recent]
     if len(recent) < HIGHER_MONTHS or any(q.id not in complete for q in before):
         return []
+    def habits(q, cid: int) -> int:
+        """Spending in a bakje without spread parts and waardeverlies: a car's depreciation
+        or a kitchen paid off over months is no habit you can cut back on."""
+        return sum(r["bucket"][2] for r in lg.flows_for(q).rows if r["bucket"][1] == cid and not r.get("part"))
+
     out = []
     for cid, cat in lg.categories.items():
         if cat["grp"] != DAILY or cat["key"] in ("unsorted", "creditcard"):
             continue
-        now = sum(lg.flows_for(q).spent.get(cid, 0) for q in recent) / HIGHER_MONTHS
-        then = sum(lg.flows_for(q).spent.get(cid, 0) for q in before) / HIGHER_MONTHS
+        # the middle month, not the mean: one big purchase (a car, a holiday) is not a trend
+        now = statistics.median(habits(q, cid) for q in recent)
+        then = statistics.median(habits(q, cid) for q in before)
         if then > 0 and now - then >= 2500 and now >= then * 1.15:
             out.append({"category_id": cid, "now_cents": int(round(now)), "then_cents": int(round(then)),
                         "extra_per_year_cents": int(round((now - then) * 12))})
