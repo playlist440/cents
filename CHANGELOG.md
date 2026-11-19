@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.3.3 — 2026-11-19
+
+- Koersen: vindt Yahoo een aandeel niet op ISIN (vaak bij Amerikaanse aandelen), dan zoekt Cents ook op ticker en op naam.
+- Verkochte aandelen worden niet meer elke dag bijgewerkt: Cents haalt alleen nog ontbrekende koersen tot de verkoop op. Vindt Yahoo een verkocht aandeel niet, dan is dat geen fout.
+
 ## 1.3.2 — 2026-11-19
 
 - Koersen: bij "Laatste poging lukte niet" staat nu waarom (per fonds, of de fout zelf), en "Nu bijwerken" meldt de reden direct. Een onverwachte fout overschrijft ook een oude melding, zodat je altijd de laatste ziet.

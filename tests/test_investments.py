@@ -372,3 +372,34 @@ def test_etoro_without_isin_is_looked_up_by_ticker(monkeypatch):
     monkeypatch.setattr(p, "_works", lambda sym: tried.append(("works", sym)) or ("USD" if sym == "AAPL" else None))
     assert p.lookup("ETORO-AAPL", None, "EUR", "AAPL", name="Apple") == "AAPL"
     assert ("search", "ETORO-AAPL") not in tried
+
+
+def test_real_isin_falls_back_to_ticker(monkeypatch):
+    """Yahoo's ISIN search finds nothing for many US shares: try the ticker."""
+    p = prices.YahooProvider()
+    monkeypatch.setattr(p, "_search", lambda q: [])
+    monkeypatch.setattr(p, "_works", lambda sym: "USD" if sym == "TSLA" else None)
+    assert p.lookup("US88160R1014", None, "EUR", "TSLA", name="Tesla") == "TSLA"
+
+
+def test_sold_share_not_found_is_no_error(client):
+    """A share that is sold (quantity 0) and that Yahoo does not find: not an error."""
+    prices_on(client)
+    upload(client, ("Transacties.csv", fixture("degiro_transacties_nl.csv")))
+    c = conn_of(client)
+    acc = db.value(c, "SELECT id FROM accounts WHERE type = 'investment'")
+    c.execute("INSERT INTO securities (isin, name, currency) VALUES ('US0000000001', 'Oud aandeel', 'EUR')")
+    for d, q in (("2025-02-03", 5), ("2025-09-01", -5)):
+        c.execute("INSERT INTO trades (account_id, date, isin, quantity, price, currency, value_eur_cents, fees_cents, dedupe_key, manual, created_at) "
+                  "VALUES (?, ?, 'US0000000001', ?, 10, 'EUR', ?, 0, ?, 0, '2026-01-01')", (acc, d, q, -q * 1000, f"t{d}"))
+    c.commit()
+    c.close()
+
+    class NotOld(FakeProvider):
+        def lookup(self, isin, exchange, currency, symbol, name=None):
+            return None if isin == "US0000000001" else super().lookup(isin, exchange, currency, symbol, name)
+
+    prices.set_provider(NotOld())
+    prices.FX_SOURCE = lambda start: {"USD": [("2026-03-05", 1.08), ("2026-11-13", 1.2)]}
+    res = prices.refresh(client.app.state.db_path)
+    assert res["ok"] and res["errors"] == []

@@ -173,6 +173,14 @@ class YahooProvider:
         for q in quotes:
             if self._works(q["symbol"]):
                 return q["symbol"]
+        if real_isin:
+            # Yahoo's ISIN search often finds nothing for US shares: the ticker, then the name
+            for sym in dict.fromkeys(x for x in (symbol, (symbol or "").upper()) if x):
+                if self._works(sym):
+                    return sym
+            for q in (self._search(symbol) if symbol else []) + (self._search(name) if name else []):
+                if q.get("quoteType") in (None, "EQUITY", "ETF", "MUTUALFUND", "CRYPTOCURRENCY") and self._works(q["symbol"]):
+                    return q["symbol"]
         return None
 
     def history(self, symbol, start):
@@ -301,8 +309,13 @@ def _set_status(conn: sqlite3.Connection, **kw) -> None:
 
 def held_isins(conn: sqlite3.Connection) -> list[dict]:
     """Securities with trades (with the first trade date), never anything about amounts."""
-    return db.rows(conn, """SELECT s.*, MIN(t.date) AS first_date FROM securities s
+    return db.rows(conn, """SELECT s.*, MIN(t.date) AS first_date, MAX(t.date) AS last_trade,
+                                   SUM(t.quantity) AS held FROM securities s
                             JOIN trades t ON t.isin = s.isin GROUP BY s.isin""")
+
+
+def _sold(s: dict) -> bool:
+    return abs(s.get("held") or 0) < 1e-9
 
 
 # ---------------------------------------------------------------- the fetch
@@ -346,6 +359,9 @@ def _refresh(db_path: str, force: bool) -> dict:
         for s in secs:
             last = db.value(conn, "SELECT MAX(date) FROM prices WHERE isin = ? AND source = ?",
                             (s["isin"], PROVIDER.name))
+            # sold: only the closes up to the sale are useful, and only when they are missing
+            if _sold(s) and last and last >= s["last_trade"]:
+                continue
             start = date.fromisoformat(last) - timedelta(days=5) if last else date.fromisoformat(s["first_date"]) - timedelta(days=7)
             plan.append((s, start))
         _set_status(conn, last_run=db.now_iso())
@@ -369,7 +385,7 @@ def _refresh(db_path: str, force: bool) -> dict:
                 sym = PROVIDER.lookup(s["isin"], s["exchange"], s["currency"], s["symbol"], name=s["name"])
             if not sym:
                 # eToro without ISIN has its own prices from the export: not an error
-                if not str(s["isin"]).startswith("ETORO-"):
+                if not str(s["isin"]).startswith("ETORO-") and not _sold(s):
                     errors.append(f"{s['name'] or s['isin']}: niet gevonden")
                 fetched.append((s, None, "", []))
                 continue
