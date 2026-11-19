@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.0.1 — 2026-11-19
+
+- Hypotheek koppelen biedt geen betaling meer aan die al bij een andere schuld hoort. "Niet koppelen" krijgt een vinkje als het gekozen is.
+- Schuld: eerdere bedragen staan met een minteken, net als het huidige bedrag.
+- Sorteren: "Volgende" sorteert op vroegst of laatst eerst, "Hoe vaak" op vaakst eerst. Geen "Z–A" meer bij datums.
+- Terugblik: "Aandeel" is een eigen sorteerkolom met het juiste label.
+- Importgeschiedenis past op de iPhone: de regels lopen door en de knop heet "Terugdraaien".
+- Mac: ⇧-klik voegt een reeks toe aan regels die je met ⌘ koos, zoals in de Finder.
+
 ## 1.0.0 — 2026-11-19
 
 De eerste stabiele versie. Cents vervangt Firefly III voor een huishouden: bankbestanden importeren,

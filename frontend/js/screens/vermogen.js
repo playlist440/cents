@@ -583,7 +583,7 @@ function MortgageDetail({ m, onChange, close }) {
       icon: m.payment?.merchant_key === c.merchant_key ? 'check' : undefined,
       onSelect: () => api.updateMortgage({ merchant_key: c.merchant_key }).then(onChange, apiFail) })),
     { label: 'Automatisch kiezen', onSelect: () => api.updateMortgage({ merchant_key: null }).then(onChange, apiFail) },
-    { label: 'Niet koppelen', onSelect: () => api.updateMortgage({ merchant_key: '' }).then(onChange, apiFail) },
+    { label: 'Niet koppelen', icon: !m.payment ? 'check' : undefined, onSelect: () => api.updateMortgage({ merchant_key: '' }).then(onChange, apiFail) },
   ]);
   const remove = (e) => openMenu(e.currentTarget, [{
     label: 'Verwijder hypotheek en woning', icon: 'trash', destructive: true, onSelect: async () => {
@@ -833,7 +833,7 @@ function AssetDetail({ a, k, candidates, onChange, close }) {
     <${EntryForm} a=${a} k=${k} onChange=${onChange} />
     ${a.entries.length > 0 && html`<${List} header="Eerdere bedragen">
       ${a.entries.map((e) => html`<${ListRow} key=${e.id} title=${longDate(e.date)} subtitle=${e.note || null}
-        value=${html`<span class="num">${money(e.value_cents)}</span>`}
+        value=${html`<span class="num">${money(debt ? -e.value_cents : e.value_cents, { negative: debt })}</span>`}
         onClick=${(ev) => openMenu(ev.currentTarget, [{ label: 'Verwijder', icon: 'trash', destructive: true,
           onSelect: () => api.deleteAssetEntry(a.id, e.id).then(onChange, apiFail) }])}
         label=${`${longDate(e.date)}, ${money(e.value_cents)}. Opties`} />`)}

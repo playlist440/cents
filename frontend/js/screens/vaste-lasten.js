@@ -154,8 +154,8 @@ const FREQ_ORDER = { weekly: 1, '2-weekly': 2, '4-weekly': 3, monthly: 4, quarte
 export const VL_COLS = [
   { key: 'name', label: 'Naam', value: (i) => i.name },
   { key: 'cat', label: 'Bakje', value: (i) => categoryById(i.category_id)?.name || '' },
-  { key: 'freq', label: 'Hoe vaak', value: (i) => FREQ_ORDER[i.frequency] || 0, num: false, text: (i) => freqLabel(i.frequency) || '' },
-  { key: 'next', label: 'Volgende', value: (i) => i.next_date || '9999', text: (i) => (i.next_date ? shortDate(i.next_date) : '') },
+  { key: 'freq', label: 'Hoe vaak', order: ['vaakst eerst', 'minst vaak eerst'], value: (i) => FREQ_ORDER[i.frequency] || 0, num: false, text: (i) => freqLabel(i.frequency) || '' },
+  { key: 'next', label: 'Volgende', date: true, value: (i) => i.next_date || '9999', text: (i) => (i.next_date ? shortDate(i.next_date) : '') },
   { key: 'month', label: 'Per maand', value: (i) => Math.abs(i.per_month_cents), num: true, text: (i) => money(Math.abs(i.per_month_cents)) },
   { key: 'year', label: 'Per jaar', value: (i) => perYear(i), num: true, text: (i) => euros(perYear(i)) },
 ];

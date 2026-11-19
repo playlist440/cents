@@ -277,13 +277,14 @@ const RB_COLS = [
   { key: 'name', label: 'Bakje', value: (x) => x.cat.name },
   { key: 'cents', label: 'Bedrag', value: (x) => x.cents, num: true, text: (x) => euros(x.cents) },
   { key: 'prev', label: 'Vorige keer', value: (x) => x.previous_cents, num: true, text: () => '' },
+  { key: 'share', label: 'Aandeel', value: (x) => x.share, num: true, text: (x) => `${Math.round((x.share || 0) * 100)} %` },
   { key: 'diff', label: 'Verschil', value: (x) => (x.previous_cents != null ? x.cents - x.previous_cents : null), num: true, text: () => '' },
 ];
 
 function Bakjes({ r, cmp, q, desk }) {
   const base = (r.categories || []).map((c) => ({ ...c, cat: categoryById(c.category_id) || { name: 'Onbekend', emoji: '❔', color: 'gray', key: 'unsorted' } }));
   const [all, setAll] = useState(false);
-  const cols = cmp ? RB_COLS : RB_COLS.slice(0, 2);
+  const cols = cmp ? RB_COLS : RB_COLS.filter((c) => ['name', 'cents', 'share'].includes(c.key));
   const t = useTable('rb-bakjes', cols, { key: 'cents', dir: -1 });
   if (!base.length) return null;
   const rows = t.rows(base);
@@ -299,7 +300,7 @@ function Bakjes({ r, cmp, q, desk }) {
         <${SortHead} t=${t} col=${RB_COLS[0]} />
         <${SortHead} t=${t} col=${RB_COLS[1]} />
         ${cmp && html`<${SortHead} t=${t} col=${RB_COLS[2]} class="rb-col-prev" />`}
-        <${SortHead} t=${t} col=${{ ...RB_COLS[1], label: 'Aandeel' }} />
+        <${SortHead} t=${t} col=${RB_COLS.find((c) => c.key === 'share')} />
       </div>
       ${shown.map((x) => {
         const Tag = open ? 'button' : 'div';

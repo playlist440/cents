@@ -386,7 +386,7 @@ export function Imports() {
             <span class="row-sub inst-file" title=${imp.filename}>${middleTruncate(imp.filename, 44)}</span>
             ${(imp.account_name || imp.date_from) && html`<span class="row-sub">${[imp.account_name, range(imp.date_from, imp.date_to)].filter(Boolean).join(' · ')}</span>`}
           </span>
-          <${Button} variant="gray" size="small" class="inst-undo-btn" onClick=${() => undo(imp)} aria-label=${'Import ' + imp.filename + ' terugdraaien'}>Import terugdraaien</${Button}>
+          <${Button} variant="gray" size="small" class="inst-undo-btn" onClick=${() => undo(imp)} aria-label=${'Import ' + imp.filename + ' terugdraaien'}>Terugdraaien</${Button}>
         </div>
       </li>`)}
     </${List}>`}

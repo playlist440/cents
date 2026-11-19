@@ -221,7 +221,8 @@ def summary(conn: sqlite3.Connection, lg) -> dict:
     today = lg.today.isoformat()
     year, share = ratio(conn)
     key, auto = linked_merchant(conn)
-    cands = candidates(conn)
+    taken = {r["merchant_key"] for r in db.rows(conn, "SELECT merchant_key FROM assets WHERE merchant_key IS NOT NULL")}
+    cands = [c for c in candidates(conn) if c["merchant_key"] not in taken]
     linked = next((c for c in cands if c["merchant_key"] == key), None)
     repaid_ytd = sum(v for d, v in est.events if d >= f"{lg.today.year}-01-01")
     home = est.home(today)

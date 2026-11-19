@@ -9,7 +9,7 @@
 import { generate } from './data.js';
 import { addDays, daysBetween, parseISO, shiftPeriod, monthLabel, todayISO, MONTHS, money, euros } from '../format.js';
 
-const VERSION = '1.0.0-mock';
+const VERSION = '1.0.1-mock';
 const PASSWORD = 'demo1234';
 
 let db;
@@ -1578,7 +1578,7 @@ function mortgageOut() {
     original_cents: homeOut()?.original_cents ?? null, repaid_pct: homeOut()?.repaid_pct ?? null,
     include_in_networth: db.settings.mortgage_include_home !== false,
     payment: key ? { merchant_key: key, merchant_name: linked?.merchant_name || key, amount_cents: linked?.amount_cents ?? null, auto } : null,
-    candidates: cands.slice(0, 8).map(({ description, ...c }) => c),
+    candidates: cands.filter((c) => !db.assets.some((a) => a.merchant_key === c.merchant_key)).slice(0, 8).map(({ description, ...c }) => c),
   };
 }
 

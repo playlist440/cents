@@ -226,13 +226,14 @@ export function Transacties({ query }) {
 
   const onRow = (tx) => {
     if (selecting) { toggleSel(tx); return; }
-    if (wide) { setActiveId(tx.id); setSelected(new Set([tx.id])); anchor.current = tx.id; }
+    if (wide) { setActiveId(tx.id); setSelected(new Set([tx.id])); anchor.current = tx.id; base.current = new Set(); }
     else openTransaction(tx);
   };
 
   // Worksheet (≥ 1000 px): click selects, ⌘-click toggles, ⇧-click selects a range; the
   // inspector shows the active payment, or a summary when several are chosen.
   const anchor = useRef(null);
+  const base = useRef(new Set());   // selection before the current ⇧-range (Finder: ⇧ adds to ⌘-picks)
   const byId = useMemo(() => new Map(items.map((t) => [t.id, t])), [items]);
   const selIds = wide ? [...selected].filter((id) => byId.has(id)) : [];
   const multi = wide && selIds.length > 1;
@@ -240,7 +241,7 @@ export function Transacties({ query }) {
   const indexOf = (id) => items.findIndex((t) => t.id === id);
   const selectRow = (tx, e) => {
     if (e && (e.metaKey || e.ctrlKey)) {
-      setSelected((s) => { const n = new Set(s); if (n.has(tx.id) && n.size > 1) n.delete(tx.id); else n.add(tx.id); return n; });
+      setSelected((s) => { const n = new Set(s); if (n.has(tx.id) && n.size > 1) n.delete(tx.id); else n.add(tx.id); base.current = new Set(n); return n; });
       setActiveId(tx.id);
       anchor.current = tx.id;
       return;
@@ -248,7 +249,7 @@ export function Transacties({ query }) {
     if (e && e.shiftKey && anchor.current != null && indexOf(anchor.current) >= 0) {
       const a = indexOf(anchor.current);
       const b = indexOf(tx.id);
-      setSelected(new Set(items.slice(Math.min(a, b), Math.max(a, b) + 1).map((t) => t.id)));
+      setSelected(new Set([...base.current, ...items.slice(Math.min(a, b), Math.max(a, b) + 1).map((t) => t.id)]));
       setActiveId(tx.id);
       return;
     }

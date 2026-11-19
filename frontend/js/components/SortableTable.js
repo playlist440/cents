@@ -65,6 +65,8 @@ export function SortHead({ t, col, class: cls = '' }) {
 
 function sortName(c, dir) {
   if (c.num) return `${c.label}: ${dir < 0 ? 'hoog naar laag' : 'laag naar hoog'}`;
+  if (c.date) return `${c.label}: ${dir < 0 ? 'laatst eerst' : 'vroegst eerst'}`;
+  if (c.order) return `${c.label}: ${dir < 0 ? c.order[1] : c.order[0]}`;
   return `${c.label}: ${dir < 0 ? 'Z–A' : 'A–Z'}`;
 }
 
