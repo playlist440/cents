@@ -57,6 +57,8 @@ jobs:
           docker exec cents sh -c 'test -w /data && ! test -w /app/backend'
           docker logs cents | tail -5
           docker rm -f cents
+      - id: version
+        run: echo "version=$(sed -n 's/^VERSION = "\(.*\)"$/\1/p' backend/cents/__init__.py)" >> "$GITHUB_OUTPUT"
       - uses: docker/build-push-action@v6
         with:
           context: .
@@ -65,5 +67,6 @@ jobs:
           tags: |
             ghcr.io/${{ github.repository }}:latest
             ghcr.io/${{ github.repository }}:${{ github.sha }}
+            ghcr.io/${{ github.repository }}:${{ steps.version.outputs.version }}
           cache-from: type=gha
           cache-to: type=gha,mode=max

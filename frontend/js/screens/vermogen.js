@@ -690,6 +690,7 @@ function YearForm({ m, onChange }) {
     </${List}>`)}
     <${List} footer=${`Neem de bedragen over van je jaaropgave. Afgelost rekent Cents zelf uit. Nieuwe lening dat jaar? Vul bij 1 januari 0 in en daarna het bedrag bij ingang. De opgave over ${m.form_year + 1} komt begin ${m.form_year + 2}.`}>
       <li class="field-row vm-add-row"><${Button} variant="tinted" size="medium" block onClick=${save} disabled=${!ready} loading=${busy}>Bewaar jaaropgave</${Button}></li>
+      ${!ready && html`<li class="field-row vm-p-note">Vul bij elk deel de restschuld op 31 december in om te bewaren.</li>`}
     </${List}>
   </div>`;
 }

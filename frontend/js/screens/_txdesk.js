@@ -285,7 +285,7 @@ export function MultiInspector({ ids, byId, onClear }) {
     const m = new Map();
     for (const t of txs) m.set(t.category_id, (m.get(t.category_id) || 0) + 1);
     return [...m.entries()].sort((a, b) => b[1] - a[1]).slice(0, 6);
-  }, [ids.join(',')]);
+  }, [txs.map((t) => t.id + ':' + t.category_id).join(',')]);
   const sign = txs.every((t) => t.amount_cents > 0) ? 'in' : 'out';
   return html`<div class="ti-multi">
     <div class="ti-stack" aria-hidden="true">${cats.map(([id], i) => {

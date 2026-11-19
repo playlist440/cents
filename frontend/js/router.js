@@ -120,6 +120,7 @@ function onPop(e) {
       cur = { ...cur, idx: st.idx };
     }
   }
+  if (pendingQuery && awaitingPops === 0) { const q = pendingQuery; pendingQuery = null; replaceQuery(q); }
   if (pending && !sheets.some((s) => !s.closing) && awaitingPops === 0) {
     const p = pending;
     pending = null;
@@ -188,7 +189,9 @@ export function navigate(to, opts = {}) {
 }
 
 /** Change query params of the current screen without a new history entry. */
+let pendingQuery = null;  // replaceQuery while a sheet's history.back() is in flight
 export function replaceQuery(patch) {
+  if (awaitingPops > 0) { pendingQuery = { ...(pendingQuery || {}), ...patch }; return; }
   const q = { ...cur.query, ...patch };
   const full = href(cur.path, q).slice(1);
   history.replaceState({ ...history.state, path: full }, '', '#' + full);

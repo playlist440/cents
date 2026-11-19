@@ -201,6 +201,8 @@ export function Transacties({ query }) {
   const qRef = useRef(qText);
   qRef.current = qText;
   useEffect(() => { if ((query.q || '') !== qRef.current.trim()) setQText(query.q || ''); }, [query.q]);
+  // a new search or filter starts at the top of the list
+  useEffect(() => { document.querySelectorAll('.screen-content, .td-list, .tx-table-wrap').forEach((el) => { if (el.scrollTop) el.scrollTop = 0; }); if (window.scrollY) window.scrollTo(0, 0); }, [query.q, query.cat, query.account, query.tag]);
   useEffect(() => {
     if ((qText.trim() || '') === (filters.q || '')) return;
     const t = setTimeout(() => { if (page.active) replaceQuery({ q: qText.trim() || undefined }); }, 260);

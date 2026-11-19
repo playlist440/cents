@@ -16,6 +16,7 @@
 
 import { html, useEffect, useLayoutEffect, useRef, useState } from '../vendor/preact-htm.js';
 import { Icon } from '../icons.js';
+import { onRouteChange } from '../router.js';
 
 let setMenuState = () => {};
 
@@ -43,6 +44,7 @@ export function openPopover(anchor, render, opts = {}) {
 }
 
 export function closeMenu() { setMenuState(null); }
+onRouteChange(() => closeMenu());
 export const isMenuOpen = () => !!document.querySelector('.menu');
 
 export function MenuHost() {

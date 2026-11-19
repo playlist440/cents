@@ -106,7 +106,7 @@ function resolveBack(back, route, layout) {
   const came = prev && match(prev.split('?')[0]);
   if (came?.route && came.route.path !== route.path && came.route.title) return { to: prev, label: came.route.title };
   const parent = match(route.parent.split('?')[0]);
-  return { to: route.parent, label: parent?.route.title || 'Terug' };
+  return { to: route.parent, label: (parent?.route.title && parent.route.title !== 'Terug') ? parent.route.title : 'Meer' };
 }
 
 export function BackButton({ label = 'Terug', to }) {

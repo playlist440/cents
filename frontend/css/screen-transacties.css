@@ -480,3 +480,5 @@ li.ps-actions.is-row { margin: 0; padding: 10px 16px; }
 .ps-intro { margin: 0 16px 18px; font: 400 var(--fs-subhead)/1.4 var(--font); color: var(--label-2); }
 .ps-emoji { font-size: 2.4rem; line-height: 1; margin-bottom: 8px; }
 .ps-meter { max-width: 320px; margin: 14px auto 0; text-align: left; }
+.ps-form, .ps-form * { min-width: 0; }
+.td-cost-sum { overflow-wrap: anywhere; }

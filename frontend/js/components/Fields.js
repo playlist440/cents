@@ -43,7 +43,7 @@ export function AmountField({ cents, onChange, label, placeholder = '0', large =
   };
   const input = html`<input id=${fid} class="field-input amount-input" type="text" inputmode="decimal" enterkeyhint="done"
     size=${Math.max(large ? 2 : 3, (text || placeholder).length + 1)}
-    autocomplete="off" placeholder=${placeholder} value=${text} onInput=${onInput} autofocus=${autoFocus}
+    autocomplete="off" placeholder=${placeholder} value=${text} onInput=${onInput} onFocus=${(e) => e.currentTarget.select()} autofocus=${autoFocus}
     aria-label=${label || 'Bedrag'} />`;
   if (large) {
     return html`<div class="amount-large">

@@ -369,3 +369,25 @@ def test_transaction_shows_the_item_it_belongs_to(client, book):
     assert client.get(f"/api/transactions/{one_off}").json()["merchant"]["recurring"] is None
     listed = {i["key"] for i in client.get("/api/recurring").json()["items"]}
     assert buf["key"] in listed
+
+
+def test_one_off_transfer_elsewhere_keeps_the_key(client, book):
+    """A single transfer in the same name to another account does not rename or rekey the
+    existing item, so "Geen vaste last" keeps working (review 1.0)."""
+    chk = book.account("Betaal", "checking")
+    for i in range(6):
+        d = (date(2026, 1, 5) + timedelta(days=31 * i)).replace(day=5).isoformat()
+        tid = book.tx(chk, d, -10000, "beleggen", "Test Gezin", method="transfer")
+        book.conn.execute("UPDATE transactions SET counterparty_iban = 'NL11BANK0000000001' WHERE id = ?", (tid,))
+    book.commit()
+    before = [i["key"] for i in client.get("/api/recurring").json()["items"]]
+    tid = book.tx(chk, "2026-06-20", -2500, "beleggen", "Test Gezin", method="transfer")
+    book.conn.execute("UPDATE transactions SET counterparty_iban = 'NL99BANK0000000099' WHERE id = ?", (tid,))
+    book.commit()
+    assert [i["key"] for i in client.get("/api/recurring").json()["items"]] == before
+
+
+def test_end_of_month_payment_stays_at_month_end():
+    item = {"status": "active", "frequency": "monthly", "next_date": "2026-01-31", "day_of_month": 31}
+    days = recurring.occurrences(item, date(2026, 1, 1), date(2026, 5, 1))
+    assert [d.isoformat() for d in days] == ["2026-01-31", "2026-02-28", "2026-03-31", "2026-04-30"]

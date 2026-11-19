@@ -252,6 +252,7 @@ def analyse_series(segments: list[list[dict]], data_today: date,
         "per_year_cents": abs(amount) * PER_YEAR[freq],
         "last_date": last["date"],
         "next_date": next_date.isoformat(),
+        "day_of_month": int(_median([d.day for d in dates[-6:]])) if freq == "monthly" else None,
         "status": status,
         "variable": variable,
         "count": n,
@@ -349,10 +350,11 @@ def detect_full(rows: list[dict], data_today: date, ignored: set[str] = frozense
     # one name, several accounts (your own name on a pocket-money and an investment account):
     # those are separate items, told apart by the account
     split = {}
-    for mk, out, dest in groups:
-        split.setdefault((mk, out), set()).add(dest)
+    for (mk, out, dest), txs in groups.items():
+        if len(txs) >= 2:                 # a one-off transfer elsewhere renames nothing
+            split.setdefault((mk, out), set()).add(dest)
     items = []
-    for txs in groups.values():
+    for (_, _, group_dest), txs in groups.items():
         if len(txs) < 2:
             continue
         segments = [part for cl in _cluster(txs) for part in _split_by_day(cl)]
@@ -364,8 +366,10 @@ def detect_full(rows: list[dict], data_today: date, ignored: set[str] = frozense
             if item and item["_group"] == "daily" and _busy_between(flat, [t for t in txs if t not in flat]):
                 continue    # a shop or restaurant you also visit at other times: no subscription
             if item:
-                dest = _destination(flat[-1])
+                dest = group_dest                 # from the group, not from the newest payment
                 item["iban"] = flat[-1].get("counterparty_iban")
+                item["_first"] = flat[0]["date"]
+                item["via_card"] = flat[-1].get("account_type") == "credit"
                 if dest and len(split.get((flat[-1]["merchant_key"], flat[-1]["amount_cents"] < 0), ())) > 1:
                     acc_part, _, what = dest.partition("|")
                     tail = (flat[-1].get("counterparty_iban") or acc_part)[-4:]
@@ -383,7 +387,8 @@ def detect_full(rows: list[dict], data_today: date, ignored: set[str] = frozense
                     item["key"] = item["key"].replace(item["merchant_key"], f"{item['merchant_key']}@{tag}", 1)
                 items.append(item)
     seen: dict[str, int] = {}
-    for item in sorted(items, key=lambda i: (i["last_date"], i["name"])):
+    # numbering of equal keys by the first payment, which does not move as payments come in
+    for item in sorted(items, key=lambda i: (i["_first"], i["name"])):
         n = seen.get(item["key"], 0)
         seen[item["key"]] = n + 1
         if n:
@@ -484,13 +489,14 @@ def occurrences(item: dict, start: date, end: date) -> list[date]:
         return []
     out = []
     day = date.fromisoformat(item["next_date"])
+    usual = item.get("day_of_month") or day.day      # the 31st stays the 31st after February
     step_days = {name: f[3] for name, f in FREQUENCIES.items()}
     while day < end and len(out) < 10:
         if day >= start:
             out.append(day)
         if item["frequency"] == "monthly":
             y, m = (day.year + 1, 1) if day.month == 12 else (day.year, day.month + 1)
-            day = date(y, m, min(day.day, calendar.monthrange(y, m)[1]))
+            day = date(y, m, min(usual, calendar.monthrange(y, m)[1]))
         else:
             day = day + timedelta(days=step_days[item["frequency"]])
     return out

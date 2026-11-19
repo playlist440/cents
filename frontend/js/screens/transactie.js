@@ -46,7 +46,7 @@ export function TransactieDetail({ id, tx: listTx, onDone, inline = false }) {
   const lastAdded = useRef(null);
   useEffect(() => { setOver({}); setShowDetails(false); setScope(null); setBelow(null); setForceCosts(false); }, [id]);
   useEffect(() => {
-    if (forceCosts) document.getElementById('td-costs-' + id)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    if (forceCosts) document.getElementById('td-costs-' + id)?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }, [forceCosts]);
   // Server data wins once it arrives after a save.
   useEffect(() => { setOver({}); }, [detail.data]);

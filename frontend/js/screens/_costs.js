@@ -131,7 +131,7 @@ export function CostSection({ t, info, account, spreadable = true, anchor, onTx 
           ${info?.kind === 'spread' && info.months === months ? html` · ${monthLabel(info.from, { short: true })} t/m ${monthLabel(info.to, { short: true })}` : ''}
         </p>
         <p class="td-cost-hint is-quiet">Je saldo, buffer en Nog te besteden volgen gewoon het echte geld.</p>`}`}
-      ${mode === 'possession' && html`<${PossessionForm} key=${t.id} txId=${t.id} price=${total} inline
+      ${mode === 'possession' && html`<${PossessionForm} key=${t.id} name=${t.merchant_name} txId=${t.id} price=${total} inline
         onCreated=${(id, name) => {
           invalidate();
           toast({ icon: 'check', text: `${name} staat nu bij Vermogen`, action: { label: 'Bekijk', onClick: () => openSheet(PossessionSheet, { id }) } });
@@ -166,8 +166,8 @@ function LinkedPossession({ t, link, info, anchor }) {
 
 /* ---------- Bezitting aanmaken ---------- */
 
-export function PossessionForm({ txId = null, price: initialPrice = null, date: initialDate = null, inline = false, onCreated }) {
-  const [name, setName] = useState('Auto');
+export function PossessionForm({ name: initialName = '', txId = null, price: initialPrice = null, date: initialDate = null, inline = false, onCreated }) {
+  const [name, setName] = useState(initialName || '');
   const [life, setLife] = useState(96);
   const [curve, setCurve] = useState('front');
   const [price, setPrice] = useState(initialPrice);
@@ -226,7 +226,7 @@ export function PossessionSheet({ close, id = null }) {
         ? (!item ? html`<${Skeleton} h=${160} r=${12} />` : html`<${PossessionDetail} a=${item} onChange=${done} close=${close} />`)
         : pick === undefined
           ? html`<${PurchasePicker} list=${data?.purchase_candidates} onPick=${setPick} />`
-          : html`<${PossessionForm} txId=${pick?.id ?? null} price=${pick ? -pick.amount_cents : null} date=${pick?.date}
+          : html`<${PossessionForm} name=${pick?.merchant_name} txId=${pick?.id ?? null} price=${pick ? -pick.amount_cents : null} date=${pick?.date}
               onCreated=${(newId) => { setItemId(newId); done(); }} />`}
     </div>
   </${Sheet}>`;

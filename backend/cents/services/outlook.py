@@ -127,9 +127,11 @@ def payday(conn: sqlite3.Connection, lg: Ledger, items: list[dict]) -> tuple[dat
 
 def _spend_items(lg: Ledger, items: list[dict], start: date, end: date,
                  groups: tuple[str, ...], direction: str = "out") -> list[tuple[dict, date]]:
+    """Expected payments from the checking account (card-paid items come in through the card's
+    settlement, which is counted separately)."""
     out = []
     for i in items:
-        if i["direction"] == direction and _group(lg, i) in groups:
+        if i["direction"] == direction and _group(lg, i) in groups and not i.get("via_card"):
             out += [(i, d) for d in recurring.occurrences(i, start, end)]
     return out
 
@@ -242,14 +244,18 @@ def _overdue_fixed(lg: Ledger, items: list[dict], start: date) -> list[dict]:
     lo = lg.current().start
     out = []
     for i in items:
-        if i["direction"] != "out" or i["status"] == "ended" or _group(lg, i) != FIXED:
+        if i["direction"] != "out" or i["status"] == "ended" or _group(lg, i) != FIXED or i.get("via_card"):
             continue
         day = date.fromisoformat(i["next_date"])
         if not lo <= day < start:
             continue
-        since = (day - timedelta(days=OVERDUE_GRACE)).isoformat()
+        # paid: a payment to that merchant of about this amount, shortly before the expected day
+        # (at most half the rhythm, so last week's payment does not count for a weekly cost)
+        grace = min(OVERDUE_GRACE, recurring.FREQUENCIES[i["frequency"]][0] // 2)
+        since = (day - timedelta(days=grace)).isoformat()
+        typical = abs(i["amount_cents"])
         if any(r["merchant_key"] == i["merchant_key"] and r["amount_cents"] < 0 and r["date"] >= since
-               for r in lg.rows):
+               and abs(-r["amount_cents"] - typical) <= max(0.3 * typical, 500) for r in lg.rows):
             continue
         out.append({"name": i["name"], "date": day.isoformat(), "cents": -i["amount_cents"]})
     return sorted(out, key=lambda x: x["date"])
