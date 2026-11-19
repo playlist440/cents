@@ -363,8 +363,13 @@ def detect_full(rows: list[dict], data_today: date, ignored: set[str] = frozense
             if len(flat) == 2 and _busy_between(flat, txs):
                 continue
             item = analyse_series(chain, data_today, starts.get(flat[0].get("account_id")))
-            if item and item["_group"] == "daily" and _busy_between(flat, [t for t in txs if t not in flat]):
-                continue    # a shop or restaurant you also visit at other times: no subscription
+            # a shop or restaurant you also visit at other times: no subscription. Not for transfers
+            # to a person: a monthly transfer (pocket money) stays a series when other, one-off
+            # transfers to the same person happen in between.
+            to_person = all(t.get("method") == "transfer" or (t.get("merchant_key") or "").startswith("p:") for t in flat)
+            if (item and item["_group"] == "daily" and not to_person
+                    and _busy_between(flat, [t for t in txs if t not in flat])):
+                continue
             if item:
                 dest = group_dest                 # from the group, not from the newest payment
                 item["iban"] = flat[-1].get("counterparty_iban")

@@ -9,7 +9,7 @@
 import { generate } from './data.js';
 import { addDays, daysBetween, parseISO, shiftPeriod, monthLabel, todayISO, MONTHS, money, euros } from '../format.js';
 
-const VERSION = '1.1.0-mock';
+const VERSION = '1.1.1-mock';
 const PASSWORD = 'demo1234';
 
 let db;

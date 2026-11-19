@@ -434,3 +434,27 @@ def test_salary_never_counts_as_incoming_before_payday():
                "next_date": "2026-11-20", "status": "active", "category_id": 1, "interval_days": 30, "day_of_month": 20}
     lg = SimpleNamespace(categories={1: {"grp": "income", "key": "salaris"}})
     assert outlook.salary_item(lg, [salary, toeslag])["key"] == "werkgever"
+
+
+def test_monthly_pocket_money_with_other_transfers_in_between():
+    """Pocket money: the same amount every month by transfer to a child, with other one-off
+    transfers to the same IBAN in between (164 payments in all, 45 of them the monthly one).
+    The monthly series is a recurring item; before 1.1.1 it was dropped as "a shop you also
+    visit at other times"."""
+    from datetime import date, timedelta
+    from cents.services import recurring as rec
+    base = {"merchant_key": "p:kind", "merchant_name": "Kind", "account_id": 1, "account_type": "checking",
+            "counterparty_iban": "NL00TEST0000000009", "method": "transfer", "kind": "normal",
+            "category_id": None, "category_key": "unsorted", "grp": None, "description": "Zakgeld"}
+    rows, n = [], 0
+    for m in range(45):
+        y, mm = 2023 + (m // 12), m % 12 + 1
+        n += 1
+        rows.append({**base, "id": n, "date": date(y, mm, 1).isoformat(), "amount_cents": -2500})
+        for k in range(3):                       # other transfers to the same child that month
+            n += 1
+            rows.append({**base, "id": n, "date": (date(y, mm, 5) + timedelta(days=7 * k)).isoformat(),
+                         "amount_cents": -(700 + 300 * k + m), "description": "Tikkie"})
+    found = rec.detect_full(rows, date(2026, 9, 10))
+    monthly = [i for i in found if i["frequency"] == "monthly" and abs(i["amount_cents"]) == 2500]
+    assert monthly and len(monthly[0]["_ids"]) == 45

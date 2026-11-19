@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.1.1 — 2026-11-19
+
+- Vaste lasten: een maandelijkse overboeking aan een persoon (zakgeld) blijft een vaste last, ook als er tussendoor andere, losse overboekingen naar dezelfde persoon gaan. Die regel ("een winkel waar je ook los komt") geldt alleen nog voor winkels en restaurants.
+
 ## 1.1.0 — 2026-11-19
 
 Financiële controle: alle adviezen van de review verwerkt. Sommige bedragen veranderen hierdoor.
