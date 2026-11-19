@@ -30,6 +30,7 @@ import { openMenu, openContextMenu, openPopover } from '../components/Menu.js';
 import { toast } from '../components/Toast.js';
 import { invalidate } from '../store.js';
 import { commitLater, usePending } from './_kit.js';
+import { useTable, SortHead, TableTools } from '../components/SortableTable.js';
 
 export function Overzicht({ query }) {
   const boot = useStore((s) => s.boot);
@@ -398,28 +399,41 @@ function Dashboard({ o, goals, stale, canPrev, canNext, setPeriod }) {
   </div>`;
 }
 
+/** Spent minus normal (normal so far this month, or the same months last year for a year). */
+const diffOf = (c, p) => (c.avg_cents ? c.spent_cents - (p.is_current && p.kind !== 'year' ? c.avg_cents * (p.day_index / p.days_total) : c.avg_cents) : null);
+
+const WHERE_COLS = [
+  { key: 'name', label: 'Bakje', value: (r) => r.cat.name },
+  { key: 'cents', label: 'Bedrag', value: (r) => r.c.spent_cents, num: true, text: (r) => euros(r.c.spent_cents) },
+  { key: 'diff', label: 'Verschil', value: (r) => r.diff, num: true, text: () => '' },
+];
+
 function WhereTable({ o }) {
+  const t = useTable('ov-where', WHERE_COLS, { key: 'cents', dir: -1 });
   const p = o.period;
-  const rows = o.categories
+  const all = o.categories
     .filter((c) => c.spent_cents > 0)
     .map((c) => {
       const cat = categoryById(c.category_id) || { name: 'Onbekend', emoji: '❔', color: 'gray', key: 'unsorted' };
-      return { c, cat, chip: chipFor(c, cat, p) || (c.repaid_cents > 0 ? { text: `+ ${euros(c.repaid_cents)} aflossing`, tone: 'info' } : null) };
+      return { c, cat, diff: diffOf(c, p), chip: chipFor(c, cat, p) || (c.repaid_cents > 0 ? { text: `+ ${euros(c.repaid_cents)} aflossing`, tone: 'info' } : null) };
     });
-  if (!rows.length) return html`<section class="dk-card ov-where"><div class="dk-card-h"><h2>Waar het heen ging</h2></div><p class="quiet">Nog niets uitgegeven</p></section>`;
-  const total = rows.reduce((s, r) => s + r.c.spent_cents, 0);
-  const max = Math.max(...rows.map((r) => r.c.spent_cents));
+  const rows = t.rows(all);
+  if (!all.length) return html`<section class="dk-card ov-where"><div class="dk-card-h"><h2>Waar het heen ging</h2></div><p class="quiet">Nog niets uitgegeven</p></section>`;
+  const total = all.reduce((s, r) => s + r.c.spent_cents, 0);
+  const max = Math.max(...all.map((r) => r.c.spent_cents));
   const open = (r) => navigate(`/overzicht/bakje/${r.c.category_id}`, { query: bakjeQuery(p) });
   return html`<section class="dk-card ov-where" aria-labelledby="ov-where-h">
     <div class="dk-card-h"><h2 id="ov-where-h">Waar het heen ging ${whereWhen(p)}</h2><span class="section-value num"><span class="ov-total-lbl">alles samen</span> ${euros(total)}</span></div>
-    <div class="capsule-wrap"><${StackedCapsule} segments=${rows.map((r) => ({ key: r.c.category_id, value: r.c.spent_cents, color: r.cat.color, label: r.cat.name }))} label="Uitgaven per bakje" /></div>
+    <div class="capsule-wrap"><${StackedCapsule} segments=${all.map((r) => ({ key: r.c.category_id, value: r.c.spent_cents, color: r.cat.color, label: r.cat.name }))} label="Uitgaven per bakje" /></div>
+    <${TableTools} t=${t} placeholder="Filter bakjes" />
     <div class="dt ov-wt" role="table" aria-label="Uitgaven per bakje">
       <div class="dt-head" role="row">
-        <span role="columnheader">Bakje</span>
-        <span role="columnheader" class="is-num">Bedrag</span>
-        <span role="columnheader" class="is-num">Aandeel</span>
-        <span role="columnheader" class="is-num">${p.kind === 'year' ? 't.o.v. vorig jaar' : 't.o.v. normaal'}</span>
+        <${SortHead} t=${t} col=${WHERE_COLS[0]} />
+        <${SortHead} t=${t} col=${WHERE_COLS[1]} />
+        <${SortHead} t=${t} col=${{ ...WHERE_COLS[1], label: 'Aandeel' }} />
+        <${SortHead} t=${t} col=${{ ...WHERE_COLS[2], label: p.kind === 'year' ? 't.o.v. vorig jaar' : 't.o.v. normaal' }} />
       </div>
+      ${!rows.length && html`<p class="quiet st-none">Geen bakje gevonden</p>`}
       ${rows.map((r) => html`<button class="dt-row" role="row" key=${r.c.category_id} onClick=${() => open(r)}
           aria-label=${`${r.cat.name}, ${euros(r.c.spent_cents)}${r.chip ? ', ' + r.chip.text : ''}`}>
         <span class="dt-cell ov-wt-name" role="cell">
@@ -527,8 +541,9 @@ const whereWhen = (p) => (p.kind === 'year' ? `in ${p.id}` : `in ${monthLabel(p.
 
 function WhereItWent({ o }) {
   const [all, setAll] = useState(false);
+  const t = useTable('ov-where', WHERE_COLS, { key: 'cents', dir: -1 });
   const p = o.period;
-  const rows = o.categories
+  const base = o.categories
     .filter((c) => c.spent_cents > 0)
     .map((c) => {
       const cat = categoryById(c.category_id) || { name: 'Onbekend', emoji: '❔', color: 'gray', key: 'unsorted' };
@@ -542,14 +557,17 @@ function WhereItWent({ o }) {
         // the repayment counts as saved: say so where "Wonen € 697" meets "Florius € 1.148"
         chip: chipFor(c, cat, p) || (c.repaid_cents > 0 ? { text: `+ ${euros(c.repaid_cents)} aflossing`, tone: 'info' } : null),
         onClick: () => navigate(`/overzicht/bakje/${c.category_id}`, { query: bakjeQuery(p) }),
+        c, cat, diff: diffOf(c, p),
       };
     });
-  if (!rows.length) return null;
-  const total = rows.reduce((s, r) => s + r.value, 0);
-  const shown = all || rows.length <= 7 ? rows : rows.slice(0, 6);
+  if (!base.length) return null;
+  const total = base.reduce((s, r) => s + r.value, 0);
+  const rows = t.rows(base);
+  const shown = all || t.filter || rows.length <= 7 ? rows : rows.slice(0, 6);
   return html`<${Section} title=${`Waar het heen ging ${whereWhen(p)}`} trailing=${html`<span class="section-value num"><span class="ov-total-lbl">alles samen</span> ${euros(total)}</span>`}>
     ${p.is_current && html`<p class="ov-where-note">T/m vandaag. "Meer" is vergeleken met een normale maand tot vandaag.</p>`}
-    <div class="capsule-wrap"><${StackedCapsule} segments=${rows} label="Uitgaven per bakje" /></div>
+    <div class="capsule-wrap"><${StackedCapsule} segments=${base} label="Uitgaven per bakje" /></div>
+    <${TableTools} t=${t} menu placeholder="Filter bakjes" />
     <${RankedBars} rows=${shown} />
     ${shown.length < rows.length && html`<button class="show-all" onClick=${() => setAll(true)}>
       Toon alle ${rows.length}</button>`}

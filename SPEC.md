@@ -741,6 +741,14 @@ amounts 0, plus `per_month: {income_cents, fixed_cents, daily_cents, saved_cents
 `previous_year: {income_cents, fixed_cents, daily_cents, saved_cents, net_cents, from, to} |
 null`, `months: [{period, label, income_cents, fixed_cents, daily_cents, saved_cents,
 net_cents, partial}]` and `categories[].per_month_cents`.
+`GET /transactions` also takes `sort` (`date`, `amount`, `merchant`, `category`, `account`;
+`-` = descending; default `-date`, newest first with keyset paging; other orders page by
+offset, cursor `o:<n>`, ties newest first) and `sign` (`in` | `out`). The Transacties screen
+sorts on every column (Mac: click the column header; phone: "Sorteer") and filters on amount
+("Bedrag": uitgaven/inkomsten, vanaf € X). The other tables (Waar het heen ging, Jaaroverzicht
+bakjes, Terugblik bakjes, Vaste lasten) sort on every column and have a filter field
+(`components/SortableTable.js`); the choice is remembered per table in the browser.
+
 `GET /trends?periods=12` → `{periods:[{period: Period-id, label, income_cents, fixed_cents,
 daily_cents, saved_cents, repaid_cents, net_cents, result_cents, partial}], categories:[{category_id,
 cents: number[]}], top_merchants:[{merchant_key, merchant_name, category_id, cents, count}],

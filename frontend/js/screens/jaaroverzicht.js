@@ -18,6 +18,7 @@ import { BarChart } from '../charts/BarChart.js';
 import { Sparkline } from '../charts/Sparkline.js';
 import { colorVar } from '../colors.js';
 import { drawIn, useFirstRender } from '../anim.js';
+import { useTable, SortHead, TableTools } from '../components/SortableTable.js';
 
 const SERIES = [
   { key: 'fixed_cents', name: 'Vast', color: 'var(--chart-fixed)' },
@@ -60,7 +61,7 @@ export function Jaaroverzicht() {
   return html`<${Screen} title="Jaaroverzicht" class="jo">
     <${ChartCard} periods=${periods} sel=${sel} setSel=${setSel} />
     <${LastYear} periods=${periods} byId=${byId} sel=${sel} />
-    <${Bakjes} cats=${data.categories || []} offset=${offset} n=${periods.length} />
+    <${Bakjes} cats=${data.categories || []} offset=${offset} n=${periods.length} periods=${periods} />
     <${TopMerchants} items=${data.top_merchants || []} months=${data.top_merchants_months} />
   </${Screen}>`;
 }
@@ -154,15 +155,38 @@ function LastYear({ periods, byId, sel, desk = false }) {
 
 /* ---------- Bakjes ---------- */
 
-function Bakjes({ cats, offset, n }) {
-  const [all, setAll] = useState(false);
-  const rows = cats.map((c) => {
+/** Rising: the last three months against the first three (a quick "wordt het meer?"). */
+const trendOf = (values) => {
+  const a = values.slice(0, 3); const b = values.slice(-3);
+  return a.length && b.length ? b.reduce((s, x) => s + x, 0) / b.length - a.reduce((s, x) => s + x, 0) / a.length : 0;
+};
+
+const JO_COLS = [
+  { key: 'name', label: 'Bakje', value: (r) => (r.cat || { name: 'Onbekend' }).name },
+  { key: 'trend', label: 'Verloop', value: (r) => r.trend, num: true, text: () => '' },
+  { key: 'avg', label: 'Per maand', value: (r) => r.avg, num: true, text: (r) => euros(r.avg) },
+  { key: 'total', label: 'Totaal', value: (r) => r.total, num: true, text: (r) => euros(r.total) },
+];
+
+function joRows(cats, offset, n, periods) {
+  return cats.map((c) => {
     const values = (c.cents || []).slice(offset, offset + n);
-    return { c, cat: categoryById(c.category_id), values, total: values.reduce((s, x) => s + x, 0) };
-  }).filter((r) => r.total > 0).sort((a, b) => b.total - a.total);
-  if (!rows.length) return null;
-  const shown = all || rows.length <= 9 ? rows : rows.slice(0, 8);
-  return html`<${Section} title="Bakjes" trailing=${html`<span class="section-value num">${euros(rows.reduce((s, r) => s + r.total, 0))}</span>`}>
+    // Averages leave out incomplete months (they would pull "normal" down).
+    const complete = values.filter((_, i) => !periods?.[i]?.partial);
+    return { c, cat: categoryById(c.category_id), values, total: values.reduce((s, x) => s + x, 0),
+      avg: complete.length ? complete.reduce((s, x) => s + x, 0) / complete.length : 0, trend: trendOf(values) };
+  }).filter((r) => r.total > 0);
+}
+
+function Bakjes({ cats, offset, n, periods }) {
+  const [all, setAll] = useState(false);
+  const t = useTable('jo-bakjes', JO_COLS, { key: 'total', dir: -1 });
+  const base = joRows(cats, offset, n, periods);
+  if (!base.length) return null;
+  const rows = t.rows(base);
+  const shown = all || t.filter || rows.length <= 9 ? rows : rows.slice(0, 8);
+  return html`<${Section} title="Bakjes" trailing=${html`<span class="section-value num">${euros(base.reduce((s, r) => s + r.total, 0))}</span>`}>
+    <${TableTools} t=${t} menu placeholder="Filter bakjes" />
     <${List}>
       ${shown.map(({ c, cat, values, total }) => {
         const k = cat || { name: 'Onbekend', emoji: '❔', color: 'gray', key: 'unsorted' };
@@ -206,18 +230,15 @@ function DeskCard({ title, children }) {
 }
 
 function BakjesTable({ cats, offset, n, periods }) {
-  const rows = cats.map((c) => {
-    const values = (c.cents || []).slice(offset, offset + n);
-    // Averages leave out incomplete months (they would pull "normal" down).
-    const complete = values.filter((_, i) => !periods[i]?.partial);
-    return { c, cat: categoryById(c.category_id), values, total: values.reduce((s, x) => s + x, 0), avg: complete.length ? complete.reduce((s, x) => s + x, 0) / complete.length : 0 };
-  }).filter((r) => r.total > 0).sort((a, b) => b.total - a.total);
-  if (!rows.length) return null;
+  const t = useTable('jo-bakjes', JO_COLS, { key: 'total', dir: -1 });
+  const base = joRows(cats, offset, n, periods);
+  if (!base.length) return null;
+  const rows = t.rows(base);
   return html`<section class="dk-card jo-card" aria-labelledby="jo-bk-h">
-    <div class="dk-card-h"><h2 id="jo-bk-h">Bakjes</h2><span class="section-value num">${euros(rows.reduce((s, r) => s + r.total, 0))}</span></div>
+    <div class="dk-card-h"><h2 id="jo-bk-h">Bakjes</h2><span class="section-value num">${euros(base.reduce((s, r) => s + r.total, 0))}</span></div>
+    <${TableTools} t=${t} placeholder="Filter bakjes" />
     <div class="dt jo-dt" role="table" aria-label="Bakjes per maand">
-      <div class="dt-head" role="row"><span role="columnheader">Bakje</span><span role="columnheader">Verloop</span>
-        <span role="columnheader" class="is-num">Per maand</span><span role="columnheader" class="is-num">Totaal</span></div>
+      <div class="dt-head" role="row">${JO_COLS.map((col) => html`<${SortHead} t=${t} col=${col} />`)}</div>
       ${rows.map(({ c, cat, values, total, avg }) => {
         const k = cat || { name: 'Onbekend', emoji: '❔', color: 'gray', key: 'unsorted' };
         return html`<button class="dt-row" role="row" key=${c.category_id} disabled=${!cat}

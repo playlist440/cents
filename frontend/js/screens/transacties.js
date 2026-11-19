@@ -30,7 +30,22 @@ import { BakjeGrid, allTags, createTag, onTxChange, applyTxChange } from './_tx.
 import { TxTableRow, openRowMenu, openBakjePopover, openTagPopover, setTxBakje, bulkSetBakje, bulkAddTag, BulkTools, MultiInspector } from './_txdesk.js';
 
 const PAGE = 150;
-const FILTER_KEYS = ['q', 'category_id', 'tag_id', 'account_id', 'period', 'merchant_key', 'unsorted', 'flow'];
+const FILTER_KEYS = ['q', 'category_id', 'tag_id', 'account_id', 'period', 'merchant_key', 'unsorted', 'flow', 'sort', 'sign', 'min'];
+
+/** Sort orders (GET /transactions `sort`); '' = newest first. */
+export const TX_SORTS = [
+  { v: '', label: 'Nieuwste eerst' },
+  { v: 'date', label: 'Oudste eerst' },
+  { v: 'amount', label: 'Grootste uitgaven eerst' },
+  { v: '-amount', label: 'Grootste inkomsten eerst' },
+  { v: 'merchant', label: 'Winkel A–Z' },
+  { v: '-merchant', label: 'Winkel Z–A' },
+  { v: 'category', label: 'Bakje A–Z' },
+  { v: '-category', label: 'Bakje Z–A' },
+  { v: 'account', label: 'Rekening A–Z' },
+];
+const sortLabel = (v) => TX_SORTS.find((s) => s.v === (v || ''))?.label || 'Nieuwste eerst';
+const MIN_STEPS = [2500, 5000, 10000, 25000, 50000, 100000];
 
 /* ======================================================================================
    Data: cursor pages + flow mode, cached per filter key
@@ -43,6 +58,9 @@ function apiParams(f) {
   for (const k of ['q', 'category_id', 'tag_id', 'account_id', 'period', 'merchant_key']) if (f[k]) p[k] = f[k];
   if (f.unsorted) p.unsorted = 1;
   if (f.flow && !p.period) p.period = getState().boot.periods.current;
+  if (f.sort && TX_SORTS.some((s) => s.v === f.sort)) p.sort = f.sort;
+  if (f.sign === 'in' || f.sign === 'out') p.sign = f.sign;
+  if (Number(f.min) > 0) p.min_cents = Math.round(Number(f.min));
   return p;
 }
 
@@ -310,7 +328,7 @@ export function Transacties({ query }) {
             ? html`<${EmptyState} emoji="🔍" title="Niets gevonden" action=${{ label: 'Wis filters', variant: 'tinted', onClick: clearAll }} />`
             : html`<${EmptyState} emoji="🧾" title="Nog geen betalingen" />`)
           : html`<div class=${'tx-list' + (stale ? ' is-stale' : '') + (selecting ? ' is-selecting' : '')}>
-              <${DayList} items=${items} hasMore=${!!data.next} loadMore=${loadMore} active=${page.active}
+              <${DayList} items=${items} sort=${filters.sort} hasMore=${!!data.next} loadMore=${loadMore} active=${page.active}
                 selecting=${selecting} selected=${selected} activeId=${wide && !selecting ? activeId : null} onRow=${onRow}
                 table=${wide} showAccount=${showAccount} showTags=${showTags} onSelectRow=${selectRow} onRowContext=${onRowContext} onRowBakje=${onRowBakje} />
             </div>`}
@@ -365,12 +383,31 @@ function Toolbar({ qText, setQText, filters, desk = false, showAccount = false, 
       ${desk
         ? html`<div class="tx-filterbar"><${FilterChips} filters=${filters} desk />${summary}</div>
           <div class="txt-head" role="row">
-            <span role="columnheader">Winkel</span><span role="columnheader">Bakje</span>${showTags && html`<span role="columnheader">Tags</span>`}
-            ${showAccount && html`<span role="columnheader">Rekening</span>`}<span role="columnheader" class="is-num">Bedrag</span>
+            <${SortHead} label="Winkel" by="merchant" sort=${filters.sort} /><${SortHead} label="Bakje" by="category" sort=${filters.sort} />${showTags && html`<span role="columnheader">Tags</span>`}
+            ${showAccount && html`<${SortHead} label="Rekening" by="account" sort=${filters.sort} />`}<${SortHead} label="Bedrag" by="amount" sort=${filters.sort} num />
           </div>`
         : html`<${SearchField} value=${qText} onInput=${setQText} placeholder="Zoek winkel, bedrag of tag" />
           <${FilterChips} filters=${filters} />`}
     </div>`;
+}
+
+/** A column header that sorts: first click in its natural order, again to reverse, a third
+ *  time back to newest first. */
+function SortHead({ label, by, sort, num = false }) {
+  const cur = (sort || '').replace(/^-/, '');
+  const on = cur === by;
+  const desc = on && sort.startsWith('-');
+  const next = !on ? by : !desc ? '-' + by : undefined;
+  return html`<button role="columnheader" class=${'txt-sort' + (num ? ' is-num' : '') + (on ? ' is-on' : '')}
+      aria-sort=${on ? (desc ? 'descending' : 'ascending') : 'none'} onClick=${() => replaceQuery({ sort: next })}
+      aria-label=${`Sorteer op ${label.toLowerCase()}`}>
+    <span>${label}</span>${on && html`<${Icon} name=${desc ? 'chevron-down' : 'chevron-up'} size=${11} stroke=${2.6} />`}
+  </button>`;
+}
+
+function amountLabel(f) {
+  const parts = [f.sign === 'out' ? 'Uitgaven' : f.sign === 'in' ? 'Inkomsten' : null, Number(f.min) > 0 ? `vanaf ${money(Number(f.min), { whole: true })}` : null].filter(Boolean);
+  return parts.length ? parts.join(' ') : null;
 }
 
 function FilterChips({ filters: f, desk = false }) {
@@ -403,6 +440,16 @@ function FilterChips({ filters: f, desk = false }) {
     ${chip('Tag', tag?.name, (e) => (desk
       ? openTagPopover(e.currentTarget, { value: tag?.id, onPick: (t) => set({ tag_id: t.id }) })
       : openSheet(PickTagSheet, { value: tag?.id, onPick: (t) => set({ tag_id: t.id }) })), () => set({ tag_id: undefined }), { emoji: tag?.emoji, color: tag?.color })}
+    ${!f.flow && chip('Bedrag', amountLabel(f), (e) => openMenu(e.currentTarget, [
+      { label: 'Uitgaven en inkomsten', checked: !f.sign, onSelect: () => set({ sign: undefined }) },
+      { label: 'Alleen uitgaven', checked: f.sign === 'out', onSelect: () => set({ sign: 'out' }) },
+      { label: 'Alleen inkomsten', checked: f.sign === 'in', onSelect: () => set({ sign: 'in' }) },
+      '-',
+      { label: 'Elk bedrag', checked: !(Number(f.min) > 0), onSelect: () => set({ min: undefined }) },
+      ...MIN_STEPS.map((c) => ({ label: `Vanaf ${money(c, { whole: true })}`, checked: Number(f.min) === c, onSelect: () => set({ min: c }) })),
+    ]), () => set({ sign: undefined, min: undefined }))}
+    ${(!desk || f.sort) && chip('Sorteer', f.sort ? sortLabel(f.sort) : null, (e) => openMenu(e.currentTarget,
+      TX_SORTS.map((s) => ({ label: s.label, checked: (f.sort || '') === s.v, onSelect: () => set({ sort: s.v || undefined }) }))), () => set({ sort: undefined }))}
     ${accounts.length > 1 && chip('Rekening', acc?.name, (e) => openMenu(e.currentTarget, [
       ...accounts.map((a) => ({ label: a.name, checked: a.id === acc?.id, onSelect: () => set({ account_id: a.id }) })),
       '-', { label: 'Alle rekeningen', checked: !acc, onSelect: () => set({ account_id: undefined }) },
@@ -468,7 +515,20 @@ function Summary({ data, filters }) {
 
 const OVERSCAN = 1400;
 
-function groupByDay(items) {
+const CHUNK = 40;
+
+/** Day groups when sorted by date; otherwise chunks in the chosen order (the first one titled
+ *  with that order), and every row shows its date. */
+function groupByDay(items, sort) {
+  if (sort && sort !== 'date') {
+    const out = [];
+    for (let i = 0; i < items.length; i += CHUNK) {
+      const part = items.slice(i, i + CHUNK);
+      out.push({ key: 's' + i, label: i === 0 ? sortLabel(sort) : null, items: part,
+        out: part.reduce((s, t) => s + Math.min(0, t.amount_cents), 0), in: part.reduce((s, t) => s + Math.max(0, t.amount_cents), 0) });
+    }
+    return out;
+  }
   const groups = [];
   let g = null;
   for (const t of items) {
@@ -479,8 +539,9 @@ function groupByDay(items) {
   return groups;
 }
 
-function DayList({ items, hasMore, loadMore, active, selecting, selected, activeId, onRow, table = false, showAccount = false, showTags = false, onSelectRow, onRowContext, onRowBakje }) {
-  const groups = useMemo(() => groupByDay(items), [items]);
+function DayList({ items, hasMore, loadMore, active, selecting, selected, activeId, onRow, table = false, showAccount = false, showTags = false, onSelectRow, onRowContext, onRowBakje, sort = '' }) {
+  const groups = useMemo(() => groupByDay(items, sort), [items, sort]);
+  const dated = !!sort && sort !== 'date';
   const root = useRef(null);
   const sizes = useRef(new Map());       // `${date}:${n}` -> measured height
   const metrics = useRef({ head: 40, row: 62.5, gap: 20 });
@@ -551,18 +612,18 @@ function DayList({ items, hasMore, loadMore, active, selecting, selected, active
   const [a, b] = [Math.min(range[0], groups.length - 1), Math.min(range[1], groups.length - 1)];
   const shown = groups.slice(Math.max(0, a), b + 1);
   return html`<div class=${'tx-days' + (table ? ' is-table' : '')} ref=${root} role=${table ? 'grid' : null} aria-multiselectable=${table ? 'true' : null} style=${{ paddingTop: offsets[Math.max(0, a)] + 'px', paddingBottom: (total - offsets[b + 1]) + 'px' }}>
-    ${shown.map((g, j) => html`<section class="tx-day" key=${g.key} data-i=${a + j} aria-label=${dayLabel(g.date, { today, long: true })}>
-      <h3 class="tx-day-h">
+    ${shown.map((g, j) => html`<section class="tx-day" key=${g.key} data-i=${a + j} aria-label=${g.date ? dayLabel(g.date, { today, long: true }) : (g.label || 'Vervolg')}>
+      ${g.date ? html`<h3 class="tx-day-h">
         <span class="tx-day-label">${dayLabel(g.date, { today })}</span>
         <span class=${'tx-day-total num' + (g.out === 0 && g.in > 0 ? ' is-income' : '')}>${g.out < 0 ? `${money(g.out)} uit` : `${money(g.in, { signed: true })} in`}</span>
-      </h3>
+      </h3>` : g.label && html`<h3 class="tx-day-h"><span class="tx-day-label">${g.label}</span></h3>`}
       ${table
         ? html`<div class="txt-group" role="rowgroup">
-            ${g.items.map((t) => html`<${TxTableRow} key=${t.id} tx=${t} selected=${selected.has(t.id)} active=${t.id === activeId}
+            ${g.items.map((t) => html`<${TxTableRow} key=${t.id} tx=${t} date=${dated} selected=${selected.has(t.id)} active=${t.id === activeId}
               showAccount=${showAccount} showTags=${showTags} onSelect=${onSelectRow} onContext=${onRowContext} onBakje=${onRowBakje} />`)}
           </div>`
         : html`<ul class="inset">
-            ${g.items.map((t) => html`<${TxKeyed} key=${t.id} tx=${t} onRow=${onRow} selectable=${selecting}
+            ${g.items.map((t) => html`<${TxKeyed} key=${t.id} tx=${t} date=${dated} onRow=${onRow} selectable=${selecting}
               selected=${selecting ? selected.has(t.id) : t.id === activeId} />`)}
           </ul>`}
     </section>`)}
@@ -570,8 +631,8 @@ function DayList({ items, hasMore, loadMore, active, selecting, selected, active
   </div>`;
 }
 
-function TxKeyed({ tx, onRow, selectable, selected }) {
-  return html`<${TxRow} tx=${tx} onClick=${() => onRow(tx)} selectable=${selectable} selected=${selected} />`;
+function TxKeyed({ tx, onRow, selectable, selected, date = false }) {
+  return html`<${TxRow} tx=${tx} date=${date} onClick=${() => onRow(tx)} selectable=${selectable} selected=${selected} />`;
 }
 
 function ListSkeleton() {

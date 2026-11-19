@@ -167,3 +167,4 @@
   .vl2-insp-close:hover { background: var(--fill-2); }
 }
 .vl2-repaid { margin-left: 6px; font-weight: 400; font-size: var(--fs-footnote); color: var(--label-2); }
+.vl2-table { overflow-x: auto; }

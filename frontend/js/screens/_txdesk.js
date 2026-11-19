@@ -6,7 +6,7 @@ import { html, useMemo, useState } from '../vendor/preact-htm.js';
 import { api } from '../api.js';
 import { categoryById, tagById, accountById, invalidate } from '../store.js';
 import { replaceQuery } from '../router.js';
-import { money, plural } from '../format.js';
+import { money, plural, shortDate } from '../format.js';
 import { EmojiTile } from '../components/EmojiTile.js';
 import { Switch } from '../components/Controls.js';
 import { openPopover, openContextMenu } from '../components/Menu.js';
@@ -201,7 +201,7 @@ export const openTagPopover = (anchor, props) => openPopover(anchor, (close) => 
  * One payment as a table row. Columns: winkel, bakje (pop-up), tags, rekening (optional),
  * bedrag. Click/⌘/⇧ go to onSelect(tx, event); right-click opens the context menu.
  */
-export function TxTableRow({ tx, selected, active, showAccount, showTags = true, onSelect, onContext, onBakje }) {
+export function TxTableRow({ tx, selected, active, showAccount, showTags = true, onSelect, onContext, onBakje, date = false }) {
   const cat = categoryById(tx.category_id);
   const unsorted = isUnsorted(tx.category_id);
   const tags = (tx.tag_ids || []).map(tagById).filter(Boolean);
@@ -214,7 +214,7 @@ export function TxTableRow({ tx, selected, active, showAccount, showTags = true,
     <span class="txt-cell txt-name" role="gridcell">
       <${EmojiTile} emoji=${cat?.emoji} color=${cat?.color} dashed=${unsorted} size=${24} />
       <span class="txt-name-text">${tx.merchant_name}</span>
-      ${tx.city && html`<span class="txt-city">${tx.city}</span>`}
+      ${date ? html`<span class="txt-date num">${shortDate(tx.date)}</span>` : tx.city && html`<span class="txt-city">${tx.city}</span>`}
     </span>
     <span class="txt-cell" role="gridcell">
       <button class=${'txt-bakje' + (unsorted ? ' is-unsorted' : '')} style=${{ '--c': colorVar(cat?.color || 'gray') }}

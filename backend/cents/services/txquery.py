@@ -121,6 +121,10 @@ def build_filter(f: dict) -> tuple[str, list[Any]]:
         params.append(f["tag_id"])
     if f.get("unsorted"):
         where.append("c.key = 'unsorted'")
+    if f.get("sign") == "out":
+        where.append("t.amount_cents < 0")
+    elif f.get("sign") == "in":
+        where.append("t.amount_cents > 0")
     if f.get("min_cents") is not None:
         where.append("ABS(t.amount_cents) >= ?")
         params.append(abs(int(f["min_cents"])))
@@ -145,9 +149,20 @@ def build_filter(f: dict) -> tuple[str, list[Any]]:
     return " AND ".join(where), params
 
 
+# sort key -> SQL expression (ascending); "-key" sorts descending. Ties: newest first.
+SORTS = {
+    "date": "t.date",
+    "amount": "t.amount_cents",
+    "merchant": "COALESCE(NULLIF(t.merchant_name, ''), t.description) COLLATE NOCASE",
+    "category": "c.name COLLATE NOCASE",
+    "account": "a.name COLLATE NOCASE",
+}
+
+
 def list_transactions(conn: sqlite3.Connection, f: dict, limit: int = 100,
-                      cursor: str | None = None) -> dict:
-    """Newest first, keyset paging. Count and sums cover the whole filtered set."""
+                      cursor: str | None = None, sort: str = "-date") -> dict:
+    """Newest first by default with keyset paging; any other `sort` (SORTS, "-" = descending)
+    pages by offset (cursor "o:<n>"). Count and sums cover the whole filtered set."""
     where, params = build_filter(f)
     base = ("FROM transactions t JOIN accounts a ON a.id = t.account_id "
             "LEFT JOIN categories c ON c.id = t.category_id WHERE " + where)
@@ -155,6 +170,19 @@ def list_transactions(conn: sqlite3.Connection, f: dict, limit: int = 100,
                           "COALESCE(SUM(CASE WHEN t.amount_cents > 0 THEN t.amount_cents END), 0) AS sin, "
                           "COALESCE(SUM(CASE WHEN t.amount_cents < 0 THEN t.amount_cents END), 0) AS sout "
                           + base, params)
+    key = (sort or "-date").lstrip("-")
+    if key not in SORTS:
+        key, sort = "date", "-date"
+    if sort != "-date":
+        desc = sort.startswith("-")
+        offset = int(cursor[2:]) if cursor and cursor.startswith("o:") and cursor[2:].isdigit() else 0
+        order = f"{SORTS[key]} {'DESC' if desc else 'ASC'}, t.date DESC, t.id DESC"
+        rows = db.rows(conn, "SELECT t.* " + base + f" ORDER BY {order} LIMIT ? OFFSET ?",
+                       list(params) + [limit + 1, offset])
+        more = len(rows) > limit
+        return {"items": tx_list_json(conn, rows[:limit]),
+                "next_cursor": f"o:{offset + limit}" if more else None,
+                "count": totals["n"], "sum_in_cents": totals["sin"], "sum_out_cents": totals["sout"]}
     page_where, page_params = "", list(params)
     if cursor:
         try:

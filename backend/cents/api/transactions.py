@@ -89,6 +89,8 @@ def list_transactions(
     unsorted: bool = False,
     min_cents: int | None = Query(default=None, ge=-MONEY_LIMIT, le=MONEY_LIMIT),
     max_cents: int | None = Query(default=None, ge=-MONEY_LIMIT, le=MONEY_LIMIT),
+    sign: str | None = Query(default=None, pattern="^(in|out)$"),
+    sort: str = Query(default="-date", pattern="^-?(date|amount|merchant|category|account)$"),
     limit: int = Query(default=100, ge=1, le=1000),
     cursor: str | None = None,
     conn: sqlite3.Connection = Depends(get_conn),
@@ -96,7 +98,7 @@ def list_transactions(
     filters = {"from": iso_date(from_), "to": iso_date(to), "account_id": account_id,
                "category_id": category_id, "tag_id": tag_id, "merchant_key": merchant_key,
                "q": q, "method": method, "kind": kind, "unsorted": unsorted,
-               "min_cents": min_cents, "max_cents": max_cents}
+               "min_cents": min_cents, "max_cents": max_cents, "sign": sign}
     if period:
         try:
             p = periods.resolve(conn, period)
@@ -104,7 +106,7 @@ def list_transactions(
             raise bad_request("Onbekende maand.", "bad_period") from None
         filters["from"] = max(filters["from"] or "", p.start.isoformat())
         filters["to"] = min(filters["to"] or "9999-12-31", p.last.isoformat())
-    return txquery.list_transactions(conn, filters, limit, cursor)
+    return txquery.list_transactions(conn, filters, limit, cursor, sort)
 
 
 @router.get("/transactions/{tx_id}")

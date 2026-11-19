@@ -542,6 +542,7 @@
   .txt-name .etile { border-radius: 7px; }
   .txt-name-text { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
   .txt-name-text { flex: 0 1 auto; }
+  .txt-date { flex: none; color: var(--label-2); font-size: var(--fs-footnote); }
   .txt-city { flex: 0 100 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; color: var(--label-2); font-size: var(--fs-footnote); } /* the city gives way first */
   .txt-bakje {
     display: inline-flex;

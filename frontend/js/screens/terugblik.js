@@ -11,6 +11,7 @@
 // year the 12-month chart. `complete: false` → "Nog bezig", no comparisons. "Druk af" prints an
 // A4 version (print stylesheet in css/screen-terugblik.css).
 
+import { useTable, SortHead, TableTools } from '../components/SortableTable.js';
 import { html, useEffect, useRef, useState } from '../vendor/preact-htm.js';
 import { api } from '../api.js';
 import { useQuery, useStore, categoryById } from '../store.js';
@@ -272,22 +273,33 @@ function YearChart({ months }) {
 
 /* ---------- Bakjes ---------- */
 
+const RB_COLS = [
+  { key: 'name', label: 'Bakje', value: (x) => x.cat.name },
+  { key: 'cents', label: 'Bedrag', value: (x) => x.cents, num: true, text: (x) => euros(x.cents) },
+  { key: 'prev', label: 'Vorige keer', value: (x) => x.previous_cents, num: true, text: () => '' },
+  { key: 'diff', label: 'Verschil', value: (x) => (x.previous_cents != null ? x.cents - x.previous_cents : null), num: true, text: () => '' },
+];
+
 function Bakjes({ r, cmp, q, desk }) {
-  const rows = (r.categories || []).map((c) => ({ ...c, cat: categoryById(c.category_id) || { name: 'Onbekend', emoji: '❔', color: 'gray', key: 'unsorted' } }));
+  const base = (r.categories || []).map((c) => ({ ...c, cat: categoryById(c.category_id) || { name: 'Onbekend', emoji: '❔', color: 'gray', key: 'unsorted' } }));
   const [all, setAll] = useState(false);
-  if (!rows.length) return null;
-  const shown = all || rows.length <= 10 ? rows : rows.slice(0, 8);
+  const cols = cmp ? RB_COLS : RB_COLS.slice(0, 2);
+  const t = useTable('rb-bakjes', cols, { key: 'cents', dir: -1 });
+  if (!base.length) return null;
+  const rows = t.rows(base);
+  const shown = all || t.filter || rows.length <= 10 ? rows : rows.slice(0, 8);
   const open = q.period ? (id) => navigate(`/overzicht/bakje/${id}`, { query: { period: q.period } }) : null;
-  const total = rows.reduce((s, x) => s + x.cents, 0);
+  const total = base.reduce((s, x) => s + x.cents, 0);
   return html`<section class="rb-card rb-sec rb-bakjes" aria-labelledby="rb-bk">
     <div class="rb-sec-hrow"><h2 class="rb-sec-h" id="rb-bk">Bakjes</h2><span class="rb-sec-val num">${euros(total)}</span></div>
-    <div class="rb-capsule"><${StackedCapsule} segments=${rows.map((x) => ({ value: x.cents, color: x.cat.color, label: x.cat.name, key: x.category_id }))} label="Uitgaven per bakje" /></div>
+    <div class="rb-capsule"><${StackedCapsule} segments=${base.map((x) => ({ value: x.cents, color: x.cat.color, label: x.cat.name, key: x.category_id }))} label="Uitgaven per bakje" /></div>
+    <div class="rb-noprint"><${TableTools} t=${t} menu=${!desk} placeholder="Filter bakjes" /></div>
     <div class=${'rb-table' + (cmp ? ' has-prev' : '')} role="table" aria-label="Bakjes">
       <div class="rb-tr rb-th" role="row">
-        <span role="columnheader">Bakje</span>
-        <span role="columnheader" class="is-num">Bedrag</span>
-        ${cmp && html`<span role="columnheader" class="is-num rb-col-prev">Vorige keer</span>`}
-        <span role="columnheader" class="is-num">Aandeel</span>
+        <${SortHead} t=${t} col=${RB_COLS[0]} />
+        <${SortHead} t=${t} col=${RB_COLS[1]} />
+        ${cmp && html`<${SortHead} t=${t} col=${RB_COLS[2]} class="rb-col-prev" />`}
+        <${SortHead} t=${t} col=${{ ...RB_COLS[1], label: 'Aandeel' }} />
       </div>
       ${shown.map((x) => {
         const Tag = open ? 'button' : 'div';

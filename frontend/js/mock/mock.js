@@ -1806,6 +1806,8 @@ function filterTransactions(q) {
     if (q.kind && t.kind !== q.kind) return false;
     if (q.unsorted && q.unsorted !== '0' && catById(t.category_id)?.key !== 'unsorted') return false;
     // Like the backend: min/max compare absolute amounts.
+    if (q.sign === 'out' && t.amount_cents >= 0) return false;
+    if (q.sign === 'in' && t.amount_cents <= 0) return false;
     if (num(q.min_cents) != null && Math.abs(t.amount_cents) < num(q.min_cents)) return false;
     if (num(q.max_cents) != null && Math.abs(t.amount_cents) > num(q.max_cents)) return false;
     if (text) {
@@ -1815,7 +1817,22 @@ function filterTransactions(q) {
     }
     return true;
   });
-  return [...list].sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : b.id - a.id));
+  const newest = (a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : b.id - a.id);
+  // services/txquery.py SORTS: "-" = descending, ties newest first
+  const sort = q.sort || '-date';
+  const key = sort.replace(/^-/, '');
+  const dir = sort.startsWith('-') ? -1 : 1;
+  const val = {
+    date: (t) => t.date, amount: (t) => t.amount_cents,
+    merchant: (t) => (t.merchant_name || t.description || '').toLowerCase(),
+    category: (t) => (catById(t.category_id)?.name || '').toLowerCase(),
+    account: (t) => (accById(t.account_id)?.name || '').toLowerCase(),
+  }[key];
+  if (!val || sort === '-date') return [...list].sort(newest);
+  return [...list].sort((a, b) => {
+    const x = val(a); const y = val(b);
+    return (x < y ? -dir : x > y ? dir : 0) || newest(a, b);
+  });
 }
 
 function txDetail(t) {

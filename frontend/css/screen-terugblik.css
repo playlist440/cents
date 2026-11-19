@@ -168,6 +168,7 @@
 /* ---------- Print: A4 portrait, white, no chrome ---------- */
 @page { size: A4 portrait; margin: 14mm 14mm 18mm; }
 @media print {
+  .rb-noprint { display: none !important; }
   /* html:root:not(…) outranks the dark-mode token blocks, so print is always light. */
   html:root:not([data-theme="none"]) {
     color-scheme: light;

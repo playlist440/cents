@@ -950,3 +950,19 @@
 }
 .chart-line-thin.is-compare { stroke: var(--label-3); stroke-dasharray: 4 4; }
 .ro-row.ro-sub { color: var(--label-2); font-size: var(--fs-caption1); }
+
+/* Sortable column headers (shared: Transacties, tables with SortableTable) */
+.txt-sort, .st-sort { display: inline-flex; align-items: center; gap: 4px; min-width: 0; padding: 0; border: 0; background: none;
+  font: inherit; color: inherit; text-align: left; cursor: pointer; }
+.txt-sort.is-num, .st-sort.is-num { justify-content: flex-end; }
+.txt-sort:hover, .st-sort:hover { color: var(--label); }
+.txt-sort.is-on, .st-sort.is-on { color: var(--tint-text, var(--tint)); }
+.st-tools { display: flex; align-items: center; gap: 8px; margin: 0 0 10px; }
+.st-filter { flex: 1; min-width: 0; display: flex; align-items: center; gap: 6px; height: 30px; padding: 0 10px; border-radius: 9px;
+  background: var(--fill-4, var(--fill-3)); color: var(--label-2); }
+.st-filter input { flex: 1; min-width: 0; border: 0; background: none; outline: none; color: var(--label); font: 400 var(--fs-subhead)/1 var(--font); }
+.st-sortbtn { flex: none; display: inline-flex; align-items: center; gap: 4px; height: 30px; padding: 0 10px; border: 0; border-radius: 9px;
+  background: var(--fill-4, var(--fill-3)); color: var(--tint-text, var(--tint)); font: 500 var(--fs-footnote)/1 var(--font); cursor: pointer;
+  max-width: 55%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.st-sortbtn span { overflow: hidden; text-overflow: ellipsis; }
+.st-none { padding: 10px 4px; }

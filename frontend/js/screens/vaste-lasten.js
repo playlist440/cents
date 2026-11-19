@@ -10,6 +10,7 @@
 //             agenda. Paid ✓ muted, expected normal, missed orange "niet gezien", income green.
 // Item details (history bars, payments, "Geen vaste last") in the inspector or a sheet.
 
+import { useTable, SortHead, TableTools } from '../components/SortableTable.js';
 import { html, useEffect, useRef, useState } from '../vendor/preact-htm.js';
 import { api } from '../api.js';
 import { useQuery, useStore, categoryById } from '../store.js';
@@ -148,26 +149,24 @@ function Hero({ data, items, desk = false }) {
 
 /* ---------- Mac: sortable table in sections ---------- */
 
-const SORTS = {
-  name: { label: 'Naam', dir: 1, cmp: (a, b) => a.name.localeCompare(b.name, 'nl') },
-  next: { label: 'Volgende', dir: 1, cmp: (a, b) => (a.next_date || '9999').localeCompare(b.next_date || '9999') },
-  month: { label: 'Per maand', dir: -1, cmp: (a, b) => Math.abs(a.per_month_cents) - Math.abs(b.per_month_cents) },
-  year: { label: 'Per jaar', dir: -1, cmp: (a, b) => perYear(a) - perYear(b) },
-};
+const FREQ_ORDER = { weekly: 1, '2-weekly': 2, '4-weekly': 3, monthly: 4, quarterly: 5, 'half-year': 6, yearly: 7 };
+export const VL_COLS = [
+  { key: 'name', label: 'Naam', value: (i) => i.name },
+  { key: 'cat', label: 'Bakje', value: (i) => categoryById(i.category_id)?.name || '' },
+  { key: 'freq', label: 'Hoe vaak', value: (i) => FREQ_ORDER[i.frequency] || 0, num: false, text: (i) => freqLabel(i.frequency) || '' },
+  { key: 'next', label: 'Volgende', value: (i) => i.next_date || '9999', text: (i) => (i.next_date ? shortDate(i.next_date) : '') },
+  { key: 'month', label: 'Per maand', value: (i) => Math.abs(i.per_month_cents), num: true, text: (i) => money(Math.abs(i.per_month_cents)) },
+  { key: 'year', label: 'Per jaar', value: (i) => perYear(i), num: true, text: (i) => euros(perYear(i)) },
+];
 
 function VLTable({ items, selKey, onSelect }) {
-  const [sort, setSort] = useState({ by: 'month', dir: -1 });
+  const t = useTable('vaste-lasten', VL_COLS, { key: 'month', dir: -1 });
   const ref = useRef(null);
-  const sorted = (list) => [...list].sort((a, b) => (live(b) - live(a)) || SORTS[sort.by].cmp(a, b) * sort.dir || a.name.localeCompare(b.name, 'nl'));
+  // live items first (stable sort keeps the chosen order within them)
+  const sorted = (list) => t.rows(list).sort((a, b) => live(b) - live(a));
   const sections = SECTIONS.map((s) => ({ ...s, rows: sorted(items.filter((i) => sectionOf(i) === s.id)) })).filter((s) => s.rows.length);
   const flat = sections.flatMap((s) => s.rows);
-  const head = (by, cls = '') => {
-    const on = sort.by === by;
-    return html`<button role="columnheader" class=${'vl2-sort ' + cls + (on ? ' is-on' : '')} aria-sort=${on ? (sort.dir > 0 ? 'ascending' : 'descending') : 'none'}
-      onClick=${() => setSort(on ? { by, dir: -sort.dir } : { by, dir: SORTS[by].dir })}>
-      <span>${SORTS[by].label}</span><${Icon} name=${on && sort.dir > 0 ? 'chevron-up' : 'chevron-down'} size=${10} stroke=${2.8} />
-    </button>`;
-  };
+  const head = (key) => html`<${SortHead} t=${t} col=${VL_COLS.find((c) => c.key === key)} />`;
   const onKey = (e) => {
     if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
     const i = flat.findIndex((r) => r.key === selKey);
@@ -178,10 +177,10 @@ function VLTable({ items, selKey, onSelect }) {
     requestAnimationFrame(() => ref.current?.querySelector(`[data-key="${CSS.escape(n.key)}"]`)?.focus());
   };
   return html`<div class="dk-card vl2-table">
+    <${TableTools} t=${t} placeholder="Filter vaste lasten" />
     <div class="dt vl2-dt" role="grid" aria-label="Vaste lasten" onKeyDown=${onKey} ref=${ref}>
       <div class="dt-head" role="row">
-        ${head('name')}<span role="columnheader">Bakje</span><span role="columnheader">Hoe vaak</span>
-        ${head('next')}${head('month', 'is-num')}${head('year', 'is-num')}
+        ${head('name')}${head('cat')}${head('freq')}${head('next')}${head('month')}${head('year')}
       </div>
       ${sections.map((s) => {
         const act = s.rows.filter(live);
@@ -225,9 +224,9 @@ function TableRow({ it, selected, onSelect }) {
 /* ---------- Phone: sections ---------- */
 
 function Sections({ items, onPick }) {
-  return SECTIONS.map((s) => {
-    const rows = items.filter((i) => sectionOf(i) === s.id)
-      .sort((a, b) => (live(b) - live(a)) || Math.abs(b.per_month_cents) - Math.abs(a.per_month_cents));
+  const t = useTable('vaste-lasten', VL_COLS, { key: 'month', dir: -1 });
+  return html`<${TableTools} t=${t} menu placeholder="Filter vaste lasten" />${SECTIONS.map((s) => {
+    const rows = t.rows(items.filter((i) => sectionOf(i) === s.id)).sort((a, b) => live(b) - live(a));
     if (!rows.length) return null;
     const act = rows.filter(live);
     const inc = s.id === 'income';
@@ -238,7 +237,7 @@ function Sections({ items, onPick }) {
       </h2>
       <ul class="inset">${rows.map((it) => html`<${ItemRow} key=${it.key} it=${it} onClick=${() => onPick(it)} />`)}</ul>
     </section>`;
-  });
+  })}`;
 }
 
 function badges(it) {
