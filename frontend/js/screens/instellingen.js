@@ -33,6 +33,7 @@ export function InstSplit({ active, children }) {
   const items = [
     { id: 'algemeen', label: 'Algemeen', icon: 'instellingen', iconColor: 'gray', onClick: () => go('/instellingen') },
     { id: 'bakjes', label: 'Bakjes', icon: 'bakjes', iconColor: 'yellow', onClick: () => go('/bakjes') },
+    { id: 'uitleg', label: 'Uitleg', icon: 'info', iconColor: 'blue', onClick: () => go('/uitleg') },
     { id: 'controle', label: 'Controle', icon: 'check', iconColor: 'green', onClick: () => go('/instellingen/controle') },
     { id: 'aannames', label: 'Slimme aannames', icon: 'sparkles', iconColor: 'indigo', onClick: () => go('/instellingen/aannames') },
     { id: 'regels', label: 'Geleerde regels', icon: 'sparkles', iconColor: 'purple', onClick: () => go('/instellingen/regels') },

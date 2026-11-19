@@ -468,7 +468,7 @@ function YearTiles({ o }) {
     <${Tile} label="Vaste lasten" icon="vaste-lasten" color="indigo" cents=${o.fixed_cents} sub=${perMonth(pm.fixed_cents || 0)}
       onClick=${() => navigate('/vaste-lasten')} />
     <${Tile} label="Dagelijks" icon="creditcard" color="blue" cents=${o.daily_cents}
-      sub=${py ? `vorig jaar ${euros(Math.round(py.daily_cents * scale))}` : perMonth(pm.daily_cents || 0)} />
+      sub=${o.irregular_cents >= 2500 ? `waarvan ${euros(o.irregular_cents)} onregelmatig` : py ? `vorig jaar ${euros(Math.round(py.daily_cents * scale))}` : perMonth(pm.daily_cents || 0)} />
     <${Tile} label="Gespaard" icon="piggy" color="teal" cents=${o.saved_cents} sub=${withRepaid(perMonth(pm.saved_cents || 0), o)}
       onClick=${() => navigate('/potjes')} />
   </div>`;
@@ -491,11 +491,11 @@ function Tiles({ o }) {
       sub=${p.is_current ? fixedSub(o) : ''}
       onClick=${() => navigate('/vaste-lasten')} />
     <${Tile} label="Dagelijks" icon="creditcard" color="blue" cents=${o.daily_cents}
-      sub=${o.pace ? `normaal ${euros(p.is_current ? o.pace.typical[o.pace.actual.length - 1] || 0 : o.pace.typical.at(-1) || 0)}` : ''}
+      sub=${o.irregular_cents >= 2500 ? `waarvan ${euros(o.irregular_cents)} onregelmatig` : o.pace ? `normaal ${euros(p.is_current ? o.pace.typical[o.pace.actual.length - 1] || 0 : o.pace.typical.at(-1) || 0)}${p.is_current ? ' tot nu' : ''}` : ''}
       onClick=${() => navigate('/transacties', { query: { period: p.id, flow: 'out' } })} />
     <${Tile} label="Gespaard" icon="piggy" color="teal" cents=${o.saved_cents}
       progress=${p.is_current && o.saving_upcoming_cents > 0 ? o.saved_cents / savedTotal : null}
-      sub=${withRepaid(p.is_current && o.saving_upcoming_cents > 0 ? `netto · nog ${euros(o.saving_upcoming_cents)}` : 'netto gespaard', o)}
+      sub=${withRepaid(p.is_current && o.saving_upcoming_cents > 0 ? `nog ${euros(o.saving_upcoming_cents)} gepland` : 'naar sparen, min opnames', o)}
       onClick=${() => navigate('/potjes')} />
   </div>`;
 }
@@ -745,7 +745,8 @@ function Health({ h, desk = false }) {
   const list = html`<ul class="inset ov-hl">${rows.map((r) => html`<${ListRow} key=${r.key} class="ov-hl-row" emoji=${r.emoji} color=${r.color}
       title=${html`<span class="ov-hl-title">${r.title}</span><span class="ov-hl-value num">${r.value}</span>`}
       subtitle=${r.text} chevron onClick=${() => navigate(r.to)} label=${`${r.title}: ${r.value}. ${r.text}`} />`)}
-    <${ListRow} key="besparen" title="Waar kunnen we besparen?" tint chevron onClick=${() => navigate('/besparen')} /></ul>`;
+    <${ListRow} key="besparen" title="Waar kunnen we besparen?" tint chevron onClick=${() => navigate('/besparen')} />
+    <${ListRow} key="uitleg" title="Wat betekenen deze woorden?" tint chevron onClick=${() => navigate('/uitleg')} /></ul>`;
   if (desk) {
     return html`<section class="dk-card ov-health" aria-labelledby="ov-hl-h">
       <div class="dk-card-h"><h2 id="ov-hl-h">Hoe staan we ervoor</h2></div>
@@ -763,7 +764,7 @@ function Health({ h, desk = false }) {
 
 function PotjesPeek({ goals, desk = false }) {
   if (!goals?.length) return null;
-  const items = goals.slice(0, 4);
+  const items = goals.slice(0, 6);
   if (desk) {
     return html`<section class="dk-card ov-pots" aria-labelledby="ov-pots-h">
       <div class="dk-card-h"><h2 id="ov-pots-h">Potjes</h2><button class="dk-link" onClick=${() => navigate('/potjes')}>Alle potjes</button></div>

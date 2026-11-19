@@ -140,7 +140,7 @@ def possession_out(conn: sqlite3.Connection, it: Item, today: str) -> dict:
     sd = it.start_day
     first = periods.period_for(date.fromisoformat(plan.start), sd) if plan.start else None
     value = it.value(today)
-    parts = spread.amounts(total, plan.months, plan.keep)
+    parts = spread.amounts(total, plan.months, plan.keep, plan.curve)
     sale_tx = _tx_brief(conn, a["sale_tx_id"])
     return {"id": a["id"], "kind": "possession", "name": a["name"], "emoji": a["emoji"],
             "include": bool(a["include"]), "value_cents": value,
@@ -148,7 +148,7 @@ def possession_out(conn: sqlite3.Connection, it: Item, today: str) -> dict:
             "estimated": False, "repaid_since_cents": 0, "repaid_share": None, "payment": None,
             "debt_kind": None, "entries": [],
             "price_cents": total, "start_date": plan.start, "life_months": plan.months,
-            "residual_cents": plan.keep, "category_id": a["category_id"],
+            "residual_cents": plan.keep, "category_id": a["category_id"], "curve": plan.curve or "linear",
             "monthly_cents": parts[0] if parts else 0,
             "lost_cents": (total - value) if value is not None and not plan.sale_date else None,
             "end_period": spread.end_period(plan, first, sd).id if first else None,
@@ -241,7 +241,7 @@ def networth_part(conn: sqlite3.Connection, lg) -> tuple[list[dict], list[Item]]
                "value_cents": it.value(today), "signed_cents": it.signed(today),
                "as_of": (today if it.plan is not None else it.ents[-1]["date"] if it.ents else None),
                "emoji": it.a["emoji"],
-               **({"monthly_cents": spread.amounts(it.plan.total or 0, it.plan.months, it.plan.keep)[0],
+               **({"monthly_cents": spread.amounts(it.plan.total or 0, it.plan.months, it.plan.keep, it.plan.curve)[0],
                    "sold": bool(it.plan.sale_date), "sale_date": it.plan.sale_date}
                   if it.plan is not None else {})} for it in ests]
     return listed, [it for it in ests if it.a["include"]]

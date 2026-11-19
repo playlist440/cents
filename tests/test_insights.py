@@ -64,7 +64,7 @@ def test_current_period_rules(client, book):
     spike = found["category_spike"]
     # up to day 12 (data until 12 March + 3 days = day 15): 2 x 10000 normally, 60000 + 9436 now
     assert spike["value_cents"] == 69436 - 20000
-    assert spike["title"] == f"Boodschappen: {euro(49436)} meer dan normaal deze maand"
+    assert spike["title"] == f"Boodschappen: {euro(49436)} meer dan normaal tot nu toe deze maand"
     assert spike["link"] == {"screen": "category", "params": {"id": book.cats["boodschappen"],
                                                               "period": "2026-03"}}
     assert spike["href"] == f"/overzicht/bakje/{book.cats['boodschappen']}?period=2026-03"

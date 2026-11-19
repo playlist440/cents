@@ -27,6 +27,7 @@ export function Meer() {
       <${ListRow} icon="bakjes" iconColor="yellow" title="Bakjes" chevron onClick=${() => navigate('/bakjes')} />
     </${List}>
     <${List}>
+      <${ListRow} icon="info" iconColor="blue" title="Uitleg" subtitle="Wat betekenen de woorden?" chevron onClick=${() => navigate('/uitleg')} />
       <${ListRow} icon="instellingen" iconColor="gray" title="Instellingen" chevron onClick=${() => navigate('/instellingen')} />
     </${List}>
     ${version && html`<p class="meer-version">Cents ${version} · <a href="https://github.com/playlist440/cents" target="_blank" rel="noopener noreferrer">Broncode</a> · AGPL-3.0</p>`}

@@ -132,3 +132,12 @@ def test_purchase_candidates_skip_rent(client, book):
     c = client.get("/api/assets").json()["purchase_candidates"]
     names = [x["merchant_name"] for x in c]
     assert "Autobedrijf" in names and "Verhuurder" not in names
+
+
+def test_front_loaded_depreciation():
+    from cents.services import spread
+    parts = spread.amounts(1_000_000, 4, 0, "front")
+    assert parts == [400000, 300000, 200000, 100000] and sum(parts) == 1_000_000
+    assert spread.amounts(1_000_000, 4, 0) == [250000] * 4
+    odd = spread.amounts(1001, 3, 0, "front")
+    assert sum(odd) == 1001 and odd[0] > odd[1] > odd[2]

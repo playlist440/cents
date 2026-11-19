@@ -32,6 +32,7 @@ import { Gallery } from './screens/gallery.js';
 import { Aannames } from './screens/aannames.js';
 import { Controle } from './screens/controle.js';
 import { Besparen } from './screens/besparen.js';
+import { Uitleg } from './screens/uitleg.js';
 import { ImportSheet } from './screens/import.js';
 import { UitgaveSheet } from './screens/uitgave.js';
 import { TransactieSheet } from './screens/transactie.js';
@@ -46,6 +47,7 @@ export const routes = [
   { path: '/meer', screen: Meer, title: 'Meer', tab: 'meer', sidebar: 'instellingen' },
   { path: '/sorteren', screen: Sorteren, title: 'Sorteren', tab: null, sidebar: 'sorteren', presentation: 'cover', parent: '/overzicht' },
   { path: '/vaste-lasten', screen: VasteLasten, title: 'Vaste lasten', tab: 'meer', sidebar: 'vaste-lasten', sidebarRoot: true, parent: '/meer' },
+  { path: '/uitleg', screen: Uitleg, title: 'Uitleg', tab: 'meer', sidebar: 'instellingen', parent: '/meer' },
   { path: '/besparen', screen: Besparen, title: 'Besparen', tab: 'meer', sidebar: 'besparen', sidebarRoot: true, parent: '/meer' },
   { path: '/jaaroverzicht', screen: Jaaroverzicht, title: 'Jaaroverzicht', tab: 'meer', sidebar: 'jaaroverzicht', sidebarRoot: true, parent: '/meer' },
   { path: '/terugblik', screen: Terugblik, title: 'Terugblik', tab: 'meer', sidebar: 'terugblik', sidebarRoot: true, parent: '/meer' },

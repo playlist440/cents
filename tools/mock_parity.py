@@ -189,7 +189,7 @@ CHECK = {
                  "result_cents", "free.", "buffer.", "tempo.avg_net_cents", "health.",
                  "checking_warning."],
     "overview:": ["income_cents", "fixed_cents", "daily_cents", "saved_cents", "repaid_cents",
-                  "result_cents", "net_cents"],
+                  "result_cents", "net_cents", "irregular_cents"],
     "recap:": ["totals.", "savings.saved_cents"],
     "trends": ["periods[", "top_merchants["],
     "goals": ["total_advice_cents", "room.", "savings_balance_cents", "unallocated_cents",

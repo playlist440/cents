@@ -211,8 +211,9 @@ function InvestPillar({ accounts, total, share }) {
       ${known.length > 0 && html`<${Fact} label="Resultaat" tone=${tone}
         value=${`${money(result, { signed: true, negative: true })}${pct != null ? ` · ${(pct * 100).toLocaleString('nl-NL', { maximumFractionDigits: 1, signDisplay: 'exceptZero' })}%` : ''}`} />`}
     </div>
+    ${known.length > 0 && Math.abs(invested + result - total) >= 100 && html`<p class="vm-p-note num">Ingelegd + resultaat is ${money(invested + result, { whole: true })}: het verschil met de waarde is dividend dat al op je bankrekening staat of kosten die apart zijn betaald.</p>`}
     ${invested > 0 && known.length > 0 && html`<${Meter} value=${Math.max(0, total)} of=${Math.max(total, invested)} mark=${invested}
-      label=${result >= 0 ? `${money(result, { whole: true })} boven je inleg · streepje = wat je inlegde` : `${money(-result, { whole: true })} onder je inleg · streepje = wat je inlegde`} kind="invest" />`}
+      label=${result >= 0 ? `${money(result, { whole: true })} boven je inleg · het streepje is wat je inlegde` : `${money(-result, { whole: true })} onder je inleg · het streepje is wat je inlegde`} kind="invest" />`}
     <${PillarRows} list=${list} />
   </section>`;
 }
@@ -268,6 +269,8 @@ function Hero({ data, accounts, desk = false }) {
   const value = sel ? sel.total_cents : data.total_cents;
   const first = pts[0]?.total_cents;
   const diff = pts.length > 1 ? data.total_cents - first : null;
+  // vermogensgroei apart: the home's value is not money you put aside
+  const homeDiff = pts.length > 1 && pts.at(-1).home_cents != null && pts[0].home_cents != null ? pts.at(-1).home_cents - pts[0].home_cents : null;
   const span = range === '6m' ? 'in 6 maanden' : range === '1j' ? 'in een jaar' : pts.length ? `sinds ${monthLabel(pts[0].month)}` : '';
   // Vrij vermogen = geld op de bank (betaal- en spaarrekeningen, min wat open staat op de
   // creditcard). De balk eronder toont hoe het hele vermogen over de drie pijlers verdeeld is.
@@ -290,6 +293,7 @@ function Hero({ data, accounts, desk = false }) {
     <div class="vm-hero-sub num">${sel
       ? (scrub > 0 ? deltaText(sel.total_cents - pts[scrub - 1].total_cents, 'die maand') : ' ')
       : diff != null ? deltaText(diff, span) : ' '}</div>
+    ${!sel && diff != null && homeDiff != null && Math.abs(homeDiff) >= 100 && html`<div class="vm-hero-note num">waarvan ${money(homeDiff, { whole: true, signed: true })} in je huis (waardestijging en aflossing), ${money(diff - homeDiff, { whole: true, signed: true })} op je rekeningen en beleggingen</div>`}
     ${data.pension_excluded_cents != null && html`<div class="vm-hero-note num">Pensioen (later beschikbaar) ${euros(data.pension_excluded_cents)}</div>`}
     ${desk && points.length > 1 && html`<div class="vm-range is-top"><${Segmented} value=${range} onChange=${(r) => { setRange(r); setScrub(null); }} options=${RANGES} label="Periode" size="small" /></div>`}
     ${desk && points.length > 1 && html`<div class="vm-chart">
@@ -619,7 +623,7 @@ function MortgageDetail({ m, onChange, close }) {
     <${MortgageSummary} m=${m} />
     <${YearForm} m=${m} onChange=${onChange} />
     <${HomeValue} m=${m} onChange=${onChange} />
-    <${List} footer=${m.repaid_share != null && m.payment ? `Van elke betaling telt ${Math.round(m.repaid_share * 100)} % als afgelost (gespaard), de rest als vaste lasten.` : null}>
+    <${List} footer=${m.repaid_share != null && m.payment ? `Van elke betaling telt ${String(Math.round(m.repaid_share * 1000) / 10).replace('.', ',')} % als afgelost (gespaard), de rest als vaste lasten.` : null}>
       <li class="field-row"><label class="field-label sa-grow" for="vm-mg-inc">Meetellen in vermogen</label>
         <${Switch} id="vm-mg-inc" checked=${m.include_in_networth} label="Woning meetellen in vermogen"
           onChange=${(on) => api.updateMortgage({ include_in_networth: on }).then(onChange, apiFail)} /></li>

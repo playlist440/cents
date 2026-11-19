@@ -160,8 +160,16 @@ function settlementUnexplained() {
 
 /* Costs over time (SPEC §7.4; services/spread.py): spread payments and possessions */
 const pIndex = (pid) => { const [y, m] = pid.split('-').map(Number); return y * 12 + m - 1; };
-function spreadAmounts(total, months, keep = 0) {
+function spreadAmounts(total, months, keep = 0, curve = null) {
   const base = Math.max(0, total - Math.max(0, Math.min(keep || 0, total)));
+  if (curve === 'front' && months > 1) {
+    // services/spread.py: sum of the years' digits, leftover cents to the first parts
+    const whole = (months * (months + 1)) / 2;
+    const parts = Array.from({ length: months }, (_, i) => Math.floor((base * (months - i)) / whole));
+    let left = base - parts.reduce((a, b) => a + b, 0);
+    for (let i = 0; left > 0; i++, left--) parts[i] += 1;
+    return parts;
+  }
   const q = Math.floor(base / months); const r = base % months;
   return Array.from({ length: months }, (_, i) => q + (i < r ? 1 : 0));
 }
@@ -177,11 +185,11 @@ function possessionLinks() {
 }
 function possessionPlan(a) {
   const sale = a.sale_tx_id ? db.transactions.find((t) => t.id === a.sale_tx_id) : null;
-  return { months: a.life_months || 96, total: a.price_cents || 0, keep: a.residual_cents || 0, start: a.start_date,
+  return { months: a.life_months || 96, total: a.price_cents || 0, keep: a.residual_cents || 0, curve: a.curve || null, start: a.start_date,
     sale_date: sale ? sale.date : a.sale_date || null, sale_cents: sale ? sale.amount_cents : a.sale_cents ?? null };
 }
 function spreadSchedule(plan, startPid) {
-  const parts = spreadAmounts(plan.total, plan.months, plan.keep);
+  const parts = spreadAmounts(plan.total, plan.months, plan.keep, plan.curve);
   const saleK = plan.sale_date && plan.sale_cents != null ? Math.max(0, pIndex(periodOf(plan.sale_date)) - pIndex(startPid)) : null;
   const upto = saleK == null ? parts.length : Math.min(saleK, parts.length);
   const out = [];
@@ -218,7 +226,7 @@ function possessionValue(a, day) {
   const plan = possessionPlan(a);
   if (!plan.start || day < plan.start) return null;
   if (plan.sale_date && day >= plan.sale_date) return 0;
-  const parts = spreadAmounts(plan.total, plan.months, plan.keep);
+  const parts = spreadAmounts(plan.total, plan.months, plan.keep, plan.curve);
   const p = periodOf(day);
   const k = pIndex(p) - pIndex(periodOf(plan.start));
   if (k >= parts.length) return plan.total - parts.reduce((s, v) => s + v, 0);
@@ -234,7 +242,7 @@ function spreadInfo(t) {
     const plan = possessionPlan(a);
     const first = periodOf(plan.start);
     return { kind: 'possession', role: link.role, asset_id: a.id, name: a.name, emoji: a.emoji, months: plan.months, residual_cents: plan.keep,
-      price_cents: plan.total, monthly_cents: spreadAmounts(plan.total, plan.months, plan.keep)[0], value_cents: possessionValue(a, db.today),
+      price_cents: plan.total, monthly_cents: spreadAmounts(plan.total, plan.months, plan.keep, plan.curve)[0], value_cents: possessionValue(a, db.today),
       from: first, to: shiftPeriod(first, plan.months - 1), sold: !!plan.sale_date, sale_date: plan.sale_date, sale_cents: plan.sale_cents, category_id: a.category_id };
   }
   if (!isSpread(t)) return null;
@@ -429,10 +437,17 @@ function recurringItems() {
    Overview, insights, trends
    ====================================================================================== */
 
+const MONTHS_SHORT_NL = ['jan', 'feb', 'mrt', 'apr', 'mei', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'dec'];
+/** Part of Dagelijks that comes a few times a year (services/summary.py irregular_in). */
+function irregularIn(f) {
+  return ['vakantie', 'kleding', 'cadeaus', 'huis-tuin'].reduce((s, k) => s + Math.max(0, f.cats.get(catByKey(k)?.id)?.cents || 0), 0);
+}
+
 function categoryAvg(catId, pid) {
   const prev = previousComplete(pid, 6);
   if (!prev.length) return 0;
-  return Math.round(prev.reduce((s, p) => s + (flows(p).cats.get(catId)?.cents || 0), 0) / prev.length);
+  // "normaal" = the median of the previous complete months (services/summary.py _normal)
+  return Math.round(median(prev.map((p) => flows(p).cats.get(catId)?.cents || 0)));
 }
 
 function overview(pid) {
@@ -507,7 +522,7 @@ function overview(pid) {
     period: p,
     income_cents: f.income, expected_income_cents, fixed_cents: f.fixed, fixed_upcoming_cents, fixed_overdue_cents,
     salary_expected: salaryUp[0] || null,
-    daily_cents: f.daily, saved_cents: f.saved, repaid_cents: f.repaid, saving_upcoming_cents,
+    daily_cents: f.daily, irregular_cents: irregularIn(f), saved_cents: f.saved, repaid_cents: f.repaid, saving_upcoming_cents,
     left_cents: left, per_day_left_cents: perDay, net_cents: net, result_cents: f.income - f.fixed - f.daily,
     pace, categories, income, upcoming, insights: [], unsorted,
     balance: { checking_cents: checking, expected_end_cents: expectedEnd },
@@ -565,7 +580,7 @@ function yearOverview(year) {
       next: `${year + 1}-01` <= cur ? String(year + 1) : null,
     },
     income_cents: t.income, expected_income_cents: t.income, fixed_cents: t.fixed, fixed_upcoming_cents: 0,
-    daily_cents: t.daily, saved_cents: t.saved, repaid_cents: t.repaid, saving_upcoming_cents: 0,
+    daily_cents: t.daily, irregular_cents: ids.reduce((a, id) => a + irregularIn(flows(id)), 0), saved_cents: t.saved, repaid_cents: t.repaid, saving_upcoming_cents: 0,
     fixed_overdue_cents: 0, salary_expected: null,
     left_cents: null, per_day_left_cents: null, net_cents: t.net, result_cents: t.result,
     per_month: { income_cents: pm(t.income), fixed_cents: pm(t.fixed), daily_cents: pm(t.daily), saved_cents: pm(t.saved), repaid_cents: pm(t.repaid), net_cents: pm(t.net), result_cents: pm(t.result) },
@@ -982,7 +997,7 @@ function insights(o, prev) {
     if (cat(c.category_id).key === 'unsorted') continue;
     if (c.avg_cents > 0 && diff > 5000 && diff > normal * 0.2 && prev.length >= 3) {
       spikes++;
-      out.push({ id: 'spike-' + c.category_id, kind: 'category_spike', tone: 'info', emoji: cat(c.category_id).emoji, title: `${cat(c.category_id).name}: ${euros(diff)} meer dan normaal`, value_cents: Math.round(diff), link: `/overzicht/bakje/${c.category_id}?period=${p.id}`, rank: diff / 100 });
+      out.push({ id: 'spike-' + c.category_id, kind: 'category_spike', tone: 'info', emoji: cat(c.category_id).emoji, title: `${cat(c.category_id).name}: ${euros(diff)} meer dan normaal ${p.is_current ? 'tot nu toe deze maand' : 'in ' + MONTHS[Number(p.id.slice(5)) - 1]}`, value_cents: Math.round(diff), link: `/overzicht/bakje/${c.category_id}?period=${p.id}`, rank: diff / 100 });
     }
   }
   const rec = recurringItems();
@@ -1037,6 +1052,13 @@ function insights(o, prev) {
     out.push({ id: `pension:${db.today.slice(0, 4)}`, kind: 'pension', tone: 'info', emoji: '🧓', title: 'Pensioenoverzicht bijwerken?', link: '/vermogen', rank: 29 });
   }
   const stale = daysBetween(db.transactions.reduce((m, t) => (t.date > m ? t.date : m), db.today), db.today);
+  // a checking account below zero, said plainly (services/insights.py overdrawn)
+  if (p.is_current) {
+    for (const a of db.accounts.filter((x) => x.type === 'checking' && !x.hidden)) {
+      const b = accountBalance(a);
+      if (b.balance_cents != null && b.balance_cents < 0) out.push({ id: `overdrawn:${a.id}:${b.as_of}`, kind: 'overdrawn', tone: 'warn', emoji: '🔻', title: `${a.name} staat ${euros(-b.balance_cents)} rood${b.as_of ? ` (saldo ${Number(b.as_of.slice(8))} ${MONTHS_SHORT_NL[Number(b.as_of.slice(5, 7)) - 1]})` : ''}`, value_cents: -b.balance_cents, link: '/vermogen', rank: 95 });
+    }
+  }
   if (stale > 10) out.push({ id: 'stale', kind: 'stale', tone: 'warn', emoji: '⏳', title: `Laatste import ${stale} dagen geleden`, link: '/import', rank: 90 });
   // Dismissed ids and muted kinds are left out before ranking (DECISIONS, Insight preferences).
   const dismissed = new Set(db.settings._dismissed_insights || []);
@@ -1064,7 +1086,8 @@ function trends(n) {
     const f = flows(pid);
     periods.push({ period: pid, label: monthLabel(pid), income_cents: f.income, fixed_cents: f.fixed, daily_cents: f.daily, saved_cents: f.saved, repaid_cents: f.repaid, net_cents: f.income - f.fixed - f.daily - f.saved, result_cents: f.income - f.fixed - f.daily, partial: pid === cur || pid === firstPeriod() });
   }
-  const catIds = db.categories.filter((c) => ['fixed', 'daily'].includes(c.grp)).map((c) => c.id);
+  // like services/summary.py trends: Creditcard (the unexplained part) and Nog te sorteren count too
+  const catIds = db.categories.filter((c) => ['fixed', 'daily'].includes(c.grp) || ['creditcard', 'unsorted'].includes(c.key)).map((c) => c.id);
   const categories = catIds
     .map((id) => ({ category_id: id, cents: periods.map((p) => flows(p.period).cats.get(id)?.cents || 0) }))
     .filter((c) => c.cents.some((x) => x));
@@ -1409,7 +1432,7 @@ function assetsNetworth() {
     const base = { id: a.id, kind: a.kind, name: a.name, debt_kind: a.debt_kind, include: a.include, value_cents: assetValue(a, db.today), signed_cents: assetSigned(a, db.today), as_of: es.at(-1)?.date || null, emoji: a.emoji || null };
     if (a.kind !== 'possession') return base;
     const plan = possessionPlan(a);
-    return { ...base, as_of: db.today, monthly_cents: spreadAmounts(plan.total, plan.months, plan.keep)[0], sold: !!plan.sale_date, sale_date: plan.sale_date };
+    return { ...base, as_of: db.today, monthly_cents: spreadAmounts(plan.total, plan.months, plan.keep, plan.curve)[0], sold: !!plan.sale_date, sale_date: plan.sale_date };
   });
 }
 function assetsOut() {
@@ -1439,8 +1462,8 @@ function possessionOut(a) {
   const taken = new Set(db.assets.map((x) => x.sale_tx_id).filter(Boolean));
   return { id: a.id, kind: 'possession', name: a.name, emoji: a.emoji, include: a.include, value_cents: value, signed_cents: value || 0,
     as_of: db.today, estimated: false, repaid_since_cents: 0, repaid_share: null, payment: null, debt_kind: null, entries: [],
-    price_cents: plan.total, start_date: plan.start, life_months: plan.months, residual_cents: plan.keep, category_id: a.category_id,
-    monthly_cents: spreadAmounts(plan.total, plan.months, plan.keep)[0], lost_cents: value != null && !plan.sale_date ? plan.total - value : null,
+    price_cents: plan.total, start_date: plan.start, life_months: plan.months, residual_cents: plan.keep, curve: plan.curve || 'linear', category_id: a.category_id,
+    monthly_cents: spreadAmounts(plan.total, plan.months, plan.keep, plan.curve)[0], lost_cents: value != null && !plan.sale_date ? plan.total - value : null,
     end_period: shiftPeriod(first, plan.months - 1), purchase: txBrief(a.tx_id),
     sale: plan.sale_date ? { date: plan.sale_date, cents: plan.sale_cents, tx: txBrief(a.sale_tx_id), result_cents: sale?.cents ?? null } : null,
     sale_candidates: plan.sale_date ? undefined : db.transactions.filter((t) => t.amount_cents >= 10000 && t.kind === 'normal' && t.date >= plan.start && !taken.has(t.id)
@@ -2303,7 +2326,7 @@ const ROUTES = [
       const emoji = [['motor', '🏍️'], ['camper', '🚐'], ['caravan', '🚐'], ['boot', '⛵'], ['fiets', '🚲']].find(([w]) => name.toLowerCase().includes(w))?.[1] || '🚗';
       db.seq.asset = (db.seq.asset || 0) + 1;
       db.assets.push({ id: db.seq.asset, kind: 'possession', name, include: true, merchant_key: null, debt_kind: null, tx_id: tx?.id || null,
-        price_cents: price, start_date: start, life_months: body.life_months || 96, residual_cents: body.residual_cents || 0,
+        price_cents: price, start_date: start, life_months: body.life_months || 96, residual_cents: body.residual_cents || 0, curve: body.curve === 'front' ? 'front' : null,
         category_id: body.category_id ?? (txCat && ['fixed', 'daily'].includes(txCat.grp) && txCat.key !== 'unsorted' ? txCat.id : catByKey('vervoer')?.id),
         emoji, sale_tx_id: null, sale_date: null, sale_cents: null });
       if (tx) tx.spread_months = null;
@@ -2330,6 +2353,7 @@ const ROUTES = [
     if (body.include != null) a.include = !!body.include;
     if (a.kind === 'possession') {
       for (const f of ['price_cents', 'life_months', 'residual_cents', 'category_id', 'emoji', 'start_date']) if (body[f] != null) a[f] = body[f];
+      if (body.curve) a.curve = body.curve === 'front' ? 'front' : null;
       if ((a.residual_cents || 0) > a.price_cents) fail(422, 'residual_too_high', 'De verwachte verkoopprijs is hoger dan de aankoopprijs.');
       if ('sale_tx_id' in body || 'sale_date' in body) {
         if (body.sale_tx_id) { a.sale_tx_id = body.sale_tx_id; a.sale_date = null; a.sale_cents = null; }
@@ -2514,7 +2538,7 @@ const ROUTES = [
 /* ---------- Slimme aannames (SPEC §13) ---------- */
 
 const INSIGHT_KINDS = {
-  pace: 'Dagelijkse uitgaven tot nu toe', category_spike: 'Meer dan normaal in een bakje', price_change: 'Prijsstijgingen',
+  overdrawn: 'Rood staan', pace: 'Dagelijkse uitgaven tot nu toe', category_spike: 'Meer dan normaal in een bakje', price_change: 'Prijsstijgingen',
   new_recurring: 'Nieuwe vaste lasten', ended_recurring: 'Gestopte vaste lasten', duplicate: 'Dubbele afschrijvingen',
   large: 'Grote eenmalige uitgaven', savings_rate: 'Hoeveel je spaart', buffer: 'Buffer', left_over: 'Geld over',
   unsorted: 'Nog te sorteren', yearly_bill: 'Jaarlijkse rekeningen', goal_behind: 'Potjes die achterlopen',

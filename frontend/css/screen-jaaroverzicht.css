@@ -31,3 +31,4 @@
 .jo-spark { flex: none; display: flex; margin-top: 3px; }
 .jo-total { color: var(--label); }
 .jo-rank { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 9px; background: var(--fill-4); font: 600 var(--fs-subhead)/1 var(--font-rounded); color: var(--label-2); }
+.jo-note { margin: -6px 0 12px; font: 400 var(--fs-footnote)/1.35 var(--font); color: var(--label-2); }

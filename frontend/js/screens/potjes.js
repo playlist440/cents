@@ -126,7 +126,7 @@ function GoalCard({ g }) {
     <${Card} class=${'pj-card' + (g.status === 'reached' ? ' is-reached' : '')} onClick=${() => navigate(`/potjes/${g.id}`)}
       label=${`${g.name}, ${euros(g.saldo_cents)} van ${euros(g.target_cents)}, ${pct} procent`}>
       <span class="pj-card-top">
-        <${ProgressRing} value=${g.progress} color=${g.color} size=${64} stroke=${8} emoji=${g.emoji} label=${`${pct} procent`} />
+        <${ProgressRing} value=${g.progress} color=${g.status === 'reached' ? 'green' : g.color} size=${64} stroke=${8} emoji=${g.emoji} label=${`${pct} procent`} />
         <${StatusChip} status=${g.status} />
       </span>
       <span class="pj-card-name">${g.name}</span>

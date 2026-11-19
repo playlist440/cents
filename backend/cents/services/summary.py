@@ -28,6 +28,12 @@ def _mean(values: list[int]) -> int:
     return int(round(sum(values) / len(values))) if values else 0
 
 
+def _normal(values: list[int]) -> int:
+    """"Normaal" for a bakje everywhere (Overzicht, bakje, meldingen): the median of the
+    previous complete months, so one holiday or one big purchase does not move it."""
+    return int(round(statistics.median(values))) if values else 0
+
+
 def category_value(f: Flows, category: dict) -> int:
     """What a bakje shows for a period: income in, saved, or spent."""
     if category["grp"] == INCOME:
@@ -123,7 +129,7 @@ def build_overview(conn: sqlite3.Connection, lg: Ledger, p: Period) -> dict:
         if cat["grp"] not in (FIXED, DAILY) and cat["key"] not in ("unsorted", "creditcard"):
             continue
         spent = f.spent.get(cid, 0)
-        avg = _mean([lg.flows_for(h).spent.get(cid, 0) for h in history])
+        avg = _normal([lg.flows_for(h).spent.get(cid, 0) for h in history])
         count = f.counts.get(cid, 0)
         if spent or avg or count:
             cats.append({"category_id": cid, "spent_cents": spent, "avg_cents": avg, "count": count,
@@ -150,6 +156,7 @@ def build_overview(conn: sqlite3.Connection, lg: Ledger, p: Period) -> dict:
         "fixed_overdue_cents": fixed_overdue,
         "salary_expected": salary_dates[0].isoformat() if salary_dates and is_current else None,
         "daily_cents": f.daily,
+        "irregular_cents": irregular_in(lg, f),
         "saved_cents": f.saved,
         "repaid_cents": f.repaid,
         "saving_upcoming_cents": saving_upcoming,
@@ -275,6 +282,7 @@ def build_year_overview(conn: sqlite3.Connection, lg: Ledger, year: int) -> dict
         "fixed_overdue_cents": 0,
         "salary_expected": None,
         "daily_cents": tot["daily"],
+        "irregular_cents": sum(irregular_in(lg, f) for f in flows),
         "saved_cents": tot["saved"],
         "repaid_cents": tot["repaid"],
         "saving_upcoming_cents": 0,
@@ -309,6 +317,15 @@ def build_year_overview(conn: sqlite3.Connection, lg: Ledger, year: int) -> dict
         "checking_warning": None,
         "health": None,
     }
+
+
+IRREGULAR = ("vakantie", "kleding", "cadeaus", "huis-tuin")
+
+
+def irregular_in(lg: Ledger, f: Flows) -> int:
+    """The part of Dagelijks that comes a few times a year (vakantie, kleding, cadeaus, huis &
+    tuin): shown apart so a holiday month does not read as overspending on groceries."""
+    return sum(max(0, f.spent.get(lg.cat_ids[k], 0)) for k in IRREGULAR if k in lg.cat_ids)
 
 
 def repaid_in(f, cid: int) -> int:
@@ -411,7 +428,7 @@ def category_summary(conn: sqlite3.Connection, category: dict, period_id: str | 
     return {
         "spent_cents": category_value(f, category),
         "repaid_cents": repaid_in(f, cid),
-        "avg_cents": _mean([category_value(lg.flows_for(h), category) for h in history]),
+        "avg_cents": _normal([category_value(lg.flows_for(h), category) for h in history]),
         "count": len(tx_rows) + len(parts),
         "series": series,
         "parts": parts,

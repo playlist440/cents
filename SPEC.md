@@ -517,7 +517,9 @@ fly and cached until the next write:
   the previous up to six complete periods at the same day index). The UI shows it as
   "Dagelijkse uitgaven – nog over" (normal month's total minus spending; may go below zero),
   or as plain cumulative "Uitgegeven" when there is no typical series.
-- Per category: spent, the average of the previous six complete periods, count.
+- Per category: spent, "normaal" (`avg_cents`) = the median of the previous six complete
+  periods (the same everywhere: Overzicht, bakje, meldingen), count. `irregular_cents` = the part
+  of Dagelijks in Vakantie, Kleding, Cadeaus and Huis & tuin (shown as "waarvan … onregelmatig").
 
 **Jaar** (`build_year_overview`, `GET /overview?period=2026`): the periods whose id lies in the
 year (`2026-01` … `2026-12`, so with `month_start_day` 24 the year starts on 24 December) and
@@ -575,6 +577,10 @@ Riverty/Afterpay, in3, Billink in the last three months; also `health.debts.late
 screen of the current month says how much is left of a normal month ("Nog € 28 tot een normale
 maand") in daily bakjes.
 
+**Waardeverlies** of a possession: `assets.curve` (schema v11) `linear` (equal parts) or `front`
+(sum of the years' digits: the first month weighs most, like a car). New possessions default to
+`front` in the UI.
+
 **Insights** (`services/insights.py`): each returns `{id, kind, tone, emoji, title, value_cents?,
 detail?, link}` with one short Dutch sentence as `title`. Compute all, rank, return at most five.
 Only show an insight when the data really supports it (minimum history per rule). The
@@ -603,7 +609,9 @@ Overzicht shows only actionable kinds: `fixed_share`, `last_year`, `savings_rate
 15. `fixed_share` — fixed costs as a share of income; info below 50 %, warn above 60 %.
 16. `last_year` — this period's daily spending vs the same period last year ("… meer aan
     dagelijkse uitgaven dan …"; needs 13 periods).
-17. `tempo` — the three-month mean result (`tempo`) is € 25 or more negative: "Jullie geven
+17. `overdrawn` — a checking account below zero on its latest balance ("Betaalrekening staat € 2.831
+    rood"), warn, shown on the Overzicht.
+18. `tempo` — the three-month mean result (`tempo`) is € 25 or more negative: "Jullie geven
     sinds <maand> gemiddeld € X per maand meer uit dan er binnenkomt." Id `tempo:<since>`.
 Tone: `good`, `warn`, `info`. Never moralise.
 

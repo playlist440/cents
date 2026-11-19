@@ -652,7 +652,7 @@
   }
   .pj-head-label { grid-column: 1 / 3; grid-row: 1; }
   .pj-head-amount { grid-column: 1; grid-row: 2; margin: 0; font-size: 2.5rem; }
-  .pj-head-sub { grid-column: 2; grid-row: 2; font-size: var(--fs-body); }
+  .pj-head-sub { grid-column: 2; grid-row: 2; font-size: var(--fs-body); min-width: 0; overflow-wrap: anywhere; }
   .pj-head .pj-advice { grid-column: 3; grid-row: 1 / span 2; align-self: center; margin: 0; min-width: 300px; padding: 10px 14px; }
   .pj-advice-icon { width: 32px; height: 32px; border-radius: 8px; }
   .pj-grid { grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 16px; }

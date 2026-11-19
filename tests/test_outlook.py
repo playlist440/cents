@@ -431,3 +431,20 @@ def test_loans_not_on_vermogen_are_named(client, book):
     book.commit()
     d = overview(client)["health"]["debts"]
     assert d["known"] is False and d["unlisted"] == [{"name": "DUO", "per_month_cents": 9600}]
+
+
+def test_overdrawn_checking_is_said_plainly(client, book):
+    chk, _ = household(book)
+    book.tx(chk, "2026-03-14", -260000, "huis-tuin", "Aannemer", method="debit", balance=-60000)
+    book.commit()
+    ins = {i["kind"]: i for i in overview(client)["insights"]}
+    assert ins["overdrawn"]["title"].startswith("Betaal staat") and "rood" in ins["overdrawn"]["title"]
+    assert ins["overdrawn"]["tone"] == "warn"
+
+
+def test_irregular_part_of_daily(client, book):
+    chk, _ = household(book)
+    book.tx(chk, "2026-02-12", -80000, "vakantie", "Camping", method="ideal")
+    book.commit()
+    o = client.get("/api/overview?period=2026-02").json()
+    assert o["irregular_cents"] == 80000 and o["daily_cents"] == 60000 + 80000

@@ -40,9 +40,20 @@ export function durationLabel(months) {
 const chipLabel = (m) => (m % 12 === 0 ? durationLabel(m) : `${m} mnd`);
 
 /** Het eerste (grootste) maanddeel, zoals de server het rekent. */
-export function firstPart(total, months, keep = 0) {
+export function firstPart(total, months, keep = 0, curve = 'linear') {
   const base = Math.max(0, total - Math.max(0, Math.min(keep || 0, total)));
+  if (curve === 'front' && months > 1) return Math.floor((base * months) / ((months * (months + 1)) / 2)) + 1;
   return Math.floor(base / months) + (base % months ? 1 : 0);
+}
+
+/** How a possession loses value (services/spread.py amounts, curve). */
+const CURVES = [{ value: 'linear', label: 'Gelijkmatig' }, { value: 'front', label: 'Sneller in het begin' }];
+function CurvePick({ value, onChange }) {
+  return html`<div class="ps-life">
+    <span class="ps-life-label">Waardeverlies</span>
+    <${Segmented} value=${value} onChange=${onChange} options=${CURVES} size="small" label="Hoe verliest het waarde" />
+    <p class="td-cost-hint is-quiet">${value === 'front' ? 'Zoals bij een auto: de eerste jaren veel, later minder.' : 'Elke maand evenveel.'}</p>
+  </div>`;
 }
 
 const roundTo = (cents, step) => Math.round(cents / step) * step;
@@ -158,6 +169,7 @@ function LinkedPossession({ t, link, info, anchor }) {
 export function PossessionForm({ txId = null, price: initialPrice = null, date: initialDate = null, inline = false, onCreated }) {
   const [name, setName] = useState('Auto');
   const [life, setLife] = useState(96);
+  const [curve, setCurve] = useState('front');
   const [price, setPrice] = useState(initialPrice);
   const [residual, setResidual] = useState(suggestedResidual(initialPrice, 96));
   const [own, setOwn] = useState(false);              // verkoopprijs zelf ingevuld
@@ -171,12 +183,12 @@ export function PossessionForm({ txId = null, price: initialPrice = null, date: 
     setBusy(true);
     try {
       const res = await api.createAsset({ kind: 'possession', name: name.trim(), tx_id: txId, price_cents: price,
-        ...(txId ? {} : { start_date: day }), life_months: life, residual_cents: residual || 0 });
+        ...(txId ? {} : { start_date: day }), life_months: life, residual_cents: residual || 0, curve });
       onCreated?.(res.id, name.trim());
     } catch (err) { fail(err); }
     setBusy(false);
   };
-  const per = price > 0 ? firstPart(price, life, residual || 0) : null;
+  const per = price > 0 ? firstPart(price, life, residual || 0, curve) : null;
   return html`<div class=${'ps-form' + (inline ? ' is-inline' : '')}>
     <ul class="list-group inset">
       <${TextField} label="Naam" value=${name} onInput=${setName} placeholder="Auto" maxLength=${60} enterkeyhint="done" />
@@ -190,7 +202,8 @@ export function PossessionForm({ txId = null, price: initialPrice = null, date: 
         ${LIFE_CHOICES.map((m) => html`<${Chip} key=${m} selected=${life === m} onClick=${() => pickLife(m)}>${chipLabel(m)}</${Chip}>`)}
       </div>
     </div>
-    ${per != null && html`<p class="td-cost-sum num"><strong>${money(per)}</strong> waardeverlies per maand · na ${durationLabel(life)} nog ${euros(residual || 0)} waard</p>`}
+    <${CurvePick} value=${curve} onChange=${setCurve} />
+    ${per != null && html`<p class="td-cost-sum num"><strong>${money(per)}</strong> waardeverlies ${curve === 'front' ? 'in de eerste maand' : 'per maand'} · na ${durationLabel(life)} nog ${euros(residual || 0)} waard</p>`}
     ${(residual || 0) > (price || 0) && html`<p class="td-cost-hint is-warn">De verkoopprijs is hoger dan de aankoopprijs.</p>`}
     <p class="td-cost-hint is-quiet">Een schatting is genoeg, je kunt het later aanpassen. Ingeruild of deels geleend? Vul dan de hele aankoopprijs in.</p>
     <div class="ps-actions"><${Button} variant=${inline ? 'tinted' : 'filled'} size="medium" block onClick=${create} disabled=${!ok} loading=${busy}>Maak bezitting</${Button}></div>
@@ -309,9 +322,10 @@ function PossessionEdit({ a, onSave, onCancel }) {
   const [price, setPrice] = useState(a.price_cents);
   const [residual, setResidual] = useState(a.residual_cents);
   const [life, setLife] = useState(a.life_months);
+  const [curve, setCurve] = useState(a.curve || 'linear');
   const [day, setDay] = useState(a.start_date);
   const ok = !!name.trim() && price > 0 && (residual || 0) <= price;
-  const per = price > 0 ? firstPart(price, life, residual || 0) : null;
+  const per = price > 0 ? firstPart(price, life, residual || 0, curve) : null;
   return html`<div class="ps-form">
     <ul class="list-group inset">
       <${TextField} label="Naam" value=${name} onInput=${setName} maxLength=${60} />
@@ -325,11 +339,12 @@ function PossessionEdit({ a, onSave, onCancel }) {
         ${[...new Set([...LIFE_CHOICES, a.life_months])].sort((x, y) => x - y).map((m) => html`<${Chip} key=${m} selected=${life === m} onClick=${() => setLife(m)}>${chipLabel(m)}</${Chip}>`)}
       </div>
     </div>
-    ${per != null && html`<p class="td-cost-sum num"><strong>${money(per)}</strong> waardeverlies per maand</p>`}
+    <${CurvePick} value=${curve} onChange=${setCurve} />
+    ${per != null && html`<p class="td-cost-sum num"><strong>${money(per)}</strong> waardeverlies ${curve === 'front' ? 'in de eerste maand' : 'per maand'}</p>`}
     <div class="ps-actions is-row">
       <${Button} variant="plain" size="medium" onClick=${onCancel}>Annuleer</${Button}>
       <${Button} variant="filled" size="medium" disabled=${!ok}
-        onClick=${() => onSave({ name: name.trim(), price_cents: price, residual_cents: residual || 0, life_months: life, ...(a.purchase ? {} : { start_date: day }) })}>Bewaar</${Button}>
+        onClick=${() => onSave({ name: name.trim(), price_cents: price, residual_cents: residual || 0, life_months: life, curve, ...(a.purchase ? {} : { start_date: day }) })}>Bewaar</${Button}>
     </div>
   </div>`;
 }

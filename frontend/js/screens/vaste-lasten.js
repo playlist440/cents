@@ -41,8 +41,8 @@ const VIEWS = [['lijst', 'Lijst'], ['kalender', 'Kalender']];
 const SECTIONS = [
   { id: 'fixed', title: 'Vaste lasten' },
   { id: 'daily', title: 'Ook regelmatig, buiten de vaste lasten' },
-  { id: 'saving', title: 'Sparen en beleggen' },
-  { id: 'income', title: 'Inkomen' },
+  { id: 'saving', title: 'Vaste spaaropdrachten' },
+  { id: 'income', title: 'Vast inkomen' },
 ];
 function sectionOf(it) {
   if (it.direction === 'in') return 'income';
@@ -141,7 +141,7 @@ function Hero({ data, items, desk = false }) {
     <div class="vl-hero-sub num">${euros(year)} per jaar${data.repaid_cents > 0 ? ` · waarvan ${euros(data.repaid_cents)} per maand aflossing` : ''}</div>
     ${share != null && html`<div class=${'vl-share' + (share > 0.6 ? ' is-high' : '')}>
       <span class="vl-share-track" aria-hidden="true"><span ref=${draw} style=${{ transform: `scaleX(${Math.min(1, share)})` }}></span></span>
-      <span class="vl-share-label num">${percent(share)} van je inkomen</span>
+      <span class="vl-share-label num">${percent(share)} van je inkomen${data.income_cents ? ` (gemiddeld ${euros(data.income_cents)} per maand)` : ''}</span>
     </div>`}
     ${subs?.count > 0 && html`<p class="vl2-subs num">${plural(subs.count, 'abonnement', 'abonnementen')} · ${euros(subs.per_month_cents)} per maand · ${euros(subs.per_year_cents)} per jaar</p>`}
   </section>`;
@@ -458,7 +458,7 @@ function ItemDetail({ close, it, cal = null, inline = false }) {
         <${BarChart} data=${bars} height=${120} color=${colorVar(cat.color)} selected=${sel} onSelect=${setSel} highlight=${bars.length - 1}
           valueFormat=${(v) => money(v)} label=${`Betalingen aan ${it.name}`} />
       </div>`}
-      ${payments.length > 0 && html`<${List} header="Betalingen">
+      ${payments.length > 0 && html`<${List} header=${payments.length > 12 ? `Laatste 12 van ${payments.length} betalingen` : 'Betalingen'}>
         ${payments.slice(0, 12).map((t) => html`<${TxRow} key=${t.id} tx=${t} date hideCategory onClick=${() => openTransaction(t)} />`)}
       </${List}>`}
       ${!data && html`<${Skeleton} h=${150} r=${16} />`}

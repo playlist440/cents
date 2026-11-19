@@ -45,8 +45,8 @@ export function HoldingsPart({ account }) {
     ? `${h.price_stale ? 'Koers van' : 'Koersen van'} ${longDate(h.price_date)}`
     : null;
   return html`
-    <${List} header="Resultaat" footer=${h.invested_source === 'trades' ? 'Ingelegd = wat je kocht (geen overboekingen naar deze rekening gevonden).'
-      : h.invested_source === 'degiro' ? 'Ingelegd = stortingen min opnames uit het rekeningoverzicht van je broker.' : null}>
+    <${List} header="Resultaat" footer=${[h.invested_source === 'trades' ? 'Ingelegd = wat je kocht (geen overboekingen naar deze rekening gevonden).'
+      : h.invested_source === 'degiro' ? 'Ingelegd = stortingen min opnames uit het rekeningoverzicht van je broker.' : null, gapNote(h)].filter(Boolean).join(' ')}>
       <${ListRow} title="Waarde fondsen" value=${html`<span class="num">${money(h.market_value_cents)}</span>`} />
       ${h.cash_cents > 0 && html`<${ListRow} title="Geld op de rekening" subtitle="geschat" value=${html`<span class="num">${money(h.cash_cents)}</span>`} />`}
       <${ListRow} title="Ingelegd" value=${html`<span class="num">${money(h.invested_cents)}</span>`} />
@@ -187,4 +187,14 @@ export function TradeSheet({ close, account }) {
       ${quantity > 0 && price > 0 && html`<p class="vm-trade-total num">Totaal ${money(Math.round(quantity * price) + (side === 'buy' ? 1 : -1) * (fees || 0))}</p>`}
     </div>
   </${Sheet}>`;
+}
+
+/** Ingelegd + resultaat is not always the value: dividend paid out to your bank and costs
+ *  paid from elsewhere are in the result, not in the account. Say so instead of leaving a sum
+ *  that does not add up (usability test 2026-11). */
+function gapNote(h) {
+  const value = (h.market_value_cents || 0) + (h.cash_cents || 0);
+  const gap = h.invested_cents + h.result_cents - value;
+  if (Math.abs(gap) < 100) return null;
+  return `Ingelegd + resultaat is ${money(h.invested_cents + h.result_cents)}, de waarde ${money(value)}: het verschil van ${money(Math.abs(gap))} is ${gap > 0 ? 'dividend dat al op je bankrekening staat' : 'geld dat er los op staat'} of kosten die apart zijn betaald.`;
 }

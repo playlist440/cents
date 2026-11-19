@@ -337,8 +337,14 @@ ALTER TABLE assets ADD COLUMN sale_cents INTEGER;
 """
 
 # Forward-only. Append new migrations; never edit an old one.
+# v11: how a possession loses value: 'linear' (equal parts) or 'front' (faster at first, like a
+# car: sum-of-the-years'-digits). NULL = linear.
+SCHEMA_V11 = """
+ALTER TABLE assets ADD COLUMN curve TEXT;
+"""
+
 MIGRATIONS: list[str] = [SCHEMA_V1, SCHEMA_V2, SCHEMA_V3, SCHEMA_V4, SCHEMA_V5, SCHEMA_V6, SCHEMA_V7, SCHEMA_V8,
-                         SCHEMA_V9, SCHEMA_V10]
+                         SCHEMA_V9, SCHEMA_V10, SCHEMA_V11]
 SCHEMA_VERSION = len(MIGRATIONS)
 
 DEFAULT_SETTINGS: dict[str, Any] = {"month_start_day": 1, "household_name": ""}

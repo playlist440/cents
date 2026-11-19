@@ -19,3 +19,4 @@
 .kit-confirm-actions { display: flex; flex-direction: column; gap: 6px; width: 100%; margin-top: 22px; }
 .kit-confirm-line.is-plain { color: var(--label-2); font-weight: 400; }
 .meer-version a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
+.uitleg-row .row-sub { white-space: normal; line-height: 1.4; } .uitleg-row { padding-top: 10px; padding-bottom: 10px; }

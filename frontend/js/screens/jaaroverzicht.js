@@ -73,8 +73,8 @@ function ChartCard({ periods, sel, setSel, desk = false }) {
   const p = sel != null ? periods[sel] : null;
   const sum = (k) => periods.reduce((s, x) => s + (x[k] || 0), 0);
   const v = p
-    ? { income: p.income_cents, spent: p.fixed_cents + p.daily_cents, fixed: p.fixed_cents, daily: p.daily_cents, saved: p.saved_cents }
-    : { income: sum('income_cents'), spent: sum('fixed_cents') + sum('daily_cents'), fixed: sum('fixed_cents'), daily: sum('daily_cents'), saved: sum('saved_cents') };
+    ? { income: p.income_cents, spent: p.fixed_cents + p.daily_cents, fixed: p.fixed_cents, daily: p.daily_cents, saved: p.saved_cents, repaid: p.repaid_cents || 0 }
+    : { income: sum('income_cents'), spent: sum('fixed_cents') + sum('daily_cents'), fixed: sum('fixed_cents'), daily: sum('daily_cents'), saved: sum('saved_cents'), repaid: sum('repaid_cents') };
   const title = p ? capitalize(monthSmart(p.period)) : periods.length >= 12 ? 'Afgelopen 12 maanden' : `Afgelopen ${plural(periods.length, 'maand', 'maanden')}`;
   // over / tekort: the same result as the Overzicht and the Terugblik (saving is not spending)
   const result = v.income - v.spent;
@@ -99,6 +99,7 @@ function ChartCard({ periods, sel, setSel, desk = false }) {
       <${Stat} color="var(--chart-daily)" label="Dagelijks" cents=${v.daily} />
       <${Stat} color="var(--chart-saved)" label="Gespaard" cents=${v.saved} />
     </div>
+    ${v.repaid > 0 && html`<p class="jo-note num">Gespaard is inclusief ${euros(v.repaid)} aflossing. Het is ook geld dat over was, daarom kan het meer zijn dan "over".</p>`}
     <${BarChart} data=${data} series=${SERIES} height=${desk ? 360 : 200} selected=${sel} onSelect=${setSel}
       line=${{ ...INCOME, values: periods.map((x) => x.income_cents) }} highlight=${periods.length - 1}
       label="Uitgaven, sparen en inkomen per maand" />

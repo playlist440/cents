@@ -30,7 +30,7 @@ from .text import day_month, euro, month_name, one_decimal, percent, period_mont
 MAX_INSIGHTS = 5
 
 SCORES = {
-    "stale": 100, "duplicate": 90, "price_change": 80, "ended_recurring": 78,
+    "stale": 100, "overdrawn": 95, "duplicate": 90, "price_change": 80, "ended_recurring": 78,
     "new_recurring": 76, "category_spike": 70, "large": 68, "yearly_bill": 66, "left_over": 64,
     "pace": 60, "goal_behind": 58, "goal_reached": 56, "buffer": 55, "unsorted": 50,
     "fixed_share": 45, "last_year": 40, "savings_rate": 35, "fx_costs": 33, "bank_fees": 30,
@@ -101,6 +101,22 @@ def pace(lg: Ledger, p: Period, ov: dict) -> list[dict]:
 NON_MONTHLY = ("quarterly", "half-year", "yearly")
 
 
+def overdrawn(conn: sqlite3.Connection, lg: Ledger, p: Period, ov: dict) -> list[dict]:
+    """A checking account below zero on its latest balance: say it plainly (usability test
+    2026-11: the red balance was only visible inside the breakdown)."""
+    if not ov["period"]["is_current"]:
+        return []
+    from . import outlook
+    out = []
+    for a in outlook.balance_accounts(conn):
+        if a["type"] == "checking" and a["balance_cents"] < 0:
+            when = f" (saldo {day_month(a['as_of'])})" if a.get("as_of") else ""
+            out.append(make("overdrawn", f"overdrawn:{a['id']}:{a['as_of']}", "warn", "🔻",
+                            f"{a['name']} staat {euro(-a['balance_cents'])} rood{when}",
+                            "networth", {}, -a["balance_cents"]))
+    return out
+
+
 def category_spike(lg: Ledger, p: Period, ov: dict, by_tx: dict[int, dict]) -> list[dict]:
     history = lg.complete_before(p, 6)
     if len(history) < 3:
@@ -137,7 +153,8 @@ def category_spike(lg: Ledger, p: Period, ov: dict, by_tx: dict[int, dict]) -> l
         if diff > 5000 and diff > 0.2 * normal:
             found.append((diff, cid, cat))
     found.sort(key=lambda x: -x[0])
-    when = "deze maand" if is_current else f"in {period_month(p.id)}"
+    # "normaal" here is a normal month up to the same day, so say so for the running month
+    when = "tot nu toe deze maand" if is_current else f"in {period_month(p.id)}"
     return [make("category_spike", f"category_spike:{cid}:{p.id}", "info", cat["emoji"] or "📊",
                  f"{cat['name']}: {euro(diff)} meer dan normaal {when}",
                  "category", {"id": cid, "period": p.id}, diff, bonus=min(diff / 10000, 5))
@@ -553,6 +570,7 @@ KIND_LABELS = {
     "goal_behind": "Potjes die achterlopen",
     "goal_reached": "Gehaalde potjes",
     "stale": "Importherinnering",
+    "overdrawn": "Rood staan",
     "fixed_share": "Aandeel vaste lasten",
     "last_year": "Vergelijking met vorig jaar",
     "bank_fees": "Bankkosten",
@@ -593,6 +611,7 @@ def candidates(conn: sqlite3.Connection, lg: Ledger, p: Period, ov: dict) -> lis
     by_tx = recurring.by_transaction(conn)
     found: list[dict] = []
     found += stale(lg, p, ov)
+    found += overdrawn(conn, lg, p, ov)
     found += duplicates(lg, p, ov)
     found += recurring_news(lg, p, ov, items)
     found += category_spike(lg, p, ov, by_tx)

@@ -258,6 +258,7 @@ class AssetCreate(BaseModel):
     start_date: str | None = None
     life_months: Annotated[int, Field(ge=6, le=360)] | None = None
     residual_cents: Annotated[int, Field(ge=0, le=MONEY_LIMIT)] | None = None
+    curve: Literal["linear", "front"] | None = None
     category_id: int | None = None
     emoji: str | None = Field(default=None, max_length=16)
 
@@ -272,6 +273,7 @@ class AssetPatch(BaseModel):
     start_date: str | None = None
     life_months: Annotated[int, Field(ge=6, le=360)] | None = None
     residual_cents: Annotated[int, Field(ge=0, le=MONEY_LIMIT)] | None = None
+    curve: Literal["linear", "front"] | None = None
     category_id: int | None = None
     emoji: str | None = Field(default=None, max_length=16)
     # sale: the payment that brought the money in, or a date and price (inruil); both null = not sold

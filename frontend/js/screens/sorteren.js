@@ -7,7 +7,7 @@
 import { html, useEffect, useRef, useState } from '../vendor/preact-htm.js';
 import { api } from '../api.js';
 import { useStore, categoryById, categoryByKey, invalidate } from '../store.js';
-import { navigate } from '../router.js';
+import { navigate, back as routerBack, previousEntry } from '../router.js';
 import { usePage, reducedMotion, canHover, isWide } from '../hooks.js';
 import { money, plural, shortDate } from '../format.js';
 import { Screen, NavButton } from '../components/Screen.js';
@@ -136,8 +136,12 @@ export function Sorteren() {
   }
 
   const again = () => setS((cur) => ({ ...cur, queue: cur.skipped, i: 0, skipped: [], history: [], total: cur.skipped.length + cur.done }));
-  // "Klaar" always lands on Overzicht for the current period.
-  const close = () => { invalidate(); navigate('/overzicht', { replace: true, direction: isWide() ? 'tab' : 'uncover' }); };
+  // "Klaar" goes back to where you came from (Controle, Overzicht, …), else to Overzicht.
+  const close = () => {
+    invalidate();
+    if (previousEntry()) routerBack();
+    else navigate('/overzicht', { replace: true, direction: isWide() ? 'tab' : 'uncover' });
+  };
 
   /* ---------- Keyboard ---------- */
   useEffect(() => {

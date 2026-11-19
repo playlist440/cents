@@ -41,6 +41,7 @@ class Plan:
     tx_id: int | None = None
     total: int | None = None      # cents; spread: None = the payment's own amount
     keep: int = 0                 # possession: expected resale value at the end
+    curve: str | None = None      # possession: 'front' = faster at first, else linear
     start: str | None = None      # possession: purchase day
     category_id: int | None = None
     sale_date: str | None = None
@@ -49,10 +50,19 @@ class Plan:
     name: str | None = None
 
 
-def amounts(total: int, months: int, keep: int = 0) -> list[int]:
-    """`total - keep` in `months` parts; the first parts take the leftover cents."""
+def amounts(total: int, months: int, keep: int = 0, curve: str | None = None) -> list[int]:
+    """`total - keep` in `months` parts; the first parts take the leftover cents. With curve
+    'front' the parts shrink month by month (sum of the years' digits: the first month weighs
+    `months`, the last 1), like a car that loses most of its value in the first years."""
     months = max(1, int(months))
     base = max(0, total - max(0, min(keep, total)))
+    if curve == "front" and months > 1:
+        weights = list(range(months, 0, -1))
+        whole = sum(weights)
+        parts = [base * w // whole for w in weights]
+        for i in range(base - sum(parts)):
+            parts[i] += 1
+        return parts
     q, r = divmod(base, months)
     return [q + (1 if i < r else 0) for i in range(months)]
 
@@ -64,7 +74,7 @@ def _index(pid: str) -> int:
 
 def schedule(plan: Plan, total: int, start: Period, start_day: int) -> list[tuple[Period, int, int, str]]:
     """(period, offset, cents, role) for every period the plan counts in."""
-    parts = amounts(total, plan.months, plan.keep)
+    parts = amounts(total, plan.months, plan.keep, plan.curve)
     out = []
     sale_k = None
     if plan.sale_date and plan.sale_cents is not None:
@@ -87,7 +97,7 @@ def value_on(plan: Plan, total: int, day: str, start_day: int) -> int | None:
         return None
     if plan.sale_date and day >= plan.sale_date:
         return 0
-    parts = amounts(total, plan.months, plan.keep)
+    parts = amounts(total, plan.months, plan.keep, plan.curve)
     d = date.fromisoformat(day)
     first = periods.period_for(date.fromisoformat(plan.start), start_day)
     p = periods.period_for(d, start_day)
@@ -113,7 +123,7 @@ def possession_plan(a: dict, tx: dict | None) -> Plan:
     return Plan(kind="possession", months=a["life_months"] or 96, tx_id=a["tx_id"],
                 total=a["price_cents"] or 0, keep=a["residual_cents"] or 0, start=a["start_date"],
                 category_id=a["category_id"], sale_date=sale_date, sale_cents=sale_cents,
-                asset_id=a["id"], name=a["name"])
+                asset_id=a["id"], name=a["name"], curve=a.get("curve"))
 
 
 def possessions(conn: sqlite3.Connection) -> list[tuple[dict, Plan]]:
@@ -189,7 +199,8 @@ def describe(conn: sqlite3.Connection, tx: dict) -> dict | None:
         first = periods.period_for(date.fromisoformat(plan.start), sd) if plan.start else start
         return {"kind": "possession", "role": link["role"], "asset_id": a["id"], "name": a["name"],
                 "emoji": a["emoji"], "months": plan.months, "residual_cents": plan.keep,
-                "price_cents": total, "monthly_cents": amounts(total, plan.months, plan.keep)[0],
+                "price_cents": total, "monthly_cents": amounts(total, plan.months, plan.keep, plan.curve)[0],
+                "curve": plan.curve or "linear",
                 "value_cents": value_on(plan, total, periods.today().isoformat(), sd),
                 "from": first.id, "to": end_period(plan, first, sd).id,
                 "sold": bool(plan.sale_date), "sale_date": plan.sale_date, "sale_cents": plan.sale_cents,

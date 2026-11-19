@@ -37,7 +37,7 @@ export function useCountUp(target, { duration = 900, from = null, enabled = true
   return value;
 }
 
-export function Amount({ cents, whole = false, signed = false, negative = false, animate = false, from = 0, class: cls = '', income = false }) {
+export function Amount({ cents, whole = false, signed = false, negative = false, animate = false, from = null, class: cls = '', income = false }) {
   const counted = useCountUp(cents, { from: animate ? from : cents, enabled: animate });
   const v = animate ? counted : cents;
   const pos = income || (signed && cents > 0);

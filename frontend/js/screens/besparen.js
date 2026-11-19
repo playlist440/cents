@@ -21,7 +21,7 @@ const recurring = (it) => navigate('/transacties', { query: { merchant_key: it.m
 export function Besparen() {
   const { data, error, reload } = useQuery('besparen', () => api.besparen());
   const desk = useLayout() === 'wide';
-  return html`<${Screen} title="Besparen" back=${desk ? false : { to: '/meer', label: 'Meer' }} class="bsp">
+  return html`<${Screen} title="Besparen" back=${desk ? false : undefined} class="bsp">
     ${!data && (error
       ? html`<${EmptyState} emoji="💡" title="Besparen laadt niet" subtitle=${error.message} action=${{ label: 'Probeer opnieuw', variant: 'tinted', onClick: () => reload() }} />`
       : html`<div class="inset" aria-busy="true" aria-label="Laden">${[0, 1, 2].map(() => html`<div class="row"><span class="row-main"><${Skeleton} w="60%" h=${15} /></span></div>`)}</div>`)}

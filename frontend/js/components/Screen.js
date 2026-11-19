@@ -17,7 +17,7 @@
 
 import { html, useEffect, useRef, useState } from '../vendor/preact-htm.js';
 import { Icon } from '../icons.js';
-import { back as routerBack, match } from '../router.js';
+import { back as routerBack, match, previousEntry } from '../router.js';
 import { usePage, useLayout } from '../hooks.js';
 import { ToolbarSearch, AddButton } from './Toolbar.js';
 
@@ -101,6 +101,10 @@ function resolveBack(back, route, layout) {
   if (back && back.to) return back;
   if (!route.parent) return null;
   if (layout === 'wide' && route.sidebarRoot) return null; // sidebar destinations are roots on wide
+  // where you actually came from (Overzicht → Vaste lasten says "Overzicht", not "Meer")
+  const prev = previousEntry();
+  const came = prev && match(prev.split('?')[0]);
+  if (came?.route && came.route.path !== route.path && came.route.title) return { to: prev, label: came.route.title };
   const parent = match(route.parent.split('?')[0]);
   return { to: route.parent, label: parent?.route.title || 'Terug' };
 }

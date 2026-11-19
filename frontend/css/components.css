@@ -112,6 +112,8 @@
   border-radius: 17px;
   background: var(--fill-3);
 }
+/* the floating switcher on the phone keeps a solid backing, so text scrolling under it stays out of view */
+.navbar .monthswitch { background: var(--mat-pop); -webkit-backdrop-filter: var(--mat-blur); backdrop-filter: var(--mat-blur); box-shadow: inset 0 0 0 100px var(--fill-3); }
 .ms-arrow {
   position: relative;
   display: grid;

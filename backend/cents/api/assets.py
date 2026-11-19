@@ -92,6 +92,7 @@ def _create_possession(conn: sqlite3.Connection, body: AssetCreate) -> int:
         "include": int(body.include if body.include is not None else True), "merchant_key": None,
         "sort": sort, "created_at": db.now_iso(), "tx_id": tx["id"] if tx else None,
         "price_cents": price, "start_date": start, "life_months": life, "residual_cents": residual,
+        "curve": "front" if body.curve == "front" else None,
         "category_id": body.category_id if body.category_id is not None else _default_category(conn, tx),
         "emoji": body.emoji or _emoji_for(body.name)})
     if tx and tx["spread_months"]:
@@ -161,6 +162,8 @@ def _patch_possession(conn: sqlite3.Connection, a: dict, body: AssetPatch, sent:
             changes[f] = getattr(body, f)
     if "start_date" in sent and body.start_date:
         changes["start_date"] = iso_date(body.start_date)
+    if "curve" in sent and body.curve:
+        changes["curve"] = "front" if body.curve == "front" else None
     if "category_id" in sent and body.category_id is not None:
         _check_category(conn, body.category_id)
         changes["category_id"] = body.category_id
