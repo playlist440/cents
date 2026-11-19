@@ -370,6 +370,8 @@ def detect_full(rows: list[dict], data_today: date, ignored: set[str] = frozense
                 item["iban"] = flat[-1].get("counterparty_iban")
                 item["_first"] = flat[0]["date"]
                 item["via_card"] = flat[-1].get("account_type") == "credit"
+                # to or from your own account (savings, potjes): never income, never a fixed cost
+                item["own_account"] = bool(flat[-1].get("transfer_account_id"))
                 if dest and len(split.get((flat[-1]["merchant_key"], flat[-1]["amount_cents"] < 0), ())) > 1:
                     acc_part, _, what = dest.partition("|")
                     tail = (flat[-1].get("counterparty_iban") or acc_part)[-4:]
@@ -444,9 +446,9 @@ def recurring_json(conn: sqlite3.Connection) -> dict:
     all_items = items(conn)
     live = [i for i in all_items if i["status"] != "ended"]
     monthly_out = -sum(i["per_month_cents"] for i in live
-                       if i["direction"] == "out" and group_of(lg, i) == "fixed")
+                       if i["direction"] == "out" and not i.get("own_account") and group_of(lg, i) == "fixed")
     monthly_in = sum(i["per_month_cents"] for i in live
-                     if i["direction"] == "in" and group_of(lg, i) == "income")
+                     if i["direction"] == "in" and not i.get("own_account") and group_of(lg, i) == "income")
     subs = [i for i in live if i["direction"] == "out"
             and lg.categories.get(i["category_id"] or -1, {}).get("key") in SUBSCRIPTION_BAKJES]
     from . import health                    # local import: health reads networth

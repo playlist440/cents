@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.2 — 2026-11-19
+
+- Geld van en naar je eigen rekeningen (spaarrekening, potjes, wekelijks terugstorten) telt nooit als vast inkomen of als vaste last. In Vaste lasten staat het samen onder één kopje: "Sparen en potjes".
+- Het salaris dat Cents voor de vooruitblik gebruikt, kan geen overboeking van je eigen spaarrekening meer zijn.
+
 ## 1.0.1 — 2026-11-19
 
 - Hypotheek koppelen biedt geen betaling meer aan die al bij een andere schuld hoort. "Niet koppelen" krijgt een vinkje als het gekozen is.

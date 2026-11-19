@@ -391,3 +391,20 @@ def test_end_of_month_payment_stays_at_month_end():
     item = {"status": "active", "frequency": "monthly", "next_date": "2026-01-31", "day_of_month": 31}
     days = recurring.occurrences(item, date(2026, 1, 1), date(2026, 5, 1))
     assert [d.isoformat() for d in days] == ["2026-01-31", "2026-02-28", "2026-03-31", "2026-04-30"]
+
+
+def test_own_account_return_is_never_income():
+    """A monthly top-up of a boodschappen potje on the savings account, paid back every week:
+    both are own-account transfers, not income or a fixed cost."""
+    from cents.services import recurring as rec
+    from datetime import date, timedelta
+    rows = []
+    d = date(2026, 1, 5)
+    for n in range(40):
+        rows.append({"id": n + 1, "date": d.isoformat(), "amount_cents": 10000, "merchant_key": "p:eigen", "merchant_name": "Eigen spaar",
+                     "account_id": 1, "account_type": "checking", "transfer_account_id": 2, "transfer_account_name": "Spaar",
+                     "counterparty_iban": "NL00TEST0000000002", "method": "transfer", "kind": "transfer",
+                     "description": "Boodschappen", "category_id": None, "grp": "saving"})
+        d += timedelta(days=7)
+    found = rec.detect_full(rows, date(2026, 10, 20))
+    assert found and all(i["own_account"] for i in found)

@@ -91,7 +91,7 @@ def main_checking(conn: sqlite3.Connection, accounts: list[dict] | None = None) 
 
 def salary_item(lg: Ledger, items: list[dict]) -> dict | None:
     income = [i for i in items if i["direction"] == "in" and i["status"] != "ended"
-              and _group(lg, i) == INCOME]
+              and not i.get("own_account") and _group(lg, i) == INCOME]
     return max(income, key=lambda i: i["amount_cents"]) if income else None
 
 
@@ -131,7 +131,8 @@ def _spend_items(lg: Ledger, items: list[dict], start: date, end: date,
     settlement, which is counted separately)."""
     out = []
     for i in items:
-        if i["direction"] == direction and _group(lg, i) in groups and not i.get("via_card"):
+        if (i["direction"] == direction and _group(lg, i) in groups and not i.get("via_card")
+                and not i.get("own_account")):
             out += [(i, d) for d in recurring.occurrences(i, start, end)]
     return out
 

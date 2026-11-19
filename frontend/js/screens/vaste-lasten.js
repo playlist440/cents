@@ -42,13 +42,14 @@ const VIEWS = [['lijst', 'Lijst'], ['kalender', 'Kalender']];
 const SECTIONS = [
   { id: 'fixed', title: 'Vaste lasten' },
   { id: 'daily', title: 'Ook regelmatig, buiten de vaste lasten' },
-  { id: 'saving', title: 'Vaste spaaropdrachten' },
+  { id: 'saving', title: 'Sparen en potjes' },
   { id: 'income', title: 'Vast inkomen' },
 ];
 function sectionOf(it) {
-  if (it.direction === 'in') return 'income';
   const g = categoryById(it.category_id)?.grp;
-  if (g === 'saving') return 'saving';
+  // to or from your own account (savings, potjes, terugstorten): never income or a fixed cost
+  if (it.own_account || g === 'saving') return 'saving';
+  if (it.direction === 'in') return 'income';
   if (g === 'fixed') return 'fixed';
   return 'daily';
 }
