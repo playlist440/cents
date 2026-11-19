@@ -196,7 +196,7 @@ function Story({ r, q, desk }) {
       </div>
       <h1 class="rb-title">${capitalize(r.label)}</h1>
       <div class=${'rb-net rounded num' + (over ? '' : ' is-short')}>${euros(Math.abs(t.result_cents))} <span>${over ? 'over' : 'tekort'}</span></div>
-      <p class="rb-sub num">${euros(t.income_cents)} inkomen · ${euros(spent)} uitgegeven${t.saved_cents > 0 ? ` · ${euros(t.saved_cents)} naar sparen` : ''}</p>
+      <p class="rb-sub num">${euros(t.income_cents)} inkomen · ${euros(spent)} uitgegeven${t.saved_cents - (t.repaid_cents || 0) > 0 ? ` · ${euros(t.saved_cents - (t.repaid_cents || 0))} naar sparen` : ''}${t.repaid_cents > 0 ? ` · ${euros(t.repaid_cents)} afgelost` : ''}</p>
       ${c.payments > 0 && html`<p class="rb-sub is-quiet num">${plural(c.payments, 'betaling', 'betalingen')} bij ${plural(c.merchants, 'winkel', 'winkels')}${c.days_without_spending > 0 ? ` · ${plural(c.days_without_spending, 'dag', 'dagen')} zonder uitgaven` : ''} · ${longDate(r.from)} – ${longDate(r.to)}</p>`}
     </header>
 

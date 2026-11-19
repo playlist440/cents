@@ -195,8 +195,10 @@ def analyse_series(segments: list[list[dict]], data_today: date,
     group = _group(txs[-1])
     whole6 = [abs(t["amount_cents"]) for t in txs[-6:]]
     by_card = all(t.get("method") == "card" for t in txs)
-    # a cleaner or window cleaner paid every two or four weeks by transfer is a fixed cost
-    rhythm = SUBSCRIPTION_FREQUENCIES + (() if by_card else SERVICE_FREQUENCIES)
+    # a cleaner or window cleaner paid every two or four weeks by transfer, sorted into a
+    # bakje, is a fixed cost (not unsorted transfers such as pocket money)
+    sorted_ = txs[-1].get("category_key") not in (None, "unsorted")
+    rhythm = SUBSCRIPTION_FREQUENCIES + (SERVICE_FREQUENCIES if sorted_ and not by_card else ())
     if group == "daily" and (freq not in rhythm or variable
                              or max(whole6) > min(whole6) * SPENDING_STABLE):
         return None         # groceries, fuel, a favourite restaurant: no fixed cost
@@ -378,8 +380,7 @@ def recurring_json(conn: sqlite3.Connection) -> dict:
     share = {"income_cents": inc["income_cents"] if inc else None,
              "repaid_cents": inc["repaid_cents"] if inc else 0,
              # the one "x % van je inkomen" (SPEC 9 Hoe staan we ervoor): real income, 12 months
-             "share_of_income": round(monthly_out / inc["income_cents"], 3)
-             if inc and inc["income_cents"] > 0 else None}
+             "share_of_income": health.fixed_share(lg, monthly_out)}
     return {**share, "monthly_out_cents": monthly_out, "monthly_in_cents": monthly_in,
             "yearly_out_cents": monthly_out * 12, "items": [dict(i) for i in all_items],
             "subscriptions": {"per_month_cents": -sum(i["per_month_cents"] for i in subs),

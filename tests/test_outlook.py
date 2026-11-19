@@ -394,3 +394,14 @@ def test_top_merchants_cover_twelve_months(client, book):
     t = client.get("/api/trends?periods=24").json()
     assert t["top_merchants_months"] == 12
     assert "aannemer" not in {m["merchant_key"] for m in t["top_merchants"]}
+
+
+def test_overdue_fixed_cost_paid_another_way_is_not_kept_aside(client, book, today):
+    chk, _ = household(book)
+    # the insurance came a day early with a new price (a new amount cluster)
+    book.tx(chk, "2026-03-19", -13000, "verzekeringen", "Verzekeraar", method="debit")
+    book.tx(chk, "2026-03-22", -1000, "boodschappen", "Supermarkt", method="card", balance=186000)
+    book.commit()
+    today("2026-03-23")
+    f = overview(client)["free"]
+    assert f["fixed_overdue"] == []

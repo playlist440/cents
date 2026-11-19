@@ -371,7 +371,8 @@ function recurringItems() {
         const grp = catById(txs.at(-1).category_id)?.grp;
         if (grp === 'daily' || catById(txs.at(-1).category_id)?.key === 'unsorted') {
           const byCard = txs.every((t) => t.method === 'card');
-          const rhythm = ['monthly', 'quarterly', 'half-year', 'yearly', ...(byCard ? [] : ['2-weekly', '4-weekly'])];
+          const sorted = catById(txs.at(-1).category_id)?.key !== 'unsorted';
+          const rhythm = ['monthly', 'quarterly', 'half-year', 'yearly', ...(sorted && !byCard ? ['2-weekly', '4-weekly'] : [])];
           const whole6 = txs.slice(-6).map((t) => Math.abs(t.amount_cents));
           if (!rhythm.includes(win[0]) || variable || Math.max(...whole6) > Math.min(...whole6) * 1.05) continue;
           if (win[0] === 'yearly' && txs.length === 2 && byCard) continue;
@@ -676,7 +677,9 @@ function outlook() {
     const start = as_of ? addDays(as_of, 1) : db.today;
     const fixed = due(start, pay, ['fixed']).reduce((s, [it]) => s - it.amount_cents, 0);
     const periodStart = periodBounds(currentPeriod()).from;
-    const overdue = rec.filter((it) => it.direction === 'out' && it.status !== 'ended' && grp(it) === 'fixed' && it.next_date >= periodStart && it.next_date < start)
+    // paid when any payment to that merchant came from 10 days before the expected day on
+    const paidSince = (it) => db.transactions.some((t) => t.merchant_key === it.merchant_key && t.amount_cents < 0 && t.date >= addDays(it.next_date, -10));
+    const overdue = rec.filter((it) => it.direction === 'out' && it.status !== 'ended' && grp(it) === 'fixed' && it.next_date >= periodStart && it.next_date < start && !paidSince(it))
       .map((it) => ({ name: it.name, date: it.next_date, cents: -it.amount_cents })).sort((x, y) => (x.date < y.date ? -1 : 1));
     const overdueCents = overdue.reduce((s, x) => s + x.cents, 0);
     const toSavings = Math.max(0, due(start, pay, ['saving']).reduce((s, [it]) => s - it.amount_cents, 0));
@@ -778,6 +781,7 @@ function health(buffer) {
   const hist = previousComplete(currentPeriod(), 12);
   if (hist.length < 2) return null;
   const n = hist.length;
+  if (!hist.some((p) => flows(p).fixed || flows(p).daily)) return null;   // no spending seen yet
   const avg = (fn) => hist.reduce((s, p) => s + fn(flows(p)), 0) / n;
   const income = avg((f) => f.income);
   const fixed = monthlyFixedCosts();
@@ -2018,7 +2022,7 @@ const ROUTES = [
     const subscriptions = { per_month_cents: subs.reduce((s, i) => s - i.per_month_cents, 0), per_year_cents: subs.reduce((s, i) => s + i.per_year_cents, 0), count: subs.length };
     const inc = incomeAvg();
     return ok({ income_cents: inc ? inc.income_cents : null, repaid_cents: inc ? inc.repaid_cents : 0,
-      share_of_income: inc && inc.income_cents > 0 ? Math.round((monthly_out_cents / inc.income_cents) * 1000) / 1000 : null,
+      share_of_income: inc && inc.income_cents > 0 && monthly_out_cents > 0 ? Math.round((monthly_out_cents / inc.income_cents) * 1000) / 1000 : null,
       monthly_out_cents, monthly_in_cents: active.filter((i) => i.direction === 'in' && catById(i.category_id)?.grp === 'income').reduce((s, i) => s + i.per_month_cents, 0), yearly_out_cents: monthly_out_cents * 12, subscriptions, items });
   }],
   ['DELETE', /^\/recurring\/ignore$/, ({ body }) => { db.recurring_ignored = db.recurring_ignored.filter((k) => k !== String(body.key || '').trim()); return ok({ ok: true }); }],

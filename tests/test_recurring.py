@@ -274,3 +274,13 @@ def test_yearly_card_pair_in_a_daily_bakje_is_a_coincidence(client, book):
     book.commit()
     names = {i["name"] for i in client.get("/api/recurring").json()["items"]}
     assert "Camping" in names and "Tankstation" not in names
+
+
+def test_unsorted_fortnightly_transfers_are_not_fixed_costs(client, book):
+    chk = book.account("Betaal", "checking")
+    day = date(2026, 1, 7)
+    for i in range(10):
+        book.tx(chk, (day + timedelta(days=14 * i)).isoformat(), -2000, "unsorted", "p:kind",
+                method="transfer")
+    book.commit()
+    assert not client.get("/api/recurring").json()["items"]

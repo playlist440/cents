@@ -83,8 +83,9 @@ function Content({ a, settings, pending }) {
     try { await api.updateSettings({ assumptions: patch }); invalidate(); } catch (err) { fail(err); }
   };
   // One buffer (SPEC 9): the target of a potje "Buffer" wins over this assumption.
-  const bufferPot = (goals.data?.goals || []).find((g) => /buffer/i.test(g.name) && g.target_cents > 0);
-  const bufferLabel = bufferPot ? euros(bufferPot.target_cents) : buffer.amount_cents != null ? euros(buffer.amount_cents)
+  const bufferPots = (goals.data?.goals || []).filter((g) => /buffer/i.test(g.name) && g.target_cents > 0);
+  const bufferPot = bufferPots[0];
+  const bufferLabel = bufferPot ? euros(bufferPots.reduce((s, g) => s + g.target_cents, 0)) : buffer.amount_cents != null ? euros(buffer.amount_cents)
     : buffer.months ? `${buffer.months} ${buffer.months === 1 ? 'maand' : 'maanden'}` : 'Geen';
   const paydayLabel = payday.day ? `De ${payday.day}e` : 'Automatisch';
   const paydaySub = a.payday?.date ? `Volgende: ${shortDate(a.payday.date)}${!payday.day && a.payday.source === 'period' ? ' · einde maand' : ''}` : '';

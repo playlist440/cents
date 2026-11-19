@@ -231,21 +231,31 @@ def expected_settlement(lg: Ledger, after: date, before: date) -> dict | None:
     return {"date": day.isoformat(), "cents": cents}
 
 
+OVERDUE_GRACE = 10     # a payment to the same merchant this close before the expected day counts
+
+
 def _overdue_fixed(lg: Ledger, items: list[dict], start: date) -> list[dict]:
     """Fixed costs of this period that were expected before the balance date but have not been
-    paid (not ended): they may still come, so Nog te besteden keeps them aside."""
+    paid (not ended): they may still come, so Nog te besteden keeps them aside. Any payment to
+    that merchant from a little before the expected day on (another amount, another account)
+    counts as paid."""
     lo = lg.current().start
     out = []
     for i in items:
         if i["direction"] != "out" or i["status"] == "ended" or _group(lg, i) != FIXED:
             continue
         day = date.fromisoformat(i["next_date"])
-        if lo <= day < start:
-            out.append({"name": i["name"], "date": day.isoformat(), "cents": -i["amount_cents"]})
+        if not lo <= day < start:
+            continue
+        since = (day - timedelta(days=OVERDUE_GRACE)).isoformat()
+        if any(r["merchant_key"] == i["merchant_key"] and r["amount_cents"] < 0 and r["date"] >= since
+               for r in lg.rows):
+            continue
+        out.append({"name": i["name"], "date": day.isoformat(), "cents": -i["amount_cents"]})
     return sorted(out, key=lambda x: x["date"])
 
 
-def free(conn: sqlite3.Connection, lg: Ledger, items: list[dict]) -> dict | None:
+def free(conn: sqlite3.Connection, lg: Ledger, items: list[dict], buf: dict | None) -> dict | None:
     """Nog te besteden (SPEC 9): the money on the checking account(s) that is not needed for
     what is still due before payday at a normal pace. Savings are reported next to it
     (`savings`: the balance minus potjes and the buffer = vrij spaargeld), never in it."""
@@ -279,7 +289,6 @@ def free(conn: sqlite3.Connection, lg: Ledger, items: list[dict]) -> dict | None
     active = goals_mod.overview(conn)["goals"]
     in_goals = sum(max(0, g["saldo_cents"]) for g in active)
     goals_cents = min(in_goals, max(0, savings)) if savings > 0 else 0
-    buf = buffer_status(conn, lg, items)
     reserved = 0
     if buf and buf["source"] == "savings":
         reserved = min(buf["saved_cents"], buf["target_cents"] or 0, max(0, savings - goals_cents))
@@ -374,10 +383,10 @@ def checking_warning(conn: sqlite3.Connection, lg: Ledger, items: list[dict],
 def compute(conn: sqlite3.Connection, lg: Ledger) -> dict:
     """The figures about now for the current period."""
     items = recurring.items(conn)
-    f = free(conn, lg, items)
+    buf = buffer_status(conn, lg, items)
+    f = free(conn, lg, items, buf)
     pay = date.fromisoformat(f["payday"]) if f else payday(conn, lg, items)[0]
     from . import health                     # local import: health reads networth
-    buf = buffer_status(conn, lg, items)
     return {"free": f, "tempo": tempo(lg), "buffer": buf,
             "checking_warning": checking_warning(conn, lg, items, pay),
             "health": health.compute(conn, lg, buf, monthly_fixed(lg, items))}

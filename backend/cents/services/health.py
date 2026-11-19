@@ -49,8 +49,9 @@ def income(lg: Ledger) -> dict | None:
 
 
 def fixed_share(lg: Ledger, monthly_fixed: float) -> float | None:
+    """The one "vaste lasten: x % van je inkomen" (Hoe staan we ervoor, Vaste lasten, insight)."""
     inc = income(lg)
-    return _share(monthly_fixed, inc["income_cents"]) if inc else None
+    return _share(monthly_fixed, inc["income_cents"]) if inc and monthly_fixed > 0 else None
 
 
 def compute(conn: sqlite3.Connection, lg: Ledger, buffer: dict | None,
@@ -60,6 +61,8 @@ def compute(conn: sqlite3.Connection, lg: Ledger, buffer: dict | None,
         return None
     flows = [lg.flows_for(p) for p in history]
     n = len(flows)
+    if not any(f.fixed or f.daily for f in flows):
+        return None         # no spending seen (only a savings account): nothing to say yet
     inc = sum(f.income for f in flows) / n
     repaid = sum(f.repaid for f in flows) / n
     saved = sum(f.saved - f.repaid for f in flows) / n
@@ -85,7 +88,7 @@ def compute(conn: sqlite3.Connection, lg: Ledger, buffer: dict | None,
             "saved_cents": buffer["saved_cents"], "target_cents": buffer["target_cents"],
             "source": buffer["source"]},
         "housing": {"cents": rnd(housing), "share": _share(housing, inc)},
-        "fixed": {"cents": rnd(monthly_fixed), "share": _share(monthly_fixed, inc),
+        "fixed": {"cents": rnd(monthly_fixed), "share": fixed_share(lg, monthly_fixed),
                   "rest_cents": rnd(inc - monthly_fixed)},
         "saving": {"cents": rnd(saved), "share": _share(saved, inc), "repaid_cents": rnd(repaid)},
         "debts": {"known": bool(debts), "total_cents": sum(d["cents"] for d in debts),

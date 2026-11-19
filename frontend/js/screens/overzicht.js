@@ -155,7 +155,7 @@ function heroModel(o) {
 function FreeBreakdown({ f }) {
   const card = f.card_settlement;
   const rows = [
-    ...f.accounts.map((a) => [a.name, a.balance_cents, `saldo ${shortDate(a.as_of)}${a.stale ? ' · verouderd' : ''}`, a.stale]),
+    ...f.accounts.map((a) => [a.name, a.balance_cents, a.as_of ? `saldo ${shortDate(a.as_of)}${a.stale ? ' · verouderd' : ''}` : 'handmatig saldo', a.stale]),
     ['Vaste lasten', -f.fixed_until_payday_cents, `tot ${shortDate(f.payday)}`],
     ...(f.fixed_overdue || []).map((x) => [x.name, -x.cents, `verwacht ${shortDate(x.date)}, nog niet afgeschreven`]),
     f.saving_until_payday_cents > 0 && ['Sparen en beleggen', -f.saving_until_payday_cents, 'gaat vast naar je spaar- of beleggingsrekening'],
@@ -165,7 +165,7 @@ function FreeBreakdown({ f }) {
   ].filter(Boolean);
   const s = f.savings;
   const savingRows = s && [
-    ...s.accounts.map((a) => [a.name, a.balance_cents, `saldo ${shortDate(a.as_of)}${a.stale ? ' · verouderd' : ''}`, a.stale]),
+    ...s.accounts.map((a) => [a.name, a.balance_cents, a.as_of ? `saldo ${shortDate(a.as_of)}${a.stale ? ' · verouderd' : ''}` : 'handmatig saldo', a.stale]),
     s.goals_cents > 0 && ['Potjes', -s.goals_cents, 'staat opzij'],
     s.buffer_cents > 0 && ['Buffer', -s.buffer_cents, 'voor onverwachte uitgaven'],
   ].filter(Boolean);
@@ -643,7 +643,7 @@ function Upcoming({ o, desk = false }) {
 
 /* ---------- Hoe staan we ervoor ---------- */
 
-const pctText = (x) => `${Math.round(x * 100)} %`;
+const pctText = (x) => (x == null ? '–' : `${Math.round(x * 100)} %`);
 const monthsText = (m) => `${String(m).replace('.', ',')} ${m === 1 ? 'maand' : 'maanden'}`;
 
 /** Five calm read-outs about the household, each with one plain sentence (no traffic lights).
